@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Contact | GeniusSeeker</title>
+  <meta name="description" content="Contact GeniusSeeker. Connecting smart people to smart teams." />
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+
+<body>
+  <div id="site-header"></div>
+
+  <main class="page">
+    <section class="container hero">
+      <div class="hero-inner">
+        <div>
+          <p class="kicker">Contact</p>
+          <h1>Connecting smart people to smart teams</h1>
+          <p class="muted">Use the form to reach out. We’ll respond as quickly as possible.</p>
+
+          <div class="grid" style="margin-top: 14px;">
+            <div class="card">
+              <h3>Candidates</h3>
+              <p>Ask about the quiz, your next steps, and how to level up.</p>
+            </div>
+
+            <div class="card">
+              <h3>Recruiters</h3>
+              <p>Ask about joining as an independent recruiter and commission structure.</p>
+            </div>
+
+            <div class="card">
+              <h3>Employers</h3>
+              <p>Ask about verification, job submissions, and hiring support.</p>
+            </div>
+          </div>
+        </div>
+
+        <aside class="hero-card">
+          <h3>Send a message</h3>
+
+          <form
+            class="form"
+            action="https://formspree.io/f/mjgewqvb"
+            method="POST"
+          >
+            <!-- Formspree -->
+            <input type="hidden" name="_subject" value="New GeniusSeeker Contact Message" />
+            <input type="hidden" name="_captcha" value="false" />
+            <input type="hidden" name="_template" value="table" />
+
+            <div class="field">
+              <label for="name">Name</label>
+              <input id="name" name="name" type="text" required />
+            </div>
+
+            <div class="field">
+              <label for="email">Email</label>
+              <input id="email" name="email" type="email" required />
+            </div>
+
+            <div class="field">
+              <label for="topic">Topic</label>
+              <select id="topic" name="topic">
+                <option value="Candidates">Candidates</option>
+                <option value="Recruiters">Recruiters</option>
+                <option value="Employers">Employers</option>
+                <option value="Partnership / Sponsorship">Partnership / Sponsorship</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="msg">Message</label>
+              <textarea id="msg" name="message" required></textarea>
+            </div>
+
+            <button class="btn" type="submit">Send Message</button>
+          </form>
+
+          <p class="muted" style="margin-top: 10px;">
+
+          </p>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <div id="site-footer"></div>
+  <script src="/js/main.js"></script>
+</body>
+</html>
