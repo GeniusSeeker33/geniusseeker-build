@@ -8,14 +8,19 @@ const gsApiBase = () => {
   const meta = document.querySelector('meta[name="gs-api"]');
   const vMeta = meta?.getAttribute("content");
   const vLs = localStorage.getItem("gs_api_base");
-  const v = vMeta || vLs;
+  const v = (vMeta || vLs || "").trim();
   return (v ? v.replace(/\/$/, "") : "http://localhost:8787");
 };
 
 console.log("GS API base (Quiz):", gsApiBase());
 
-const gsGetAccountId = () => localStorage.getItem("gs_hedera_account_id") || "";
-const gsGetDisplayName = () => localStorage.getItem("gs_display_name") || "";
+// Prefer the stable key we set on candidates.html; fall back to older keys
+const gsGetAccountId = () =>
+  (localStorage.getItem("GS_HEDERA_ACCOUNT_ID") ||
+    localStorage.getItem("gs_hedera_account_id") ||
+    "").trim();
+
+const gsGetDisplayName = () => (localStorage.getItem("gs_display_name") || "").trim();
 
 async function gsPost(path, payload) {
   const url = gsApiBase() + path;
@@ -26,10 +31,10 @@ async function gsPost(path, payload) {
       method: "POST",
       mode: "cors",
       headers: { "Content-Type": "application/json" },
+      // IMPORTANT: do NOT set credentials:"include" (CORS + dev origin "*")
       body: JSON.stringify(payload || {}),
     });
   } catch (err) {
-    // This is the real reason for “Failed to fetch”
     throw new Error(`Network/CORS error calling ${url}: ${err?.message || err}`);
   }
 
@@ -42,11 +47,7 @@ async function gsPost(path, payload) {
   }
 
   if (!res.ok) {
-    const detail =
-      data?.error
-        ? JSON.stringify(data.error)
-        : (data?.raw || text || "");
-
+    const detail = data?.error ? JSON.stringify(data.error) : (data?.raw || text || "");
     throw new Error(`API ${res.status} on ${path}: ${detail}`);
   }
 
@@ -85,6 +86,10 @@ export default function Quiz() {
 
   // Badge issuance UX status
   const [issueStatus, setIssueStatus] = useState(""); // "", "pending", "ok", "skipped", "error"
+
+  // NEW: results email (server relay) status
+  const [sendStatus, setSendStatus] = useState(""); // "", "sending", "sent", "error"
+  const [sendError, setSendError] = useState("");
 
   const total = questions.length;
   const isFinished = step >= total;
@@ -166,6 +171,7 @@ export default function Quiz() {
             payRange,
             issuedFor: "STEAM Identity Quiz",
           },
+          quizVersion: "STEAM_V1",
         });
 
         await gsPost("/api/value/log", {
@@ -186,7 +192,7 @@ export default function Quiz() {
   }, [isFinished, results]);
 
   // ---------------------------
-  // Existing server upload
+  // Existing server upload (Netlify function)
   // ---------------------------
   const submitToServer = async () => {
     if (submitted) return;
@@ -234,9 +240,23 @@ export default function Quiz() {
     }
   };
 
+  // ---------------------------
+  // NEW: Send results via identity-service -> Formspree relay
+  // ---------------------------
   const handleSendEmail = async () => {
+    setSendError("");
+
     if (!email) {
       alert("Please enter your email address.");
+      return;
+    }
+
+    const hederaAccountId = gsGetAccountId();
+    const displayName = gsGetDisplayName();
+
+    // If they didn’t connect identity, we can still send, but better UX to instruct them
+    if (!hederaAccountId) {
+      alert("Please go back to Candidates and click Save Identity first, then return to the quiz.");
       return;
     }
 
@@ -245,24 +265,43 @@ export default function Quiz() {
 
     const answerLines = answers.map((a, i) => `Q${i + 1}: ${a?.label ?? ""}`).join("\n");
 
-    const bodyText =
-      `Here are your GeniusSeeker STEAM Badge results:\n\n` +
-      `Badge: ${badge}\n` +
-      `Level: ${level}\n` +
-      `Suggested earning potential: ${payRange}\n\n` +
-      `Your answers:\n${answerLines}\n\n` +
-      `With love,\nGeniusSeeker`;
+    const resultsPayload = {
+      badge,
+      level,
+      payRange,
+      answers: answers.map((a, i) => ({
+        q: i + 1,
+        label: a?.label ?? "",
+        category: a?.category ?? "",
+        weight: a?.weight ?? 1,
+      })),
+      answerLines,
+      quizVersion: "STEAM_V1",
+      issuedStatus: issueStatus,
+      timestamp: new Date().toISOString(),
+    };
 
-    await submitToServer();
+    setSendStatus("sending");
 
-    const subject = "Your GeniusSeeker STEAM Badge Results";
-    const mailtoUrl =
-      `mailto:${encodeURIComponent(email)}` +
-      `?subject=${encodeURIComponent(subject)}` +
-      `&body=${encodeURIComponent(bodyText)}` +
-      `&bcc=${encodeURIComponent("info@geniusseeker.com")}`;
+    try {
+      // Optional: also persist to your existing Netlify storage
+      await submitToServer();
 
-    window.location.href = mailtoUrl;
+      // Send to backend (which relays to Formspree)
+      await gsPost("/api/results/email", {
+        email,
+        hederaAccountId,
+        displayName,
+        results: resultsPayload,
+      });
+
+      setSendStatus("sent");
+    } catch (err) {
+      console.error("❌ Send results failed:", err);
+      setSendStatus("error");
+      setSendError(err?.message || "Send failed");
+      alert("Could not send results. Please try again.");
+    }
   };
 
   const handleOptionClick = (opt) => {
@@ -291,6 +330,9 @@ export default function Quiz() {
 
     issuedRef.current = false;
     setIssueStatus("");
+
+    setSendStatus("");
+    setSendError("");
   };
 
   const shell = "min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white";
@@ -408,7 +450,11 @@ export default function Quiz() {
             <div className="mt-8 rounded-2xl border border-white/10 bg-black/20 p-5">
               {!showEmailForm ? (
                 <button
-                  onClick={() => setShowEmailForm(true)}
+                  onClick={() => {
+                    setShowEmailForm(true);
+                    setSendStatus("");
+                    setSendError("");
+                  }}
                   className="w-full rounded-2xl bg-indigo-600/90 px-5 py-3 font-semibold hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-300/60"
                 >
                   Email me my results
@@ -419,6 +465,7 @@ export default function Quiz() {
                     Enter the email address where you’d like to receive your results. A copy will be sent to GeniusSeeker
                     for follow-up support.
                   </p>
+
                   <input
                     type="email"
                     value={email}
@@ -426,12 +473,31 @@ export default function Quiz() {
                     placeholder="you@example.com"
                     className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-indigo-300/50"
                   />
+
                   <button
                     onClick={handleSendEmail}
-                    className="w-full rounded-2xl bg-indigo-600/90 px-5 py-3 font-semibold hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-300/60"
+                    disabled={sendStatus === "sending"}
+                    className={[
+                      "w-full rounded-2xl px-5 py-3 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-300/60",
+                      sendStatus === "sending"
+                        ? "bg-indigo-600/40 cursor-not-allowed"
+                        : "bg-indigo-600/90 hover:bg-indigo-600",
+                    ].join(" ")}
                   >
-                    Send results
+                    {sendStatus === "sending" ? "Sending…" : "Send results"}
                   </button>
+
+                  {sendStatus === "sent" && (
+                    <div className="text-sm text-emerald-200">
+                      Sent ✅ Check your inbox (and we received a copy for follow-up).
+                    </div>
+                  )}
+
+                  {sendStatus === "error" && (
+                    <div className="text-sm text-rose-200">
+                      Could not send results. {sendError ? `(${sendError})` : ""}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -543,4 +609,5 @@ export default function Quiz() {
     </div>
   );
 }
+
 
