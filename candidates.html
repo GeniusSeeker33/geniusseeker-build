@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="gs-api" content="https://organic-enigma-wx4jj76vg6x25p7q-8787.app.github.dev" />
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Candidates | GeniusSeeker</title>
@@ -30,19 +31,107 @@
         <aside class="hero-card">
           <h3>Your quiz reveals</h3>
           <p class="muted">Your STEAM Badge • Skill Level (1–5) • Earning tier • Path to growth through GeniusSeeker</p>
-          <div class="actions">
+
+          <!-- Connect Identity UI -->
+          <div class="card" style="margin-top:12px">
+            <h3 style="margin-bottom:6px">Connect your Talent Identity</h3>
+            <p class="muted" style="margin-top:0">Enter your Hedera Account ID (wallet connect comes next).</p>
+
+            <div class="form" style="display:grid;gap:10px;margin-top:10px">
+              <label>
+                Hedera Account ID
+                <input id="gsAccountId" type="text" placeholder="0.0.12345" />
+              </label>
+
+              <label>
+                Display Name (optional)
+                <input id="gsDisplayName" type="text" placeholder="Your name" />
+              </label>
+
+              <button class="btn" id="gsSaveIdentity" type="button">Save Identity</button>
+              <div id="gsIdentityStatus" class="muted" style="margin-top:6px"></div>
+            </div>
+          </div>
+
+          <div class="actions" style="margin-top:12px">
             <a class="btn" href="/quiz">Take the Quiz</a>
             <a class="btn btn-ghost" href="/contact.html">Talk to Desiree</a>
           </div>
-          <p class="muted" style="margin-top:10px">
-          
-          </p>
+
+          <p class="muted" style="margin-top:10px"></p>
         </aside>
       </div>
     </section>
   </main>
 
   <div id="site-footer"></div>
+
   <script src="/js/main.js"></script>
+  <script src="/js/identity-client.js"></script>
+  <script>
+    (function () {
+      const acct = document.getElementById("gsAccountId");
+      const name = document.getElementById("gsDisplayName");
+      const btn  = document.getElementById("gsSaveIdentity");
+      const msg  = document.getElementById("gsIdentityStatus");
+
+      function setMsg(text) {
+        msg.textContent = text;
+      }
+
+      // Ensure GSIdentity loaded
+      if (!window.GSIdentity) {
+        setMsg("Identity client failed to load. Please refresh.");
+        console.error("GSIdentity not found. Check /js/identity-client.js load.");
+        return;
+      }
+
+      // Store api base for React quiz fallback (very important in Codespaces)
+      try {
+        localStorage.setItem("gs_api_base", GSIdentity.apiBase());
+      } catch (e) {
+        console.warn("Could not store gs_api_base:", e);
+      }
+
+      // preload saved values
+      const savedAcct = GSIdentity.getAccountId ? GSIdentity.getAccountId() : (localStorage.getItem("gs_hedera_account_id") || "");
+      const savedName = GSIdentity.getDisplayName ? GSIdentity.getDisplayName() : (localStorage.getItem("gs_display_name") || "");
+
+      if (savedAcct) acct.value = savedAcct;
+      if (savedName) name.value = savedName;
+
+      btn.addEventListener("click", async () => {
+        const hederaAccountId = (acct.value || "").trim();
+        const displayName = (name.value || "").trim();
+
+        if (!hederaAccountId) {
+          setMsg("Please enter a Hedera Account ID (e.g., 0.0.12345).");
+          return;
+        }
+
+        // Local persistence (Quiz reads these)
+        GSIdentity.setAccountId(hederaAccountId);
+        if (GSIdentity.setDisplayName) GSIdentity.setDisplayName(displayName);
+
+        btn.disabled = true;
+        const old = btn.textContent;
+        btn.textContent = "Saving…";
+        setMsg("Saving identity…");
+
+        try {
+          const r = await GSIdentity.upsertProfile({ hederaAccountId, displayName });
+          setMsg("Saved ✅ " + r.profile.hedera_account_id);
+        } catch (e) {
+          console.error("Error saving identity:", e);
+          setMsg("Error saving identity: " + (e && e.message ? e.message : "Unknown error"));
+        } finally {
+          btn.disabled = false;
+          btn.textContent = old;
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
+
+
