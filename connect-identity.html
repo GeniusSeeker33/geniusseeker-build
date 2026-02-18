@@ -1,0 +1,51 @@
+<div class="card" style="margin-bottom:14px">
+  <h3>Connect your Talent Identity</h3>
+  <p class="muted">Enter your Hedera Account ID (we’ll add wallet connect next).</p>
+
+  <div class="form" style="display:grid;gap:10px">
+    <label>
+      Hedera Account ID
+      <input id="gsAccountId" type="text" placeholder="0.0.12345" />
+    </label>
+
+    <label>
+      Display Name (optional)
+      <input id="gsDisplayName" type="text" placeholder="Your name" />
+    </label>
+
+    <button class="btn" id="gsSaveIdentity" type="button">Save Identity</button>
+    <div id="gsIdentityStatus" class="muted"></div>
+  </div>
+</div>
+
+<script src="/js/identity-client.js"></script>
+<script>
+  (function () {
+    const acct = document.getElementById("gsAccountId");
+    const name = document.getElementById("gsDisplayName");
+    const btn  = document.getElementById("gsSaveIdentity");
+    const msg  = document.getElementById("gsIdentityStatus");
+
+    // preload
+    const saved = GSIdentity.getAccountId();
+    if (saved) acct.value = saved;
+
+    btn.addEventListener("click", async () => {
+      const hederaAccountId = (acct.value || "").trim();
+      const displayName = (name.value || "").trim();
+
+      if (!hederaAccountId) {
+        msg.textContent = "Please enter a Hedera Account ID (e.g., 0.0.12345).";
+        return;
+      }
+
+      try {
+        GSIdentity.setAccountId(hederaAccountId);
+        const r = await GSIdentity.upsertProfile({ hederaAccountId, displayName });
+        msg.textContent = "Saved ✅ " + r.profile.hedera_account_id;
+      } catch (e) {
+        msg.textContent = "Error saving identity: " + e.message;
+      }
+    });
+  })();
+</script>

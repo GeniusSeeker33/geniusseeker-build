@@ -1,0 +1,24 @@
+# env files (never commit secrets)
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+dist/
+build/
+*.log
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Codespaces / VSCode
+.vscode/
+*.sqlite
+*.sqlite-journal
+
+# Hedera / wallet / keys
+*.pem
+*.key
+*.p12
