@@ -34,8 +34,12 @@ app.post("/api/profile/upsert", (req, res) => {
   if (existing) {
     db.prepare("UPDATE profiles SET display_name=? WHERE id=?").run(name ?? existing.display_name, id);
   } else {
-    db.prepare("INSERT INTO profiles (id, hedera_account_id, display_name, created_at) VALUES (?,?,?,?)")
-      .run(id, hederaAccountId, name, nowISO());
+    db.prepare("INSERT INTO profiles (id, hedera_account_id, display_name, created_at) VALUES (?,?,?,?)").run(
+      id,
+      hederaAccountId,
+      name,
+      nowISO()
+    );
   }
 
   const profile = db.prepare("SELECT * FROM profiles WHERE id=?").get(id);
@@ -82,12 +86,22 @@ app.post("/api/credentials/verify", async (req, res) => {
     }
   }
 
-  db.prepare(`
+  db.prepare(
+    `
     INSERT INTO credentials
     (id, hedera_account_id, credential_type, metadata_json, hedera_token_id, hedera_serial, tx_id, created_at)
     VALUES (?,?,?,?,?,?,?,?)
-  `).run(id, hederaAccountId, credentialType, JSON.stringify(metadata),
-    hederaTokenId ?? null, hederaSerial ?? null, txId ?? null, createdAt);
+  `
+  ).run(
+    id,
+    hederaAccountId,
+    credentialType,
+    JSON.stringify(metadata),
+    hederaTokenId ?? null,
+    hederaSerial ?? null,
+    txId ?? null,
+    createdAt
+  );
 
   res.json({ ok: true, id, hederaTokenId, hederaSerial, txId });
 });
@@ -112,30 +126,44 @@ app.post("/api/badges/issue", async (req, res) => {
   const existingProfile = db.prepare("SELECT * FROM profiles WHERE id=?").get(profileId);
 
   if (!existingProfile) {
-    db.prepare("INSERT INTO profiles (id, hedera_account_id, display_name, created_at) VALUES (?,?,?,?)")
-      .run(profileId, hederaAccountId, displayName?.trim() || null, createdAt);
+    db.prepare("INSERT INTO profiles (id, hedera_account_id, display_name, created_at) VALUES (?,?,?,?)").run(
+      profileId,
+      hederaAccountId,
+      displayName?.trim() || null,
+      createdAt
+    );
   }
 
-  // dedupe
+  // dedupe (v1): text search in metadata_json for quizVersion
   const versionNeedle = `"quizVersion":"${quizVersion}"`;
-  const existingCred = db.prepare(`
-      SELECT * FROM credentials
+  const existingCred = db
+    .prepare(
+      `
+      SELECT *
+      FROM credentials
       WHERE hedera_account_id = ?
-      AND credential_type = 'STEAM_BADGE'
-      AND metadata_json LIKE ?
+        AND credential_type = 'STEAM_BADGE'
+        AND metadata_json LIKE ?
+      ORDER BY created_at DESC
       LIMIT 1
-  `).get(hederaAccountId, `%${versionNeedle}%`);
+    `
+    )
+    .get(hederaAccountId, `%${versionNeedle}%`);
 
   if (existingCred) {
     return res.json({
       ok: true,
       deduped: true,
       id: existingCred.id,
+      hederaTokenId: existingCred.hedera_token_id ?? null,
+      hederaSerial: existingCred.hedera_serial ?? null,
+      txId: existingCred.tx_id ?? null,
       payload: JSON.parse(existingCred.metadata_json),
     });
   }
 
   const id = `cred_${uuid()}`;
+
   let hederaTokenId: string | undefined;
   let hederaSerial: number | undefined;
   let txId: string | undefined;
@@ -163,12 +191,22 @@ app.post("/api/badges/issue", async (req, res) => {
     }
   }
 
-  db.prepare(`
+  db.prepare(
+    `
     INSERT INTO credentials
     (id, hedera_account_id, credential_type, metadata_json, hedera_token_id, hedera_serial, tx_id, created_at)
     VALUES (?,?,?,?,?,?,?,?)
-  `).run(id, hederaAccountId, "STEAM_BADGE", JSON.stringify(payload),
-    hederaTokenId ?? null, hederaSerial ?? null, txId ?? null, createdAt);
+  `
+  ).run(
+    id,
+    hederaAccountId,
+    "STEAM_BADGE",
+    JSON.stringify(payload),
+    hederaTokenId ?? null,
+    hederaSerial ?? null,
+    txId ?? null,
+    createdAt
+  );
 
   res.json({ ok: true, deduped: false, id, hederaTokenId, hederaSerial, txId, payload });
 });
@@ -181,16 +219,27 @@ app.post("/api/value/log", (req, res) => {
     const ts = nowISO();
     const { actor, eventType, currency, amount, reference, metadata } = req.body || {};
 
-    if (!actor || !eventType || !currency || !amount)
+    if (!actor || !eventType || !currency || amount === undefined || amount === null || String(amount).trim() === "") {
       return res.status(400).json({ error: "Invalid value log payload" });
+    }
 
     try {
-      db.prepare(`
+      db.prepare(
+        `
         INSERT INTO value_events
         (id, actor, event_type, amount, currency, reference, metadata_json, created_at)
         VALUES (?,?,?,?,?,?,?,?)
-      `).run(`ve_${uuid()}`, actor, eventType, String(amount), currency,
-        reference ?? null, metadata ? JSON.stringify(metadata) : null, ts);
+      `
+      ).run(
+        `ve_${uuid()}`,
+        String(actor),
+        String(eventType),
+        String(amount),
+        String(currency),
+        reference ?? null,
+        metadata ? JSON.stringify(metadata) : null,
+        ts
+      );
     } catch (e) {
       console.error("DB write failed (continuing):", e);
     }
@@ -211,6 +260,51 @@ app.get("/api/value/events", (_req, res) => {
   } catch (e) {
     console.error("DB read failed:", e);
     res.json({ events: [], warning: "table_missing" });
+  }
+});
+
+/* =====================================================
+   EMAIL QUIZ RESULTS (Formspree relay)
+   Sends results to your Formspree form: https://formspree.io/f/xdalgvva
+===================================================== */
+app.post("/api/results/email", async (req, res) => {
+  try {
+    const { email, hederaAccountId, displayName, results } = req.body || {};
+
+    if (!email || !hederaAccountId || !results) {
+      return res.status(400).json({ error: "Missing required fields: email, hederaAccountId, results" });
+    }
+
+    const formspreeEndpoint = process.env.FORMSPREE_ENDPOINT || "https://formspree.io/f/xdalgvva";
+
+    const payload = {
+      email,
+      hederaAccountId,
+      displayName: displayName || "—",
+      results: typeof results === "string" ? results : JSON.stringify(results, null, 2),
+      timestamp: nowISO(),
+      source: "GeniusSeeker Quiz",
+    };
+
+    const resp = await fetch(formspreeEndpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => "");
+      console.error("Formspree error:", resp.status, text);
+      return res.status(502).json({ error: "Email relay failed", status: resp.status });
+    }
+
+    return res.json({ ok: true });
+  } catch (e) {
+    console.error("Email endpoint error:", e);
+    return res.status(500).json({ error: "Internal error" });
   }
 });
 

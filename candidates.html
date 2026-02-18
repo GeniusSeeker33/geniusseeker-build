@@ -8,6 +8,7 @@
   <meta name="description" content="Discover & confirm your STEAM identity. Take the quiz to receive your badge, level (1–5), earning tier, and growth path." />
   <link rel="stylesheet" href="/css/styles.css" />
 </head>
+
 <body>
   <div id="site-header"></div>
 
@@ -57,10 +58,24 @@
             <a class="btn" href="/quiz">Take the Quiz</a>
             <a class="btn btn-ghost" href="/contact.html">Talk to Desiree</a>
           </div>
-
-          <p class="muted" style="margin-top:10px"></p>
         </aside>
       </div>
+
+      <!-- Profile Preview (kept inside container so it styles correctly) -->
+      <div class="card" style="margin-top:14px">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px">
+          <div>
+            <h3 style="margin:0">Your Saved Profile</h3>
+            <p class="muted" style="margin:6px 0 0">Loads from the identity-service (SQLite + optional Hedera mint).</p>
+          </div>
+          <button id="btnLoadProfile" class="btn btn-ghost" type="button">View my profile</button>
+        </div>
+
+        <div id="profileStatus" class="muted" style="margin-top:10px">Not loaded yet.</div>
+        <pre id="profileJson" class="code" style="display:none; margin-top:12px; white-space:pre-wrap"></pre>
+        <div id="profileNice" style="display:none; margin-top:12px"></div>
+      </div>
+
     </section>
   </main>
 
@@ -68,7 +83,105 @@
 
   <script src="/js/main.js"></script>
   <script src="/js/identity-client.js"></script>
+
   <script>
+    // ---------- API base from meta ----------
+    function getApiBase() {
+      const meta = document.querySelector('meta[name="gs-api"]');
+      return (meta?.content || "").trim().replace(/\/$/, "");
+    }
+
+    // ---------- Profile loader ----------
+    async function loadProfile(accountId) {
+      const statusEl = document.getElementById("profileStatus");
+      const jsonEl = document.getElementById("profileJson");
+      const niceEl = document.getElementById("profileNice");
+
+      if (!accountId) {
+        statusEl.textContent = "Enter your Hedera Account ID first.";
+        jsonEl.style.display = "none";
+        niceEl.style.display = "none";
+        return;
+      }
+
+      const API_BASE = getApiBase();
+      const url = `${API_BASE}/api/profile/${encodeURIComponent(accountId)}`;
+      statusEl.textContent = "Loading…";
+
+      try {
+        const resp = await fetch(url, { method: "GET" });
+        const data = await resp.json().catch(() => null);
+
+        if (!resp.ok) {
+          statusEl.textContent = `Failed to load profile (${resp.status}).`;
+          jsonEl.style.display = "block";
+          jsonEl.textContent = JSON.stringify(data, null, 2);
+          niceEl.style.display = "none";
+          return;
+        }
+
+        const profile = data?.profile;
+        const creds = Array.isArray(data?.credentials) ? data.credentials : [];
+
+        // pick latest STEAM badge (credentials already ordered DESC server-side, but we’ll be safe)
+        const latestBadge = creds.find(c => c.credential_type === "STEAM_BADGE");
+
+        let badgeHtml = `<p class="muted">No STEAM badge found yet.</p>`;
+
+        if (latestBadge) {
+          let payload = null;
+          try { payload = JSON.parse(latestBadge.metadata_json); } catch {}
+
+          const badge =
+            payload?.badge?.badge ||
+            payload?.badge?.name ||
+            payload?.badge?.category ||
+            payload?.badge?.type ||
+            (typeof payload?.badge === "string" ? payload.badge : "STEAM");
+
+          const level =
+            payload?.badge?.level ??
+            payload?.badge?.skillLevel ??
+            payload?.badge?.tier ??
+            "—";
+
+          const quizVersion = payload?.quizVersion || "—";
+          const issuedAt = payload?.issuedAt || latestBadge.created_at || "—";
+
+          badgeHtml = `
+            <div class="card" style="margin-top:10px">
+              <h4 style="margin:0 0 8px">Latest STEAM Badge</h4>
+              <div class="muted">Badge: <strong>${badge}</strong></div>
+              <div class="muted">Level: <strong>${level}</strong></div>
+              <div class="muted">Quiz Version: <strong>${quizVersion}</strong></div>
+              <div class="muted">Issued: <strong>${issuedAt}</strong></div>
+              <div class="muted">Hedera Token: <strong>${latestBadge.hedera_token_id || "—"}</strong></div>
+              <div class="muted">Serial: <strong>${latestBadge.hedera_serial || "—"}</strong></div>
+              <div class="muted">Tx: <strong>${latestBadge.tx_id || "—"}</strong></div>
+            </div>
+          `;
+        }
+
+        niceEl.innerHTML = `
+          <div class="muted">Account: <strong>${accountId}</strong></div>
+          <div class="muted">Display Name: <strong>${profile?.display_name || "—"}</strong></div>
+          ${badgeHtml}
+        `;
+
+        statusEl.textContent = "Loaded ✓";
+        niceEl.style.display = "block";
+
+        // keep raw JSON hidden, but ready for debugging if needed
+        jsonEl.style.display = "none";
+        jsonEl.textContent = JSON.stringify(data, null, 2);
+
+      } catch (e) {
+        statusEl.textContent = "Failed to fetch profile (network/tunnel issue).";
+        jsonEl.style.display = "none";
+        niceEl.style.display = "none";
+      }
+    }
+
     (function () {
       const acct = document.getElementById("gsAccountId");
       const name = document.getElementById("gsDisplayName");
@@ -76,30 +189,47 @@
       const msg  = document.getElementById("gsIdentityStatus");
 
       function setMsg(text) {
-        msg.textContent = text;
+        msg.textContent = text || "";
       }
 
-      // Ensure GSIdentity loaded
+      // Ensure identity client is loaded
       if (!window.GSIdentity) {
         setMsg("Identity client failed to load. Please refresh.");
         console.error("GSIdentity not found. Check /js/identity-client.js load.");
         return;
       }
 
-      // Store api base for React quiz fallback (very important in Codespaces)
+      // Store api base for React quiz fallback (useful in Codespaces)
       try {
         localStorage.setItem("gs_api_base", GSIdentity.apiBase());
       } catch (e) {
         console.warn("Could not store gs_api_base:", e);
       }
 
-      // preload saved values
-      const savedAcct = GSIdentity.getAccountId ? GSIdentity.getAccountId() : (localStorage.getItem("gs_hedera_account_id") || "");
-      const savedName = GSIdentity.getDisplayName ? GSIdentity.getDisplayName() : (localStorage.getItem("gs_display_name") || "");
+      // Preload saved values (supports either GSIdentity keys or our own key)
+      const savedAcct =
+        (GSIdentity.getAccountId ? GSIdentity.getAccountId() : "") ||
+        localStorage.getItem("GS_HEDERA_ACCOUNT_ID") ||
+        localStorage.getItem("gs_hedera_account_id") ||
+        "";
+
+      const savedName =
+        (GSIdentity.getDisplayName ? GSIdentity.getDisplayName() : "") ||
+        localStorage.getItem("gs_display_name") ||
+        "";
 
       if (savedAcct) acct.value = savedAcct;
       if (savedName) name.value = savedName;
 
+      // Auto-load profile if we already have an account id
+      if (savedAcct) loadProfile(savedAcct);
+
+      // View profile button
+      document.getElementById("btnLoadProfile")?.addEventListener("click", () => {
+        loadProfile((acct.value || "").trim());
+      });
+
+      // Save identity
       btn.addEventListener("click", async () => {
         const hederaAccountId = (acct.value || "").trim();
         const displayName = (name.value || "").trim();
@@ -120,7 +250,12 @@
 
         try {
           const r = await GSIdentity.upsertProfile({ hederaAccountId, displayName });
-          setMsg("Saved ✅ " + r.profile.hedera_account_id);
+          setMsg("Saved ✅ " + (r?.profile?.hedera_account_id || hederaAccountId));
+
+          // Save our own stable key + auto-load profile preview
+          try { localStorage.setItem("GS_HEDERA_ACCOUNT_ID", hederaAccountId); } catch {}
+          loadProfile(hederaAccountId);
+
         } catch (e) {
           console.error("Error saving identity:", e);
           setMsg("Error saving identity: " + (e && e.message ? e.message : "Unknown error"));
@@ -133,5 +268,3 @@
   </script>
 </body>
 </html>
-
-
