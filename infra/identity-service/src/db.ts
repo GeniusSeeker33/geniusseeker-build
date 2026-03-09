@@ -33,4 +33,17 @@ db.exec(`
     metadata_json TEXT,
     created_at TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS applications (
+    id           TEXT PRIMARY KEY,
+    job_title    TEXT NOT NULL,
+    company      TEXT,
+    name         TEXT NOT NULL,
+    email        TEXT NOT NULL,
+    phone        TEXT,
+    portfolio    TEXT,
+    hedera_id    TEXT,
+    cover_note   TEXT,
+    created_at   TEXT NOT NULL
+  );
 `);

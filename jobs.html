@@ -4,54 +4,581 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Jobs | GeniusSeeker</title>
-  <meta name="description" content="Browse jobs across STEAM categories. Filter by remote and job type." />
+  <meta name="description" content="Browse jobs across STEAM categories. Filter by remote, job type, and pay rate." />
   <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    /* ── Job-page-specific styles ── */
+    .jobs-layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 24px;
+      align-items: start;
+      margin-top: 24px;
+    }
+    @media (max-width: 768px) {
+      .jobs-layout { grid-template-columns: 1fr; }
+    }
+
+    /* Sidebar filters */
+    .filters-panel {
+      background: var(--surface, #1a1a1a);
+      border: 1px solid var(--border, #2a2a2a);
+      border-radius: 12px;
+      padding: 20px;
+      position: sticky;
+      top: 20px;
+    }
+    .filters-panel h3 {
+      font-size: .85rem;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      margin-bottom: 16px;
+      opacity: .6;
+    }
+    .filter-group { margin-bottom: 20px; }
+    .filter-group label {
+      display: block;
+      font-size: .8rem;
+      opacity: .7;
+      margin-bottom: 6px;
+    }
+    .filter-group select,
+    .filter-group input[type="text"] {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border, #2a2a2a);
+      background: var(--bg, #111);
+      color: inherit;
+      font-size: .9rem;
+    }
+    .filter-reset {
+      background: none;
+      border: none;
+      color: inherit;
+      opacity: .5;
+      font-size: .8rem;
+      cursor: pointer;
+      padding: 0;
+      text-decoration: underline;
+    }
+    .filter-reset:hover { opacity: 1; }
+
+    /* Search bar */
+    .search-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .search-bar input {
+      flex: 1;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border, #2a2a2a);
+      background: var(--surface, #1a1a1a);
+      color: inherit;
+      font-size: .95rem;
+    }
+
+    /* Results meta */
+    .results-meta {
+      font-size: .85rem;
+      opacity: .5;
+      margin-bottom: 14px;
+    }
+
+    /* Job card */
+    .job-card {
+      background: var(--surface, #1a1a1a);
+      border: 1px solid var(--border, #2a2a2a);
+      border-radius: 12px;
+      padding: 20px 22px;
+      margin-bottom: 12px;
+      transition: border-color .2s;
+    }
+    .job-card:hover { border-color: var(--accent, #c9a84c); }
+
+    .job-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .job-title { font-size: 1.05rem; font-weight: 600; margin-bottom: 4px; }
+    .job-company { font-size: .88rem; opacity: .65; }
+
+    .job-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 12px;
+    }
+    .tag {
+      font-size: .73rem;
+      font-weight: 500;
+      padding: 3px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border, #2a2a2a);
+      opacity: .85;
+      white-space: nowrap;
+    }
+    .tag-steam   { border-color: #c9a84c55; color: #c9a84c; }
+    .tag-remote  { border-color: #4caf9055; color: #4caf90; }
+    .tag-type    { border-color: #7a9fff55; color: #7a9fff; }
+    .tag-pay     { border-color: #e07b7b55; color: #e07b7b; }
+    .tag-date    { opacity: .4; }
+
+    .job-card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 14px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .job-location { font-size: .82rem; opacity: .5; }
+
+    .btn-apply {
+      background: none;
+      border: 1px solid var(--accent, #c9a84c);
+      color: var(--accent, #c9a84c);
+      padding: 7px 18px;
+      border-radius: 8px;
+      font-size: .85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background .2s, color .2s;
+    }
+    .btn-apply:hover,
+    .btn-apply.open {
+      background: var(--accent, #c9a84c);
+      color: #000;
+    }
+
+    /* Inline apply form */
+    .apply-form {
+      display: none;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border, #2a2a2a);
+    }
+    .apply-form.visible { display: block; }
+    .apply-form h4 { font-size: .9rem; margin-bottom: 12px; opacity: .8; }
+    .apply-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 500px) { .apply-grid { grid-template-columns: 1fr; } }
+    .apply-grid .full { grid-column: 1 / -1; }
+    .apply-form label { font-size: .8rem; opacity: .65; display: block; margin-bottom: 4px; }
+    .apply-form input,
+    .apply-form textarea,
+    .apply-form select {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border, #2a2a2a);
+      background: var(--bg, #111);
+      color: inherit;
+      font-size: .88rem;
+    }
+    .apply-form textarea { min-height: 80px; resize: vertical; }
+    .apply-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+      align-items: center;
+    }
+    .apply-status { font-size: .82rem; opacity: .6; }
+
+    .no-results {
+      text-align: center;
+      padding: 48px 0;
+      opacity: .45;
+      font-size: .95rem;
+    }
+  </style>
 </head>
 <body>
   <div id="site-header"></div>
 
   <main class="page">
-    <section class="container hero">
-      <div class="hero-inner">
-        <div>
-          <p class="kicker">Jobs</p>
-          <h1>Find Jobs</h1>
-          <p class="muted">
-            This page is a clean static shell. If you want, we can embed your existing job board here or rebuild it as a fast JSON-driven list.
-          </p>
+    <section class="container">
 
-          <div class="grid" style="margin-top:14px">
-            <div class="card">
-              <h3>Filters (UI placeholder)</h3>
-              <p class="muted">Remote • Job type • Category (Artist/Engineer/Mathematician/Science/Technology)</p>
-            </div>
-            <div class="card">
-              <h3>Job board</h3>
-              <p class="muted">Embed your WP job board or point to an ATS feed.</p>
-            </div>
-            <div class="card">
-              <h3>Post a role</h3>
-              <p class="muted">Submit an opening and we’ll review it.</p>
-              <div class="actions">
-                <a class="btn btn-sm" href="/submit-a-job.html">Submit a Job</a>
-              </div>
-            </div>
+      <div style="margin-bottom:8px">
+        <p class="kicker">Jobs</p>
+        <h1>Find Your Next Role</h1>
+        <p class="muted">Browse open positions across STEAM disciplines. Apply directly — no account needed.</p>
+      </div>
+
+      <div class="jobs-layout">
+
+        <!-- ── FILTERS SIDEBAR ── -->
+        <aside class="filters-panel">
+          <h3>Filters</h3>
+
+          <div class="filter-group">
+            <label for="f-steam">STEAM Category</label>
+            <select id="f-steam">
+              <option value="">All categories</option>
+              <option value="Science">Science</option>
+              <option value="Technology">Technology</option>
+              <option value="Engineering">Engineering</option>
+              <option value="Art">Art</option>
+              <option value="Mathematics">Mathematics</option>
+            </select>
           </div>
+
+          <div class="filter-group">
+            <label for="f-remote">Work Style</label>
+            <select id="f-remote">
+              <option value="">All</option>
+              <option value="Remote">Remote</option>
+              <option value="Hybrid">Hybrid</option>
+              <option value="On-site">On-site</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="f-type">Job Type</label>
+            <select id="f-type">
+              <option value="">All types</option>
+              <option value="Full-time">Full-time</option>
+              <option value="Contract">Contract</option>
+              <option value="Part-time">Part-time</option>
+            </select>
+          </div>
+
+          <button class="filter-reset" id="resetFilters">Reset filters</button>
+        </aside>
+
+        <!-- ── MAIN CONTENT ── -->
+        <div>
+          <div class="search-bar">
+            <input id="searchInput" type="text" placeholder="Search job title, company, keyword…" />
+          </div>
+
+          <p class="results-meta" id="resultsMeta"></p>
+
+          <div id="jobList"></div>
         </div>
 
-        <aside class="hero-card">
-          <h3>Quick links</h3>
-          <p class="muted">Candidates can take the STEAM quiz. Recruiters can apply to join the network.</p>
-          <div class="actions">
-            <a class="btn btn-sm" href="/candidates.html">STEAM Quiz</a>
-            <a class="btn btn-sm btn-ghost" href="/recruiters.html">Recruiter Application</a>
-          </div>
-        </aside>
       </div>
+
+      <!-- CTA strip -->
+      <div class="card" style="margin-top:32px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px">
+        <div>
+          <strong>Have a role to fill?</strong>
+          <p class="muted" style="margin:0">Submit an opening and we'll review it within 2 business days.</p>
+        </div>
+        <div class="actions">
+          <a class="btn" href="/submit-a-job.html">Post a Job</a>
+          <a class="btn btn-ghost" href="/candidates.html">Take the STEAM Quiz</a>
+        </div>
+      </div>
+
     </section>
   </main>
 
   <div id="site-footer"></div>
   <script src="/js/main.js"></script>
+  <script>
+  // ── Sample job data (replace with API fetch when backend is ready) ──
+  const JOBS = [
+    {
+      id: 1,
+      title: "Cybersecurity Analyst",
+      company: "ShieldNet Solutions",
+      steam: "Technology",
+      remote: "Remote",
+      type: "Full-time",
+      pay: "$90k – $120k",
+      location: "Louisville, KY (Remote)",
+      posted: "2026-03-05",
+      description: "Protect critical infrastructure and monitor threats across enterprise environments. 3+ years in SOC or incident response preferred."
+    },
+    {
+      id: 2,
+      title: "Data Scientist",
+      company: "Axiom Analytics",
+      steam: "Mathematics",
+      remote: "Hybrid",
+      type: "Full-time",
+      pay: "$110k – $145k",
+      location: "Chicago, IL",
+      posted: "2026-03-06",
+      description: "Build predictive models and data pipelines to support product and operations teams. Python, SQL, and ML experience required."
+    },
+    {
+      id: 3,
+      title: "UX / Product Designer",
+      company: "Craft Studio Co.",
+      steam: "Art",
+      remote: "Remote",
+      type: "Contract",
+      pay: "$65 – $85/hr",
+      location: "Remote (US)",
+      posted: "2026-03-07",
+      description: "Lead end-to-end design for a B2B SaaS platform. Figma expertise and a strong systems-thinking portfolio required."
+    },
+    {
+      id: 4,
+      title: "DevOps Engineer",
+      company: "Stackwell Inc.",
+      steam: "Engineering",
+      remote: "On-site",
+      type: "Full-time",
+      pay: "$105k – $130k",
+      location: "Austin, TX",
+      posted: "2026-03-04",
+      description: "Own CI/CD pipelines, cloud infrastructure (AWS), and reliability practices for a fast-growing fintech startup."
+    },
+    {
+      id: 5,
+      title: "Bioinformatics Researcher",
+      company: "GenePath Labs",
+      steam: "Science",
+      remote: "Hybrid",
+      type: "Full-time",
+      pay: "$95k – $125k",
+      location: "Boston, MA",
+      posted: "2026-03-03",
+      description: "Analyze genomic datasets and develop computational tools to support drug discovery pipelines. PhD or equivalent experience preferred."
+    },
+    {
+      id: 6,
+      title: "Frontend Engineer",
+      company: "Luminara Digital",
+      steam: "Technology",
+      remote: "Remote",
+      type: "Full-time",
+      pay: "$100k – $130k",
+      location: "Remote (US/CAN)",
+      posted: "2026-03-08",
+      description: "Build performant, accessible web experiences with React and TypeScript. Collaborative team, async-first culture."
+    },
+    {
+      id: 7,
+      title: "Structural Engineer",
+      company: "BuildCore Group",
+      steam: "Engineering",
+      remote: "On-site",
+      type: "Full-time",
+      pay: "$85k – $110k",
+      location: "Nashville, TN",
+      posted: "2026-03-01",
+      description: "Design and review structural systems for commercial construction projects. PE license preferred."
+    },
+    {
+      id: 8,
+      title: "Brand Strategist",
+      company: "Meridian Creative",
+      steam: "Art",
+      remote: "Hybrid",
+      type: "Part-time",
+      pay: "$45 – $60/hr",
+      location: "New York, NY",
+      posted: "2026-03-02",
+      description: "Define and evolve brand voice, visual identity, and go-to-market narratives for a portfolio of CPG clients."
+    }
+  ];
+
+  // ── Helpers ──
+  function formatDate(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+
+  function buildCard(job) {
+    return `
+      <div class="job-card" data-id="${job.id}">
+        <div class="job-card-header">
+          <div>
+            <div class="job-title">${job.title}</div>
+            <div class="job-company">${job.company}</div>
+          </div>
+        </div>
+        <div class="job-tags">
+          <span class="tag tag-steam">${job.steam}</span>
+          <span class="tag tag-remote">${job.remote}</span>
+          <span class="tag tag-type">${job.type}</span>
+          <span class="tag tag-pay">${job.pay}</span>
+          <span class="tag tag-date">Posted ${formatDate(job.posted)}</span>
+        </div>
+        <p style="font-size:.88rem;opacity:.65;margin-top:10px;line-height:1.6">${job.description}</p>
+        <div class="job-card-footer">
+          <span class="job-location">📍 ${job.location}</span>
+          <button class="btn-apply" onclick="toggleApply(this, ${job.id})">Apply Now</button>
+        </div>
+
+        <!-- Inline apply form -->
+        <div class="apply-form" id="apply-${job.id}">
+          <h4>Apply for: ${job.title} at ${job.company}</h4>
+          <div class="apply-grid">
+            <div>
+              <label>First &amp; Last Name *</label>
+              <input type="text" placeholder="Jane Smith" required />
+            </div>
+            <div>
+              <label>Email *</label>
+              <input type="email" placeholder="jane@email.com" required />
+            </div>
+            <div>
+              <label>Phone (optional)</label>
+              <input type="tel" placeholder="+1 (555) 000-0000" />
+            </div>
+            <div>
+              <label>LinkedIn or Portfolio URL</label>
+              <input type="url" placeholder="https://linkedin.com/in/..." />
+            </div>
+            <div class="full">
+              <label>Hedera Account ID (optional — links to your STEAM badge)</label>
+              <input type="text" placeholder="0.0.12345" id="applyHedera-${job.id}" />
+            </div>
+            <div class="full">
+              <label>Why are you a great fit?</label>
+              <textarea placeholder="A few sentences about your background and interest…"></textarea>
+            </div>
+          </div>
+          <div class="apply-actions">
+            <button class="btn" onclick="submitApply(this, ${job.id})">Submit Application</button>
+            <button class="btn btn-ghost" onclick="toggleApply(this.closest('.job-card').querySelector('.btn-apply'), ${job.id})">Cancel</button>
+            <span class="apply-status" id="apply-status-${job.id}"></span>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // ── Render ──
+  function render() {
+    const search  = document.getElementById("searchInput").value.toLowerCase();
+    const fSteam  = document.getElementById("f-steam").value;
+    const fRemote = document.getElementById("f-remote").value;
+    const fType   = document.getElementById("f-type").value;
+
+    const filtered = JOBS.filter(j => {
+      const matchSearch = !search ||
+        j.title.toLowerCase().includes(search) ||
+        j.company.toLowerCase().includes(search) ||
+        j.description.toLowerCase().includes(search);
+      const matchSteam  = !fSteam  || j.steam  === fSteam;
+      const matchRemote = !fRemote || j.remote === fRemote;
+      const matchType   = !fType   || j.type   === fType;
+      return matchSearch && matchSteam && matchRemote && matchType;
+    });
+
+    const list = document.getElementById("jobList");
+    const meta = document.getElementById("resultsMeta");
+
+    meta.textContent = filtered.length === JOBS.length
+      ? `${JOBS.length} open roles`
+      : `${filtered.length} of ${JOBS.length} roles match`;
+
+    if (filtered.length === 0) {
+      list.innerHTML = `<div class="no-results">No roles match your filters. <button class="filter-reset" onclick="resetAll()">Clear filters</button></div>`;
+      return;
+    }
+
+    list.innerHTML = filtered.map(buildCard).join("");
+
+    // Pre-fill Hedera ID if saved
+    const savedId = (window.GSIdentity && GSIdentity.getAccountId()) ||
+                    localStorage.getItem("gs_hedera_account_id") || "";
+    if (savedId) {
+      filtered.forEach(j => {
+        const el = document.getElementById(`applyHedera-${j.id}`);
+        if (el) el.value = savedId;
+      });
+    }
+  }
+
+  // ── Toggle inline apply form ──
+  function toggleApply(btn, id) {
+    const form = document.getElementById(`apply-${id}`);
+    const isOpen = form.classList.contains("visible");
+    // Close all others first
+    document.querySelectorAll(".apply-form.visible").forEach(f => f.classList.remove("visible"));
+    document.querySelectorAll(".btn-apply.open").forEach(b => b.classList.remove("open"));
+    if (!isOpen) {
+      form.classList.add("visible");
+      btn.classList.add("open");
+      btn.textContent = "Close";
+      form.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    } else {
+      btn.textContent = "Apply Now";
+    }
+  }
+
+  // ── Submit (wired to Formspree — swap YOUR_FORM_ID or point to /api/apply) ──
+  async function submitApply(btn, id) {
+    const form   = document.getElementById(`apply-${id}`);
+    const status = document.getElementById(`apply-status-${id}`);
+    const inputs = form.querySelectorAll("input, textarea");
+
+    // Basic validation
+    const name  = inputs[0].value.trim();
+    const email = inputs[1].value.trim();
+    if (!name || !email) {
+      status.textContent = "Please fill in your name and email.";
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Sending…";
+    status.textContent = "";
+
+    const job = JOBS.find(j => j.id === id);
+    const payload = {
+      job_title:    job.title,
+      company:      job.company,
+      name,
+      email,
+      phone:        inputs[2].value.trim(),
+      portfolio:    inputs[3].value.trim(),
+      hedera_id:    inputs[4].value.trim(),
+      cover_note:   inputs[5].value.trim(),
+    };
+
+    try {
+      const ENDPOINT = "https://formspree.io/f/xpqyqyjn";
+
+      const res = await fetch(ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        form.innerHTML = `<p style="color:#4caf90;padding:12px 0">✅ Application submitted! We'll be in touch soon.</p>`;
+      } else {
+        throw new Error(`Server responded ${res.status}`);
+      }
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = "Submit Application";
+      status.textContent = "⚠️ Submission failed — " + err.message;
+    }
+  }
+
+  function resetAll() {
+    document.getElementById("f-steam").value  = "";
+    document.getElementById("f-remote").value = "";
+    document.getElementById("f-type").value   = "";
+    document.getElementById("searchInput").value = "";
+    render();
+  }
+
+  // ── Event listeners ──
+  document.getElementById("searchInput").addEventListener("input", render);
+  document.getElementById("f-steam").addEventListener("change", render);
+  document.getElementById("f-remote").addEventListener("change", render);
+  document.getElementById("f-type").addEventListener("change", render);
+  document.getElementById("resetFilters").addEventListener("click", resetAll);
+
+  // ── Init ──
+  render();
+  </script>
 </body>
 </html>

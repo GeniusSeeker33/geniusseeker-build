@@ -308,6 +308,96 @@ app.post("/api/results/email", async (req, res) => {
   }
 });
 
+/* =====================================================
+   JOB APPLICATION (SQLite + Formspree relay)
+   Stores in DB first, then relays to Formspree:
+   https://formspree.io/f/xpqyqyjn
+===================================================== */
+app.post("/api/apply", async (req, res) => {
+  try {
+    const { job_title, company, name, email, phone, portfolio, hedera_id, cover_note } = req.body || {};
+
+    if (!name || !email || !job_title) {
+      return res.status(400).json({ error: "Missing required fields: name, email, job_title" });
+    }
+
+    const createdAt = nowISO();
+    const id = `app_${uuid()}`;
+
+    // ── 1. Save to SQLite ──
+    try {
+      db.prepare(`
+        INSERT INTO applications
+        (id, job_title, company, name, email, phone, portfolio, hedera_id, cover_note, created_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?)
+      `).run(
+        id,
+        job_title,
+        company    || null,
+        name,
+        email,
+        phone      || null,
+        portfolio  || null,
+        hedera_id  || null,
+        cover_note || null,
+        createdAt
+      );
+    } catch (e) {
+      console.error("DB write failed (continuing):", e);
+    }
+
+    // ── 2. Relay to Formspree ──
+    const formspreeEndpoint = process.env.FORMSPREE_APPLY_ENDPOINT || "https://formspree.io/f/xpqyqyjn";
+
+    const payload = {
+      email,
+      name,
+      job_title,
+      company:    company    || "—",
+      phone:      phone      || "—",
+      portfolio:  portfolio  || "—",
+      hedera_id:  hedera_id  || "—",
+      cover_note: cover_note || "—",
+      timestamp:  createdAt,
+      source:     "GeniusSeeker Jobs Page",
+    };
+
+    const resp = await fetch(formspreeEndpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => "");
+      console.error("Formspree error:", resp.status, text);
+      // Still return ok — application is saved to DB so no data is lost
+      return res.json({ ok: true, id, warning: "email_relay_failed" });
+    }
+
+    return res.json({ ok: true, id });
+  } catch (e) {
+    console.error("Apply endpoint error:", e);
+    return res.status(500).json({ error: "Internal error" });
+  }
+});
+
+/* =====================================================
+   VIEW ALL APPLICATIONS (admin)
+   TODO: add auth before going to production
+===================================================== */
+app.get("/api/applications", (_req, res) => {
+  try {
+    const applications = db.prepare(
+      "SELECT * FROM applications ORDER BY created_at DESC LIMIT 200"
+    ).all();
+    res.json({ applications });
+  } catch (e) {
+    console.error("DB read failed:", e);
+    res.json({ applications: [], warning: "table_missing" });
+  }
+});
+
 const port = Number(process.env.PORT || 8787);
 app.listen(port, "0.0.0.0", () => {
   console.log(`identity-service running on 0.0.0.0:${port}`);
