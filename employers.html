@@ -4,8 +4,54 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Employers | GeniusSeeker</title>
-  <meta name="description" content="Connect with our Genius Network. Become Genius Verified, simplify hiring, and access aligned talent across STEAM." />
+  <meta name="description" content="GeniusSeeker is the S in your ESG. Verified hiring with salary transparency, diverse panels, structured feedback, and third-party candidate reviews — built in." />
   <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    .esg-band {
+      background: linear-gradient(135deg, rgba(201,168,76,.07) 0%, rgba(0,0,0,0) 60%);
+      border-top: 1px solid rgba(201,168,76,.18);
+      border-bottom: 1px solid rgba(201,168,76,.18);
+      padding: 60px 0;
+    }
+    .esg-inner { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+    .esg-eyebrow {
+      font-size: .72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .14em; color: #c9a84c; margin-bottom: 10px;
+    }
+    .esg-headline { font-size: clamp(1.5rem, 3vw, 2rem); margin-bottom: 14px; }
+    .esg-sub { opacity: .6; max-width: 560px; line-height: 1.75; margin-bottom: 36px; }
+    .esg-pillars {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 36px;
+    }
+    @media(max-width:640px){ .esg-pillars{ grid-template-columns:1fr; } }
+    .esg-pillar-card {
+      background: var(--surface, #1a1a1a);
+      border: 1px solid var(--border, #2a2a2a);
+      border-radius: 12px;
+      padding: 20px 18px;
+    }
+    .esg-pillar-label {
+      font-size: .68rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .1em; color: #c9a84c; margin-bottom: 8px;
+    }
+    .esg-pillar-card h4 { font-size: .92rem; margin-bottom: 6px; }
+    .esg-pillar-card p { font-size: .8rem; opacity: .52; line-height: 1.65; margin: 0; }
+    .esg-quote {
+      background: var(--surface, #1a1a1a);
+      border: 1px solid rgba(201,168,76,.22);
+      border-radius: 14px;
+      padding: 28px 32px;
+      max-width: 720px;
+    }
+    .esg-quote blockquote {
+      font-size: 1rem; line-height: 1.75; font-style: italic;
+      opacity: .78; margin: 0 0 10px;
+    }
+    .esg-quote cite { font-size: .78rem; opacity: .38; font-style: normal; }
+  </style>
 </head>
 <body>
   <div id="site-header"></div>
@@ -15,21 +61,21 @@
       <div class="hero-inner">
         <div>
           <p class="kicker">Employers</p>
-          <h1>Connect with our Genius Network</h1>
-          <p class="muted">Hires, simplified. Become Genius Verified.</p>
+          <h1>The S in your ESG starts with who you hire.</h1>
+          <p class="muted">GeniusSeeker verification means salary transparency, diverse panels, structured feedback, and third-party candidate reviews — documented, attestable, and built into every hire.</p>
 
           <div class="grid" style="margin-top:14px">
             <div class="card">
               <h3>Get verified</h3>
-              <p>Signal trust and alignment. We highlight verified teams to candidates and recruiters.</p>
+              <p>Signal trust and alignment. Verified employers are prioritized with candidates, recruiters, and ESG-conscious investors.</p>
             </div>
             <div class="card">
               <h3>Submit roles</h3>
-              <p>Share your open position. We review and publish to the job board.</p>
+              <p>Share your open position. We review and publish to the job board — with salary ranges, always.</p>
             </div>
             <div class="card">
               <h3>Aligned matching</h3>
-              <p>We're building toward AI + on-chain identity to reduce noise and increase signal.</p>
+              <p>AI + on-chain identity reduces noise and increases signal. The right hire, not just a fast one.</p>
             </div>
           </div>
 
@@ -41,7 +87,7 @@
         </div>
 
         <aside class="hero-card">
-          <h3>Connect with US</h3>
+          <h3>Connect with us</h3>
           <p class="muted">Quick intake so we understand your team, hiring needs, and culture.</p>
 
           <form class="form" method="post" action="https://formspree.io/f/xlgpgpnl">
@@ -71,10 +117,42 @@
       </div>
     </section>
 
+    <!-- ESG Band -->
+    <div class="esg-band">
+      <div class="esg-inner">
+        <p class="esg-eyebrow">ESG · Social Pillar</p>
+        <h2 class="esg-headline">GeniusSeeker is the S in your ESG.</h2>
+        <p class="esg-sub">The hardest part of ESG isn't the E. It's proving your Social commitments with real, verifiable data. GeniusSeeker builds that evidence into every hire — so your investors, board, and candidates can see it.</p>
+
+        <div class="esg-pillars">
+          <div class="esg-pillar-card">
+            <div class="esg-pillar-label">Pay Equity</div>
+            <h4>Salary transparency, required</h4>
+            <p>Every job posted on GeniusSeeker includes a salary range. No exceptions. That's a documentable commitment to pay equity — right at the sourcing stage.</p>
+          </div>
+          <div class="esg-pillar-card">
+            <div class="esg-pillar-label">Workforce Diversity</div>
+            <h4>Diverse panels, attested</h4>
+            <p>Committed-tier employers attest to diverse interview panels and structured feedback for every candidate — the kind of evidence ESG raters actually ask for.</p>
+          </div>
+          <div class="esg-pillar-card">
+            <div class="esg-pillar-label">Third-Party Verification</div>
+            <h4>Candidate reviews, on record</h4>
+            <p>Candidates review employers after every engagement. That's independent, third-party data on your hiring culture — not self-reported, not curated.</p>
+          </div>
+        </div>
+
+        <div class="esg-quote">
+          <blockquote>"Our hiring pipeline is sourced from a platform that requires salary transparency, diverse interview panels, structured feedback, and third-party candidate reviews."</blockquote>
+          <cite>— What your ESG disclosure can say, once you're GeniusSeeker Verified.</cite>
+        </div>
+      </div>
+    </div>
+
     <!-- Verification tiers -->
     <section class="container section">
       <h2>Verification Tiers</h2>
-      <p class="muted">We partner with companies that walk the talk on inclusion. Our tier system gives candidates meaningful signal — and gives you a reason to keep raising the bar.</p>
+      <p class="muted">We partner with companies that walk the talk on inclusion. Our tier system gives candidates meaningful signal — and gives your ESG reporting something real to cite.</p>
 
       <div class="grid" style="margin-top:24px;grid-template-columns:repeat(4,1fr)">
         <div class="card" style="text-align:center">

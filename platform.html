@@ -4,14 +4,77 @@
   <meta charset="UTF-8" />
   <title>The Platform | GeniusSeeker</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="How GeniusSeeker uses smart contracts to guarantee payment and protect talent and employers." />
-
-  <!-- IMPORTANT: use RELATIVE paths so it works everywhere -->
+  <meta name="description" content="GeniusSeeker is a verified talent ecosystem for STEAM professionals — built on salary transparency, equity-first hiring, and on-chain identity." />
   <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .platform-stat-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin: 32px 0;
+    }
+    @media(max-width:640px){ .platform-stat-row{ grid-template-columns:1fr; } }
+    .platform-stat {
+      background: var(--surface, #1a1a1a);
+      border: 1px solid var(--border, #2a2a2a);
+      border-radius: 12px;
+      padding: 22px 20px;
+      text-align: center;
+    }
+    .platform-stat .stat-num {
+      font-size: 1.6rem; font-weight: 700;
+      color: #c9a84c; margin-bottom: 5px;
+    }
+    .platform-stat .stat-label {
+      font-size: .78rem; opacity: .5; line-height: 1.5;
+    }
+    .roadmap-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 24px;
+    }
+    @media(max-width:640px){ .roadmap-row{ grid-template-columns:1fr; } }
+    .roadmap-card {
+      background: var(--surface, #1a1a1a);
+      border: 1px solid var(--border, #2a2a2a);
+      border-radius: 12px;
+      padding: 20px 18px;
+    }
+    .roadmap-card.active {
+      border-color: rgba(201,168,76,.35);
+      background: linear-gradient(135deg, rgba(201,168,76,.07), transparent);
+    }
+    .roadmap-label {
+      font-size: .68rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .1em; margin-bottom: 8px;
+    }
+    .roadmap-label.live   { color: #4caf90; }
+    .roadmap-label.soon   { color: #c9a84c; }
+    .roadmap-label.future { color: #888; }
+    .roadmap-card h4 { font-size: .92rem; margin-bottom: 6px; }
+    .roadmap-card ul {
+      margin: 0; padding: 0; list-style: none;
+      font-size: .8rem; opacity: .55; line-height: 2;
+    }
+    .roadmap-card ul li::before { content: "— "; opacity: .4; }
+    .esg-band-sm {
+      background: linear-gradient(135deg, rgba(201,168,76,.07) 0%, rgba(0,0,0,0) 60%);
+      border-top: 1px solid rgba(201,168,76,.15);
+      border-bottom: 1px solid rgba(201,168,76,.15);
+      padding: 48px 0;
+    }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    @media(max-width:640px){ .two-col{ grid-template-columns:1fr; } }
+  </style>
 </head>
 
 <body id="top">
-  <!-- Shared Header -->
   <div id="site-header"></div>
 
   <main class="page">
@@ -21,28 +84,30 @@
       <div class="container hero-grid">
         <div class="hero-copy">
           <p class="kicker">The Platform</p>
-          <h1>Work should be trusted. Payment should be guaranteed.</h1>
+          <h1>Hiring that's verifiable. Talent that's valued.</h1>
 
           <div class="hero-sub">
             <p class="muted">
-              GeniusSeeker replaces invoices, payment delays, and trust issues with smart contracts
-              that automatically release payment when work is complete.
+              GeniusSeeker is a verified talent ecosystem for STEAM professionals.
+              We connect equity-first employers with candidates whose identity, skills,
+              and work history are on-chain — transparent from day one.
             </p>
           </div>
 
           <div class="actions" style="margin-top:14px">
-            <a class="btn" href="contact.html">Talk to Desiree</a>
-            <a class="btn btn-ghost" href="index.html">Back to Home</a>
+            <a class="btn" href="employer-verify.html">Get Verified as an Employer</a>
+            <a class="btn btn-ghost" href="candidates.html">Build Your Profile</a>
           </div>
         </div>
 
         <div class="hero-card">
-          <h3>What it does</h3>
-          <p class="muted">Secure escrow + verification + instant payout</p>
+          <h3>What GeniusSeeker does</h3>
+          <p class="muted">For every person in the hiring chain</p>
           <ul class="clean-list">
-            <li>Defines deliverables clearly</li>
-            <li>Locks funds before work starts</li>
-            <li>Releases payment on verification</li>
+            <li>Verifies employer equity commitments</li>
+            <li>Anchors candidate identity on Hedera</li>
+            <li>Makes placement fees automatic and transparent</li>
+            <li>Builds a third-party record of your hiring culture</li>
           </ul>
         </div>
       </div>
@@ -55,78 +120,119 @@
           <h2 class="h3">Why We Built GeniusSeeker</h2>
 
           <p>
-            Hiring and project work have operated on fragile trust for decades.
+            Hiring is broken — and not just for candidates.
           </p>
 
           <p>
-            Talent fears not getting paid. Companies fear paying before work is delivered.
-            Recruiters and agencies sit in the middle chasing invoices and enforcing trust manually.
+            Talented people are passed over because of bias, not ability. Companies post jobs
+            with hidden salary ranges and wonder why trust erodes. Recruiters chase invoices
+            instead of building relationships. And nobody has a verifiable record of whether
+            any of it was fair.
           </p>
 
           <p>
-            The result is friction, delays, and broken relationships.
-          </p>
-
-          <p>
-            GeniusSeeker was created to remove the trust gap using digital ledger technology and
-            forward-looking smart contracts that release payment the moment verified deliverables are complete.
+            GeniusSeeker was built to change that. Every employer commitment — salary ranges,
+            diverse panels, structured feedback — is attested and verified over time through
+            real candidate reviews. Every candidate builds an on-chain identity that belongs
+            to them, not to a resume database someone else owns.
           </p>
 
           <p class="muted" style="margin-bottom:0">
             We believe work should feel safe, transparent, and fair for everyone involved.
+            That's not a tagline. It's the architecture.
           </p>
         </div>
       </div>
     </section>
+
+    <!-- ESG BAND -->
+    <div class="esg-band-sm">
+      <div class="container">
+        <div class="two-col">
+          <div>
+            <p class="kicker" style="color:#c9a84c">ESG · Social Pillar</p>
+            <h2 style="font-size:1.4rem;margin-bottom:12px">GeniusSeeker is the S in your ESG.</h2>
+            <p class="muted" style="line-height:1.75">
+              The hardest part of ESG reporting isn't the E. It's proving your Social commitments
+              with real, verifiable data — not self-reported numbers. GeniusSeeker builds that
+              evidence into every hire: salary transparency, attested hiring practices,
+              and independent candidate reviews that live outside your own systems.
+            </p>
+            <div class="actions" style="margin-top:20px">
+              <a class="btn" href="employer-verify.html">See Verification Tiers</a>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div class="card" style="padding:16px 18px">
+              <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#c9a84c;margin-bottom:5px">Pay Equity</div>
+              <p style="font-size:.82rem;margin:0;opacity:.6">Salary ranges required on every posting. No exceptions.</p>
+            </div>
+            <div class="card" style="padding:16px 18px">
+              <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#c9a84c;margin-bottom:5px">Workforce Diversity</div>
+              <p style="font-size:.82rem;margin:0;opacity:.6">Diverse panels and structured feedback, attested and candidate-verified.</p>
+            </div>
+            <div class="card" style="padding:16px 18px">
+              <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#c9a84c;margin-bottom:5px">Third-Party Record</div>
+              <p style="font-size:.82rem;margin:0;opacity:.6">Candidate reviews create an independent audit trail of your hiring culture.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- HOW IT WORKS -->
     <section class="section">
       <div class="container">
         <div class="card">
           <h2 class="h3">How GeniusSeeker Works</h2>
-          <p class="muted">Simple. Transparent. Guaranteed.</p>
+          <p class="muted">Simple. Transparent. Documented.</p>
 
           <div class="grid" style="margin-top:14px">
             <div class="card">
-              <h3>1. Define the Work</h3>
+              <h3>1. Employer Gets Verified</h3>
               <p class="muted">
-                Companies create a Deliverable Contract that defines scope, timeline, milestones, and total payment.
+                Companies apply and attest to salary transparency, DEI practices, and hiring standards.
+                Desiree reviews every application personally.
               </p>
             </div>
 
             <div class="card">
-              <h3>2. Funds Are Secured</h3>
+              <h3>2. Candidate Builds Identity</h3>
               <p class="muted">
-                Payment is locked in escrow using digital ledger technology before work begins.
-                The funds cannot be moved by anyone.
+                STEAM professionals create verified profiles anchored to their Hedera identity —
+                their data, their record, owned by them.
               </p>
             </div>
 
             <div class="card">
-              <h3>3. Talent Accepts</h3>
+              <h3>3. Roles Are Posted</h3>
               <p class="muted">
-                Talent accepts the contract with a verified, timestamped agreement that establishes trust from day one.
+                Verified employers post roles with salary ranges.
+                Recruiters share aligned openings and earn commission on successful placements.
               </p>
             </div>
 
             <div class="card">
-              <h3>4. Work Happens</h3>
+              <h3>4. Offer & Contract</h3>
               <p class="muted">
-                Work continues using familiar tools like Slack, email, GitHub, Zoom, and your existing workflows.
+                Employers send structured offers. Candidates review, counter, or accept —
+                with every step recorded and transparent.
               </p>
             </div>
 
             <div class="card">
-              <h3>5. Deliverables Verified</h3>
+              <h3>5. Work Happens</h3>
               <p class="muted">
-                Completion is verified when agreed milestones are reached, including project delivery or hiring milestones.
+                Work continues with your existing tools. GeniusSeeker tracks milestones
+                and keeps the record clean.
               </p>
             </div>
 
             <div class="card">
-              <h3>6. Payment Releases</h3>
+              <h3>6. Reviews Build the Record</h3>
               <p class="muted">
-                Once verified, payment releases automatically. No invoices. No Net-30. No chasing payments.
+                After every engagement, candidates review the employer.
+                That's the third-party verification that makes GeniusSeeker data trustworthy.
               </p>
             </div>
           </div>
@@ -134,29 +240,90 @@
       </div>
     </section>
 
-    <!-- USE CASES -->
+    <!-- ROADMAP -->
+    <section class="section">
+      <div class="container">
+        <h2>What's Built. What's Coming.</h2>
+        <p class="muted">GeniusSeeker is live and growing. Here's where things stand.</p>
+
+        <div class="roadmap-row">
+          <div class="roadmap-card active">
+            <div class="roadmap-label live">✓ Live Now</div>
+            <h4>Verified Hiring Infrastructure</h4>
+            <ul>
+              <li>Employer verification tiers</li>
+              <li>Candidate STEAM profiles</li>
+              <li>On-chain Hedera identity</li>
+              <li>Job board with salary ranges</li>
+              <li>Recruiter network</li>
+              <li>Offer, counter & accept flow</li>
+              <li>Candidate reviews of employers</li>
+            </ul>
+          </div>
+          <div class="roadmap-card">
+            <div class="roadmap-label soon">→ Coming Soon</div>
+            <h4>Payment & Reporting Layer</h4>
+            <ul>
+              <li>Stripe placement fee invoicing</li>
+              <li>HashPack wallet connect</li>
+              <li>ESG hiring report (PDF)</li>
+              <li>Employer dashboard</li>
+              <li>AI-powered candidate matching</li>
+            </ul>
+          </div>
+          <div class="roadmap-card">
+            <div class="roadmap-label future">◌ Phase 3</div>
+            <h4>Smart Contracts & GeniusDollars</h4>
+            <ul>
+              <li>Hedera milestone escrow</li>
+              <li>Automatic payment on delivery</li>
+              <li>GeniusDollars (OGBUSD-backed)</li>
+              <li>On-chain placement records</li>
+              <li>IRENA-aligned energy accounting</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- WHO IT'S FOR -->
     <section class="section">
       <div class="container">
         <div class="card">
-          <h2 class="h3">Built for Modern Work</h2>
+          <h2 class="h3">Built for Everyone in the Hiring Chain</h2>
 
-          <ul class="clean-list">
-            <li><strong>Freelancers & Consultants:</strong> Guaranteed payment for completed work.</li>
-            <li><strong>Companies:</strong> Pay only when deliverables are verified.</li>
-            <li><strong>Recruiters & Agencies:</strong> Placement fees release automatically at hiring milestones.</li>
-          </ul>
+          <div class="grid" style="margin-top:14px">
+            <div class="card">
+              <h3>Candidates</h3>
+              <p class="muted">Own your verified identity. Know what you're worth. Only engage with employers who've committed to fair practices — and review them after every experience.</p>
+              <div class="actions" style="margin-top:12px">
+                <a class="btn btn-sm" href="candidates.html">Build Your Profile</a>
+              </div>
+            </div>
+            <div class="card">
+              <h3>Employers</h3>
+              <p class="muted">Get verified. Access top STEAM talent. Build an ESG hiring record that your investors can actually cite — not just a policy document nobody reads.</p>
+              <div class="actions" style="margin-top:12px">
+                <a class="btn btn-sm" href="employer-verify.html">Get Verified</a>
+              </div>
+            </div>
+            <div class="card">
+              <h3>Recruiters</h3>
+              <p class="muted">Share aligned roles with your network. Earn 10–15% commission on placements with no cap. No fees to join. Payment tracked transparently.</p>
+              <div class="actions" style="margin-top:12px">
+                <a class="btn btn-sm" href="recruiters.html">Join the Network</a>
+              </div>
+            </div>
+          </div>
 
-          <p style="margin-bottom:0"><strong>GeniusSeeker turns trust into technology.</strong></p>
+          <p style="margin-top:20px;margin-bottom:0"><strong>GeniusSeeker turns trust into technology — and hiring into a record you can be proud of.</strong></p>
         </div>
       </div>
     </section>
 
   </main>
 
-  <!-- Shared Footer -->
   <div id="site-footer"></div>
-
-  <!-- IMPORTANT: use RELATIVE path so it loads -->
   <script src="js/main.js"></script>
 </body>
 </html>
