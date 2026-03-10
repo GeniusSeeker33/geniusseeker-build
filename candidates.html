@@ -7,6 +7,224 @@
   <title>Candidates | GeniusSeeker</title>
   <meta name="description" content="Discover & confirm your STEAM identity. Take the quiz to receive your badge, level (1–5), earning tier, and growth path." />
   <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    /* ── Profile Editor ── */
+    .profile-editor {
+      margin-top: 14px;
+    }
+    .profile-editor-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 14px;
+    }
+    @media (max-width: 640px) { .profile-editor-grid { grid-template-columns: 1fr; } }
+    .profile-editor-grid .full { grid-column: 1 / -1; }
+
+    .profile-editor label {
+      display: block;
+      font-size: .82rem;
+      opacity: .65;
+      margin-bottom: 4px;
+    }
+    .profile-editor input,
+    .profile-editor textarea,
+    .profile-editor select {
+      width: 100%;
+      padding: 9px 11px;
+      border-radius: 8px;
+      border: 1px solid var(--border, #2a2a2a);
+      background: var(--bg, #111);
+      color: inherit;
+      font-size: .88rem;
+    }
+    .profile-editor textarea { min-height: 90px; resize: vertical; }
+
+    .skills-input-wrap {
+      position: relative;
+    }
+    .skills-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .skill-tag {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: .78rem;
+      padding: 3px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border, #2a2a2a);
+      background: rgba(255,255,255,.04);
+    }
+    .skill-tag button {
+      background: none; border: none; color: inherit;
+      cursor: pointer; opacity: .5; font-size: .9rem;
+      padding: 0; line-height: 1;
+    }
+    .skill-tag button:hover { opacity: 1; }
+
+    .editor-status {
+      font-size: .85rem;
+      margin-top: 10px;
+      min-height: 1.2em;
+    }
+    .editor-status.success { color: #4caf90; }
+    .editor-status.error   { color: #e07b7b; }
+
+    .profile-link-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border, #2a2a2a);
+    }
+    .profile-link-bar p { margin: 0; font-size: .85rem; opacity: .6; }
+
+    /* ── AI Import Widget ── */
+    .import-widget {
+      margin-top: 14px;
+      border: 1px solid var(--border, #2a2a2a);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .import-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      background: rgba(201,168,76,.06);
+      border-bottom: 1px solid rgba(201,168,76,.15);
+      cursor: pointer;
+      user-select: none;
+    }
+    .import-header:hover { background: rgba(201,168,76,.1); }
+    .import-header-left { display: flex; align-items: center; gap: 10px; }
+    .import-header h3 { margin: 0; font-size: .95rem; font-weight: 600; }
+    .import-header p  { margin: 2px 0 0; font-size: .78rem; opacity: .55; }
+    .import-badge {
+      font-size: .65rem; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; padding: 2px 8px; border-radius: 999px;
+      background: rgba(201,168,76,.2); color: #c9a84c;
+      border: 1px solid rgba(201,168,76,.3);
+    }
+    .import-chevron {
+      transition: transform .25s;
+      opacity: .5;
+      flex-shrink: 0;
+    }
+    .import-chevron.open { transform: rotate(180deg); }
+
+    .import-body {
+      padding: 20px;
+      background: var(--surface, #1a1a1a);
+      display: none;
+    }
+    .import-body.open { display: block; }
+
+    .import-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+      background: rgba(0,0,0,.3);
+      border-radius: 8px;
+      padding: 4px;
+    }
+    .import-tab {
+      flex: 1; padding: 7px 12px; border: none; border-radius: 6px;
+      font-size: .82rem; font-weight: 500; cursor: pointer;
+      background: transparent; color: inherit; opacity: .5;
+      transition: all .2s;
+    }
+    .import-tab.active {
+      background: rgba(201,168,76,.15);
+      color: #c9a84c; opacity: 1;
+      border: 1px solid rgba(201,168,76,.25);
+    }
+
+    .import-panel { display: none; }
+    .import-panel.active { display: block; }
+
+    .import-textarea {
+      width: 100%; min-height: 140px; resize: vertical;
+      padding: 11px 13px; border-radius: 8px;
+      border: 1px solid var(--border, #2a2a2a);
+      background: var(--bg, #111); color: inherit;
+      font-size: .85rem; line-height: 1.6;
+      box-sizing: border-box;
+    }
+    .import-textarea:focus { outline: none; border-color: rgba(201,168,76,.4); }
+
+    .import-drop-zone {
+      border: 2px dashed var(--border, #2a2a2a);
+      border-radius: 10px; padding: 32px 20px;
+      text-align: center; cursor: pointer;
+      transition: border-color .2s, background .2s;
+    }
+    .import-drop-zone:hover,
+    .import-drop-zone.drag-over {
+      border-color: rgba(201,168,76,.5);
+      background: rgba(201,168,76,.04);
+    }
+    .import-drop-zone input { display: none; }
+    .import-drop-icon { font-size: 2rem; margin-bottom: 8px; }
+    .import-drop-zone p { margin: 4px 0; font-size: .85rem; opacity: .6; }
+    .import-drop-zone .drop-hint { font-size: .75rem; opacity: .35; }
+    .import-file-name {
+      margin-top: 10px; font-size: .82rem;
+      color: #c9a84c; display: none;
+    }
+
+    .import-hint {
+      font-size: .78rem; opacity: .45; margin: 8px 0 14px; line-height: 1.5;
+    }
+
+    .import-result {
+      margin-top: 14px; padding: 14px 16px;
+      border-radius: 8px; font-size: .85rem; display: none;
+    }
+    .import-result.success {
+      background: rgba(76,175,144,.08);
+      border: 1px solid rgba(76,175,144,.25);
+      color: #4caf90;
+    }
+    .import-result.error {
+      background: rgba(224,123,123,.08);
+      border: 1px solid rgba(224,123,123,.25);
+      color: #e07b7b;
+    }
+    .import-result.loading {
+      background: rgba(201,168,76,.06);
+      border: 1px solid rgba(201,168,76,.2);
+      color: #c9a84c;
+    }
+
+    .import-preview {
+      margin-top: 14px; display: none;
+    }
+    .import-preview-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px;
+    }
+    @media (max-width: 640px) { .import-preview-grid { grid-template-columns: 1fr; } }
+    .import-preview-field {
+      background: rgba(0,0,0,.3); border-radius: 8px; padding: 10px 12px;
+      border: 1px solid var(--border, #2a2a2a);
+    }
+    .import-preview-field label {
+      font-size: .7rem; text-transform: uppercase; letter-spacing: .08em;
+      opacity: .4; display: block; margin-bottom: 4px;
+    }
+    .import-preview-field p { margin: 0; font-size: .83rem; opacity: .85; }
+    .import-preview-field.full { grid-column: 1 / -1; }
+    .import-apply-btn {
+      margin-top: 14px; width: 100%;
+    }
+  </style>
 </head>
 
 <body>
@@ -61,7 +279,7 @@
         </aside>
       </div>
 
-      <!-- Profile Preview (kept inside container so it styles correctly) -->
+      <!-- ── Saved Profile Preview ── -->
       <div class="card" style="margin-top:14px">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:12px">
           <div>
@@ -74,6 +292,140 @@
         <div id="profileStatus" class="muted" style="margin-top:10px">Not loaded yet.</div>
         <pre id="profileJson" class="code" style="display:none; margin-top:12px; white-space:pre-wrap"></pre>
         <div id="profileNice" style="display:none; margin-top:12px"></div>
+      </div>
+
+
+      <!-- ── AI Profile Import ── -->
+      <div class="import-widget" id="importWidget" style="display:none">
+        <div class="import-header" onclick="toggleImport()">
+          <div class="import-header-left">
+            <div>
+              <h3>✨ Import from LinkedIn or Resume <span class="import-badge">AI</span></h3>
+              <p>Paste your LinkedIn text or upload a PDF — we'll fill your profile automatically</p>
+            </div>
+          </div>
+          <svg class="import-chevron" id="importChevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+
+        <div class="import-body" id="importBody">
+          <div class="import-tabs">
+            <button class="import-tab active" id="tab-text" onclick="switchTab('text')">📋 Paste Text</button>
+            <button class="import-tab" id="tab-pdf" onclick="switchTab('pdf')">📄 Upload PDF</button>
+          </div>
+
+          <!-- Text panel -->
+          <div class="import-panel active" id="panel-text">
+            <p class="import-hint">
+              Go to your LinkedIn profile → click "More" → "Save to PDF" → copy the text, or just paste your About section + work history. Or paste any resume text.
+            </p>
+            <textarea class="import-textarea" id="importTextarea"
+              placeholder="Paste your LinkedIn profile text, resume, or bio here…&#10;&#10;Example:&#10;Jane Smith · Software Engineer · San Francisco&#10;5 years experience in Python, React, and cloud infrastructure…"></textarea>
+          </div>
+
+          <!-- PDF panel -->
+          <div class="import-panel" id="panel-pdf">
+            <p class="import-hint">Upload your resume or LinkedIn PDF export. We'll extract your information automatically.</p>
+            <div class="import-drop-zone" id="dropZone"
+              ondragover="handleDragOver(event)"
+              ondragleave="handleDragLeave(event)"
+              ondrop="handleDrop(event)"
+              onclick="document.getElementById('pdfFileInput').click()">
+              <input type="file" id="pdfFileInput" accept=".pdf" onchange="handleFileSelect(event)" />
+              <div class="import-drop-icon">📄</div>
+              <p><strong>Drop your PDF here</strong> or click to browse</p>
+              <p class="drop-hint">LinkedIn PDF export or resume · Max 5MB</p>
+            </div>
+            <div class="import-file-name" id="importFileName"></div>
+          </div>
+
+          <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <button class="btn" id="importRunBtn" onclick="runImport()">✨ Extract Profile Info</button>
+            <button class="btn btn-ghost" id="importClearBtn" onclick="clearImport()" style="display:none">Clear</button>
+          </div>
+
+          <div class="import-result" id="importResult"></div>
+
+          <!-- Preview of extracted fields -->
+          <div class="import-preview" id="importPreview">
+            <p style="font-size:.85rem;font-weight:600;margin-bottom:4px">Extracted — review before applying:</p>
+            <div class="import-preview-grid" id="importPreviewGrid"></div>
+            <button class="btn import-apply-btn" onclick="applyImport()">Apply to Profile ↓</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Profile Editor ── -->
+      <div class="card profile-editor" id="profileEditorCard" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div>
+            <h3 style="margin:0">Build Your Public Profile</h3>
+            <p class="muted" style="margin:6px 0 0">This is what employers see when they browse the candidate directory.</p>
+          </div>
+          <span id="profilePublicLink" style="font-size:.82rem;opacity:.5"></span>
+        </div>
+
+        <div class="profile-editor-grid">
+
+          <!-- Bio -->
+          <div class="full">
+            <label for="pe-bio">About You</label>
+            <textarea id="pe-bio" placeholder="A few sentences about your background, what you're passionate about, and what you're looking for…"></textarea>
+          </div>
+
+          <!-- Skills -->
+          <div class="full">
+            <label>Skills <span style="opacity:.4;font-size:.75rem">(type and press Enter or comma)</span></label>
+            <div class="skills-input-wrap">
+              <input id="pe-skills-input" type="text" placeholder="e.g. Python, Project Management, Figma…" />
+            </div>
+            <div class="skills-tags" id="pe-skills-tags"></div>
+          </div>
+
+          <!-- Open to work -->
+          <div>
+            <label for="pe-open-to-work">Availability</label>
+            <select id="pe-open-to-work">
+              <option value="looking">Actively Looking</option>
+              <option value="open" selected>Open to Offers</option>
+              <option value="not_looking">Not Looking Right Now</option>
+            </select>
+          </div>
+
+          <!-- Portfolio -->
+          <div>
+            <label for="pe-portfolio">Portfolio / Website URL</label>
+            <input id="pe-portfolio" type="url" placeholder="https://yoursite.com" />
+          </div>
+
+          <!-- LinkedIn -->
+          <div>
+            <label for="pe-linkedin">LinkedIn URL</label>
+            <input id="pe-linkedin" type="url" placeholder="https://linkedin.com/in/yourname" />
+          </div>
+
+          <!-- GitHub -->
+          <div>
+            <label for="pe-github">GitHub URL</label>
+            <input id="pe-github" type="url" placeholder="https://github.com/yourhandle" />
+          </div>
+
+          <!-- Avatar -->
+          <div class="full">
+            <label for="pe-avatar">Profile Photo URL <span style="opacity:.4;font-size:.75rem">(direct image link — Gravatar, LinkedIn, etc.)</span></label>
+            <input id="pe-avatar" type="url" placeholder="https://example.com/photo.jpg" />
+          </div>
+
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:16px;align-items:center;flex-wrap:wrap">
+          <button class="btn" id="pe-save-btn" type="button">Save Profile</button>
+          <div class="editor-status" id="pe-status"></div>
+        </div>
+
+        <div class="profile-link-bar">
+          <p>Your public profile is visible to verified employers in the candidate directory.</p>
+          <a id="pe-view-link" class="btn btn-ghost" href="#" target="_blank" style="display:none">View My Profile →</a>
+        </div>
       </div>
 
     </section>
@@ -94,8 +446,8 @@
     // ---------- Profile loader ----------
     async function loadProfile(accountId) {
       const statusEl = document.getElementById("profileStatus");
-      const jsonEl = document.getElementById("profileJson");
-      const niceEl = document.getElementById("profileNice");
+      const jsonEl   = document.getElementById("profileJson");
+      const niceEl   = document.getElementById("profileNice");
 
       if (!accountId) {
         statusEl.textContent = "Enter your Hedera Account ID first.";
@@ -121,9 +473,7 @@
         }
 
         const profile = data?.profile;
-        const creds = Array.isArray(data?.credentials) ? data.credentials : [];
-
-        // pick latest STEAM badge (credentials already ordered DESC server-side, but we’ll be safe)
+        const creds   = Array.isArray(data?.credentials) ? data.credentials : [];
         const latestBadge = creds.find(c => c.credential_type === "STEAM_BADGE");
 
         let badgeHtml = `<p class="muted">No STEAM badge found yet.</p>`;
@@ -134,19 +484,18 @@
 
           const badge =
             payload?.badge?.badge ||
-            payload?.badge?.name ||
+            payload?.badge?.name  ||
             payload?.badge?.category ||
-            payload?.badge?.type ||
+            payload?.badge?.type  ||
             (typeof payload?.badge === "string" ? payload.badge : "STEAM");
 
           const level =
-            payload?.badge?.level ??
+            payload?.badge?.level      ??
             payload?.badge?.skillLevel ??
-            payload?.badge?.tier ??
-            "—";
+            payload?.badge?.tier       ?? "—";
 
           const quizVersion = payload?.quizVersion || "—";
-          const issuedAt = payload?.issuedAt || latestBadge.created_at || "—";
+          const issuedAt    = payload?.issuedAt || latestBadge.created_at || "—";
 
           badgeHtml = `
             <div class="card" style="margin-top:10px">
@@ -158,22 +507,21 @@
               <div class="muted">Hedera Token: <strong>${latestBadge.hedera_token_id || "—"}</strong></div>
               <div class="muted">Serial: <strong>${latestBadge.hedera_serial || "—"}</strong></div>
               <div class="muted">Tx: <strong>${latestBadge.tx_id || "—"}</strong></div>
-            </div>
-          `;
+            </div>`;
         }
 
         niceEl.innerHTML = `
           <div class="muted">Account: <strong>${accountId}</strong></div>
           <div class="muted">Display Name: <strong>${profile?.display_name || "—"}</strong></div>
-          ${badgeHtml}
-        `;
+          ${badgeHtml}`;
 
         statusEl.textContent = "Loaded ✓";
         niceEl.style.display = "block";
-
-        // keep raw JSON hidden, but ready for debugging if needed
         jsonEl.style.display = "none";
         jsonEl.textContent = JSON.stringify(data, null, 2);
+
+        // Show profile editor now that we have a valid account
+        showProfileEditor(accountId, profile);
 
       } catch (e) {
         statusEl.textContent = "Failed to fetch profile (network/tunnel issue).";
@@ -182,89 +530,387 @@
       }
     }
 
+    // ---------- Profile Editor ----------
+    let currentSkills = [];
+
+    function showProfileEditor(accountId, profile) {
+      const card = document.getElementById("profileEditorCard");
+      card.style.display = "block";
+      // Also reveal the import widget
+      document.getElementById("importWidget").style.display = "block";
+
+      // Set view profile link
+      const viewLink = document.getElementById("pe-view-link");
+      viewLink.href = `/profile.html?id=${accountId}`;
+      viewLink.style.display = "inline-block";
+
+      // Pre-fill fields if profile has extended data
+      if (profile) {
+        if (profile.bio)           document.getElementById("pe-bio").value          = profile.bio;
+        if (profile.portfolio_url) document.getElementById("pe-portfolio").value     = profile.portfolio_url;
+        if (profile.linkedin_url)  document.getElementById("pe-linkedin").value      = profile.linkedin_url;
+        if (profile.github_url)    document.getElementById("pe-github").value        = profile.github_url;
+        if (profile.avatar_url)    document.getElementById("pe-avatar").value        = profile.avatar_url;
+        if (profile.open_to_work)  document.getElementById("pe-open-to-work").value  = profile.open_to_work;
+
+        // Skills
+        const skills = Array.isArray(profile.skills) ? profile.skills : [];
+        currentSkills = [...skills];
+        renderSkillTags();
+      }
+    }
+
+    function renderSkillTags() {
+      const container = document.getElementById("pe-skills-tags");
+      container.innerHTML = currentSkills.map((s, i) => `
+        <span class="skill-tag">
+          ${s}
+          <button onclick="removeSkill(${i})" title="Remove">×</button>
+        </span>`).join("");
+    }
+
+    function removeSkill(index) {
+      currentSkills.splice(index, 1);
+      renderSkillTags();
+    }
+
+    // Skills input — add on Enter or comma
+    document.getElementById("pe-skills-input").addEventListener("keydown", function(e) {
+      if (e.key === "Enter" || e.key === ",") {
+        e.preventDefault();
+        const val = this.value.replace(/,/g, "").trim();
+        if (val && !currentSkills.includes(val)) {
+          currentSkills.push(val);
+          renderSkillTags();
+        }
+        this.value = "";
+      }
+    });
+
+    // Save profile
+    document.getElementById("pe-save-btn").addEventListener("click", async () => {
+      const accountId = (document.getElementById("gsAccountId").value || "").trim() ||
+                        localStorage.getItem("gs_hedera_account_id") || "";
+
+      const statusEl = document.getElementById("pe-status");
+      const btn      = document.getElementById("pe-save-btn");
+
+      if (!accountId) {
+        statusEl.className = "editor-status error";
+        statusEl.textContent = "⚠️ Save your Hedera Account ID first (above).";
+        return;
+      }
+
+      btn.disabled    = true;
+      btn.textContent = "Saving…";
+      statusEl.className   = "editor-status";
+      statusEl.textContent = "";
+
+      const payload = {
+        hederaAccountId: accountId,
+        displayName:     document.getElementById("gsDisplayName").value.trim() || undefined,
+        bio:             document.getElementById("pe-bio").value.trim()         || undefined,
+        skills:          currentSkills.length ? currentSkills : undefined,
+        portfolioUrl:    document.getElementById("pe-portfolio").value.trim()   || undefined,
+        linkedinUrl:     document.getElementById("pe-linkedin").value.trim()    || undefined,
+        githubUrl:       document.getElementById("pe-github").value.trim()      || undefined,
+        avatarUrl:       document.getElementById("pe-avatar").value.trim()      || undefined,
+        openToWork:      document.getElementById("pe-open-to-work").value       || undefined,
+      };
+
+      try {
+        const res  = await fetch(getApiBase() + "/api/profile/update", {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify(payload),
+        });
+        const data = await res.json();
+
+        if (res.ok && data.ok) {
+          statusEl.className   = "editor-status success";
+          statusEl.textContent = "✅ Profile saved! Employers can now view your profile.";
+        } else {
+          throw new Error(data?.error || `Server error ${res.status}`);
+        }
+      } catch (e) {
+        statusEl.className   = "editor-status error";
+        statusEl.textContent = "⚠️ Save failed — " + e.message;
+      } finally {
+        btn.disabled    = false;
+        btn.textContent = "Save Profile";
+      }
+    });
+
+    // ---------- Identity save / load (original logic — unchanged) ----------
     (function () {
       const acct = document.getElementById("gsAccountId");
       const name = document.getElementById("gsDisplayName");
       const btn  = document.getElementById("gsSaveIdentity");
       const msg  = document.getElementById("gsIdentityStatus");
 
-      function setMsg(text) {
-        msg.textContent = text || "";
-      }
+      function setMsg(text) { msg.textContent = text || ""; }
 
-      // Ensure identity client is loaded
       if (!window.GSIdentity) {
         setMsg("Identity client failed to load. Please refresh.");
         console.error("GSIdentity not found. Check /js/identity-client.js load.");
         return;
       }
 
-      // Store api base for React quiz fallback (useful in Codespaces)
-      try {
-        localStorage.setItem("gs_api_base", GSIdentity.apiBase());
-      } catch (e) {
+      try { localStorage.setItem("gs_api_base", GSIdentity.apiBase()); } catch (e) {
         console.warn("Could not store gs_api_base:", e);
       }
 
-      // Preload saved values (supports either GSIdentity keys or our own key)
       const savedAcct =
         (GSIdentity.getAccountId ? GSIdentity.getAccountId() : "") ||
         localStorage.getItem("GS_HEDERA_ACCOUNT_ID") ||
-        localStorage.getItem("gs_hedera_account_id") ||
-        "";
+        localStorage.getItem("gs_hedera_account_id") || "";
 
       const savedName =
         (GSIdentity.getDisplayName ? GSIdentity.getDisplayName() : "") ||
-        localStorage.getItem("gs_display_name") ||
-        "";
+        localStorage.getItem("gs_display_name") || "";
 
       if (savedAcct) acct.value = savedAcct;
       if (savedName) name.value = savedName;
 
-      // Auto-load profile if we already have an account id
       if (savedAcct) loadProfile(savedAcct);
 
-      // View profile button
       document.getElementById("btnLoadProfile")?.addEventListener("click", () => {
         loadProfile((acct.value || "").trim());
       });
 
-      // Save identity
       btn.addEventListener("click", async () => {
         const hederaAccountId = (acct.value || "").trim();
-        const displayName = (name.value || "").trim();
+        const displayName     = (name.value || "").trim();
 
         if (!hederaAccountId) {
           setMsg("Please enter a Hedera Account ID (e.g., 0.0.12345).");
           return;
         }
 
-        // Local persistence (Quiz reads these)
         GSIdentity.setAccountId(hederaAccountId);
         if (GSIdentity.setDisplayName) GSIdentity.setDisplayName(displayName);
 
-        btn.disabled = true;
-        const old = btn.textContent;
+        btn.disabled    = true;
+        const old       = btn.textContent;
         btn.textContent = "Saving…";
         setMsg("Saving identity…");
 
         try {
           const r = await GSIdentity.upsertProfile({ hederaAccountId, displayName });
           setMsg("Saved ✅ " + (r?.profile?.hedera_account_id || hederaAccountId));
-
-          // Save our own stable key + auto-load profile preview
           try { localStorage.setItem("GS_HEDERA_ACCOUNT_ID", hederaAccountId); } catch {}
           loadProfile(hederaAccountId);
-
         } catch (e) {
           console.error("Error saving identity:", e);
           setMsg("Error saving identity: " + (e && e.message ? e.message : "Unknown error"));
         } finally {
-          btn.disabled = false;
+          btn.disabled    = false;
           btn.textContent = old;
         }
       });
     })();
+
+    // ══════════════════════════════════════════════════════
+    // AI PROFILE IMPORT
+    // ══════════════════════════════════════════════════════
+    let importPdfBase64 = null;
+    let importedData    = null;
+    let activeTab       = 'text';
+
+    function toggleImport() {
+      const body    = document.getElementById("importBody");
+      const chevron = document.getElementById("importChevron");
+      const isOpen  = body.classList.contains("open");
+      body.classList.toggle("open", !isOpen);
+      chevron.classList.toggle("open", !isOpen);
+    }
+
+    function switchTab(tab) {
+      activeTab = tab;
+      document.getElementById("tab-text").classList.toggle("active", tab === "text");
+      document.getElementById("tab-pdf").classList.toggle("active",  tab === "pdf");
+      document.getElementById("panel-text").classList.toggle("active", tab === "text");
+      document.getElementById("panel-pdf").classList.toggle("active",  tab === "pdf");
+    }
+
+    // ── Drag & drop / file select ──────────────────────────
+    function handleDragOver(e) {
+      e.preventDefault();
+      document.getElementById("dropZone").classList.add("drag-over");
+    }
+    function handleDragLeave(e) {
+      document.getElementById("dropZone").classList.remove("drag-over");
+    }
+    function handleDrop(e) {
+      e.preventDefault();
+      document.getElementById("dropZone").classList.remove("drag-over");
+      const file = e.dataTransfer.files[0];
+      if (file) loadPdfFile(file);
+    }
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (file) loadPdfFile(file);
+    }
+
+    function loadPdfFile(file) {
+      if (file.type !== "application/pdf") {
+        showImportResult("error", "Please upload a PDF file.");
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        showImportResult("error", "File too large — max 5MB.");
+        return;
+      }
+      const nameEl = document.getElementById("importFileName");
+      nameEl.textContent = "📄 " + file.name;
+      nameEl.style.display = "block";
+
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        // Strip the data:application/pdf;base64, prefix
+        importPdfBase64 = ev.target.result.split(",")[1];
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // ── Call Anthropic API ─────────────────────────────────
+    async function runImport() {
+      const btn = document.getElementById("importRunBtn");
+      clearImportResult();
+
+      if (activeTab === "text") {
+        const text = document.getElementById("importTextarea").value.trim();
+        if (!text) { showImportResult("error", "Please paste some text first."); return; }
+      } else {
+        if (!importPdfBase64) { showImportResult("error", "Please select a PDF file first."); return; }
+      }
+
+      btn.disabled    = true;
+      btn.textContent = "✨ Extracting…";
+      showImportResult("loading", "Reading your profile with AI… this takes a few seconds.");
+
+      try {
+        // Call backend — which relays to Anthropic server-side (avoids CORS)
+        const payload = activeTab === "pdf"
+          ? { pdfBase64: importPdfBase64 }
+          : { text: document.getElementById("importTextarea").value.trim() };
+
+        const response = await fetch(getApiBase() + "/api/profile/import", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.ok) {
+          throw new Error(data?.error || data?.detail || "Extraction failed");
+        }
+
+        importedData = data.data;
+
+        showImportResult("success", "✅ Profile extracted! Review the fields below, then click Apply.");
+        renderImportPreview(importedData);
+        document.getElementById("importClearBtn").style.display = "inline-block";
+
+      } catch (err) {
+        console.error("Import error:", err);
+        showImportResult("error", "Could not parse profile. Try pasting more complete text, or check the console.");
+      } finally {
+        btn.disabled    = false;
+        btn.textContent = "✨ Extract Profile Info";
+      }
+    }
+
+    // ── Preview extracted fields ───────────────────────────
+    function renderImportPreview(d) {
+      const grid    = document.getElementById("importPreviewGrid");
+      const preview = document.getElementById("importPreview");
+
+      const fields = [
+        { key: "displayName",   label: "Name",            full: false },
+        { key: "currentTitle",  label: "Current Title",   full: false },
+        { key: "steamCategory", label: "STEAM Category",  full: false },
+        { key: "yearsExperience", label: "Years Experience", full: false },
+        { key: "bio",           label: "Bio",             full: true  },
+        { key: "skills",        label: "Skills",          full: true  },
+        { key: "linkedinUrl",   label: "LinkedIn",        full: false },
+        { key: "githubUrl",     label: "GitHub",          full: false },
+        { key: "portfolioUrl",  label: "Portfolio",       full: false },
+        { key: "openToWork",    label: "Availability",    full: false },
+      ];
+
+      grid.innerHTML = fields.map(f => {
+        const val = d[f.key];
+        if (!val && val !== 0) return "";
+        const display = Array.isArray(val) ? val.join(", ") : String(val);
+        return `
+          <div class="import-preview-field ${f.full ? 'full' : ''}">
+            <label>${f.label}</label>
+            <p>${display}</p>
+          </div>`;
+      }).join("");
+
+      preview.style.display = "block";
+    }
+
+    // ── Apply extracted data to the profile form ───────────
+    function applyImport() {
+      if (!importedData) return;
+      const d = importedData;
+
+      // Display name — only fill if editor name field is empty
+      const nameEl = document.getElementById("gsDisplayName");
+      if (d.displayName && !nameEl.value.trim()) nameEl.value = d.displayName;
+
+      if (d.bio)          document.getElementById("pe-bio").value         = d.bio;
+      if (d.portfolioUrl) document.getElementById("pe-portfolio").value   = d.portfolioUrl;
+      if (d.linkedinUrl)  document.getElementById("pe-linkedin").value    = d.linkedinUrl;
+      if (d.githubUrl)    document.getElementById("pe-github").value      = d.githubUrl;
+      if (d.openToWork)   document.getElementById("pe-open-to-work").value = d.openToWork;
+
+      // Skills — merge with existing, no duplicates
+      if (Array.isArray(d.skills) && d.skills.length) {
+        d.skills.forEach(s => {
+          if (s && !currentSkills.includes(s)) currentSkills.push(s);
+        });
+        renderSkillTags();
+      }
+
+      // Scroll to profile editor and flash it
+      const editorCard = document.getElementById("profileEditorCard");
+      editorCard.scrollIntoView({ behavior: "smooth", block: "start" });
+      editorCard.style.transition = "box-shadow .4s";
+      editorCard.style.boxShadow  = "0 0 0 2px rgba(201,168,76,.5)";
+      setTimeout(() => { editorCard.style.boxShadow = ""; }, 1800);
+
+      showImportResult("success", "✅ Applied! Review the fields below and click Save Profile.");
+      document.getElementById("importPreview").style.display = "none";
+    }
+
+    // ── Helpers ────────────────────────────────────────────
+    function showImportResult(type, msg) {
+      const el = document.getElementById("importResult");
+      el.className  = "import-result " + type;
+      el.textContent = msg;
+      el.style.display = "block";
+    }
+    function clearImportResult() {
+      const el = document.getElementById("importResult");
+      el.style.display = "none";
+      document.getElementById("importPreview").style.display = "none";
+    }
+    function clearImport() {
+      document.getElementById("importTextarea").value = "";
+      importPdfBase64 = null;
+      importedData    = null;
+      const fn = document.getElementById("importFileName");
+      fn.style.display = "none"; fn.textContent = "";
+      document.getElementById("pdfFileInput").value = "";
+      clearImportResult();
+      document.getElementById("importClearBtn").style.display = "none";
+    }
+
   </script>
 </body>
 </html>

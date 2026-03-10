@@ -10,7 +10,7 @@ const app = express();
 
 // CORS — dev friendly. Lock down via CORS_ORIGIN in prod.
 app.use(cors({ origin: process.env.CORS_ORIGIN || "*" }));
-app.use(express.json({ limit: "1mb" }));
+app.use(express.json({ limit: "10mb" }));
 
 const nowISO = () => new Date().toISOString();
 
@@ -21,7 +21,37 @@ app.get("/", (_req, res) => {
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
 /* =====================================================
-   PROFILE UPSERT
+   EMPLOYER AUTH — simple token-based session
+===================================================== */
+const EMPLOYER_PASSWORD = process.env.EMPLOYER_PASSWORD || "geniusseeker2026";
+
+app.post("/api/employer/login", (req, res) => {
+  const { email, password } = req.body || {};
+  if (!email || password !== EMPLOYER_PASSWORD) {
+    return res.status(401).json({ error: "Invalid credentials" });
+  }
+  const token = uuid();
+  const createdAt = nowISO();
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  db.prepare(
+    "INSERT INTO employer_sessions (id, email, token, created_at, expires_at) VALUES (?,?,?,?,?)"
+  ).run(`sess_${uuid()}`, email, token, createdAt, expiresAt);
+  res.json({ ok: true, token, email });
+});
+
+function requireEmployer(req: any, res: any, next: any) {
+  const auth = req.headers["authorization"] || "";
+  const token = auth.replace("Bearer ", "").trim();
+  if (!token) return res.status(401).json({ error: "Unauthorized" });
+  const sess = db.prepare(
+    "SELECT * FROM employer_sessions WHERE token=? AND expires_at > ?"
+  ).get(token, nowISO());
+  if (!sess) return res.status(401).json({ error: "Session expired or invalid" });
+  next();
+}
+
+/* =====================================================
+   PROFILE UPSERT (basic — from candidates.html)
 ===================================================== */
 app.post("/api/profile/upsert", (req, res) => {
   const { hederaAccountId, displayName } = req.body || {};
@@ -35,10 +65,7 @@ app.post("/api/profile/upsert", (req, res) => {
     db.prepare("UPDATE profiles SET display_name=? WHERE id=?").run(name ?? existing.display_name, id);
   } else {
     db.prepare("INSERT INTO profiles (id, hedera_account_id, display_name, created_at) VALUES (?,?,?,?)").run(
-      id,
-      hederaAccountId,
-      name,
-      nowISO()
+      id, hederaAccountId, name, nowISO()
     );
   }
 
@@ -46,14 +73,119 @@ app.post("/api/profile/upsert", (req, res) => {
   res.json({ profile });
 });
 
+/* =====================================================
+   PROFILE UPDATE — extended fields
+===================================================== */
+app.post("/api/profile/update", (req, res) => {
+  const {
+    hederaAccountId, displayName, bio, skills,
+    avatarUrl, portfolioUrl, linkedinUrl, githubUrl, openToWork,
+    resumeText, resumePdfUrl
+  } = req.body || {};
+
+  if (!hederaAccountId) return res.status(400).json({ error: "hederaAccountId required" });
+
+  const id = `profile_${hederaAccountId}`;
+  const existing = db.prepare("SELECT * FROM profiles WHERE id=?").get(id);
+
+  if (!existing) {
+    db.prepare(
+      "INSERT INTO profiles (id, hedera_account_id, display_name, created_at) VALUES (?,?,?,?)"
+    ).run(id, hederaAccountId, displayName?.trim() || null, nowISO());
+  }
+
+  db.prepare(`
+    UPDATE profiles SET
+      display_name   = COALESCE(?, display_name),
+      bio            = COALESCE(?, bio),
+      skills         = COALESCE(?, skills),
+      avatar_url     = COALESCE(?, avatar_url),
+      portfolio_url  = COALESCE(?, portfolio_url),
+      linkedin_url   = COALESCE(?, linkedin_url),
+      github_url     = COALESCE(?, github_url),
+      open_to_work   = COALESCE(?, open_to_work),
+      resume_text    = COALESCE(?, resume_text),
+      resume_pdf_url = COALESCE(?, resume_pdf_url)
+    WHERE id = ?
+  `).run(
+    displayName?.trim()   || null,
+    bio?.trim()           || null,
+    skills ? JSON.stringify(skills) : null,
+    avatarUrl?.trim()     || null,
+    portfolioUrl?.trim()  || null,
+    linkedinUrl?.trim()   || null,
+    githubUrl?.trim()     || null,
+    openToWork            || null,
+    resumeText?.trim()    || null,
+    resumePdfUrl?.trim()  || null,
+    id
+  );
+
+  const profile = db.prepare("SELECT * FROM profiles WHERE id=?").get(id);
+  res.json({ ok: true, profile });
+});
+
+/* =====================================================
+   GET SINGLE PROFILE
+===================================================== */
 app.get("/api/profile/:accountId", (req, res) => {
   const id = `profile_${req.params.accountId}`;
-  const profile = db.prepare("SELECT * FROM profiles WHERE id=?").get(id);
+  const profile = db.prepare("SELECT * FROM profiles WHERE id=?").get(id) as any;
   const creds = db
     .prepare("SELECT * FROM credentials WHERE hedera_account_id=? ORDER BY created_at DESC")
     .all(req.params.accountId);
 
-  res.json({ profile: profile || null, credentials: creds });
+  if (!profile) return res.json({ profile: null, credentials: [] });
+
+  if (profile.skills) {
+    try { profile.skills = JSON.parse(profile.skills); } catch { profile.skills = []; }
+  }
+
+  const auth = req.headers["authorization"] || "";
+  const token = auth.replace("Bearer ", "").trim();
+  const sess = token
+    ? db.prepare("SELECT * FROM employer_sessions WHERE token=? AND expires_at > ?").get(token, nowISO())
+    : null;
+
+  if (!sess) delete profile.hedera_account_id;
+
+  res.json({ profile, credentials: creds });
+});
+
+/* =====================================================
+   CANDIDATE DIRECTORY — employers only
+===================================================== */
+app.get("/api/candidates", requireEmployer, (req, res) => {
+  const { steam, open_to_work } = req.query as any;
+
+  let query = `
+    SELECT p.*,
+      (SELECT metadata_json FROM credentials
+       WHERE hedera_account_id = p.hedera_account_id
+         AND credential_type = 'STEAM_BADGE'
+       ORDER BY created_at DESC LIMIT 1) AS latest_badge_json
+    FROM profiles p WHERE 1=1
+  `;
+  const params: any[] = [];
+
+  if (open_to_work) { query += " AND p.open_to_work = ?"; params.push(open_to_work); }
+  query += " ORDER BY p.created_at DESC LIMIT 100";
+
+  const candidates = (db.prepare(query).all(...params) as any[]).map(c => {
+    if (c.skills) { try { c.skills = JSON.parse(c.skills); } catch { c.skills = []; } }
+    if (c.latest_badge_json) {
+      try {
+        const b = JSON.parse(c.latest_badge_json);
+        c.steam_badge = b?.badge?.category || b?.badge?.name || null;
+        c.steam_level = b?.badge?.level || null;
+      } catch { c.steam_badge = null; c.steam_level = null; }
+    }
+    delete c.latest_badge_json;
+    return c;
+  });
+
+  const filtered = steam ? candidates.filter(c => c.steam_badge === steam) : candidates;
+  res.json({ candidates: filtered });
 });
 
 /* =====================================================
@@ -267,6 +399,98 @@ app.get("/api/value/events", (_req, res) => {
    EMAIL QUIZ RESULTS (Formspree relay)
    Sends results to your Formspree form: https://formspree.io/f/xdalgvva
 ===================================================== */
+/* =====================================================
+   AI PROFILE IMPORT
+   POST /api/profile/import
+   Body: { text?: string, pdfBase64?: string }
+   Returns: { ok: true, data: { displayName, bio, skills, ... } }
+===================================================== */
+app.post("/api/profile/import", async (req, res) => {
+  const { text, pdfBase64 } = req.body || {};
+
+  if (!text && !pdfBase64) {
+    return res.status(400).json({ error: "Provide text or pdfBase64" });
+  }
+
+  const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
+  if (!ANTHROPIC_KEY) {
+    return res.status(500).json({ error: "ANTHROPIC_API_KEY not set in .env" });
+  }
+
+  const systemPrompt = `You are a profile extraction assistant for GeniusSeeker, a STEAM talent platform.
+Extract profile fields and return ONLY a valid JSON object — no markdown fences, no explanation, no extra text.
+Required keys:
+{
+  "displayName": "Full name",
+  "bio": "2-3 sentence professional summary (write one if not present, based on their experience)",
+  "skills": ["skill1", "skill2"],
+  "portfolioUrl": "URL or null",
+  "linkedinUrl": "LinkedIn URL or null",
+  "githubUrl": "GitHub URL or null",
+  "openToWork": "looking | open | not_looking — infer from context, default open",
+  "steamCategory": "Science | Technology | Engineering | Arts | Mathematics",
+  "yearsExperience": number or null,
+  "currentTitle": "most recent job title or null"
+}`;
+
+  let userContent: any;
+
+  if (pdfBase64) {
+    userContent = [
+      {
+        type: "document",
+        source: { type: "base64", media_type: "application/pdf", data: pdfBase64 }
+      },
+      { type: "text", text: "Extract the profile fields from this resume or LinkedIn PDF as instructed." }
+    ];
+  } else {
+    userContent = `Extract the profile fields from this text:
+
+${text}`;
+  }
+
+  try {
+    const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": ANTHROPIC_KEY,
+        "anthropic-version": "2023-06-01",
+        "anthropic-beta": "pdfs-2024-09-25",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{ role: "user", content: userContent }],
+      }),
+    });
+
+    const anthropicData = await anthropicRes.json() as any;
+
+    if (!anthropicRes.ok) {
+      console.error("Anthropic API error:", anthropicData);
+      return res.status(502).json({ error: "AI extraction failed", detail: anthropicData?.error?.message });
+    }
+
+    const raw   = anthropicData?.content?.[0]?.text || "";
+    const clean = raw.replace(/^```json\s*/i, "").replace(/```\s*$/, "").trim();
+
+    let parsed;
+    try {
+      parsed = JSON.parse(clean);
+    } catch {
+      console.error("JSON parse failed. Raw:", raw);
+      return res.status(422).json({ error: "Could not parse AI response as JSON", raw });
+    }
+
+    res.json({ ok: true, data: parsed });
+  } catch (err: any) {
+    console.error("Import route error:", err);
+    res.status(500).json({ error: "Import failed", detail: err?.message });
+  }
+});
+
 app.post("/api/results/email", async (req, res) => {
   try {
     const { email, hederaAccountId, displayName, results } = req.body || {};

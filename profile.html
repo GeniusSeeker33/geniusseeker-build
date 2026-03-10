@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="gs-api" content="https://organic-enigma-wx4jj76vg6x25p7q-8787.app.github.dev" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Candidate Profile | GeniusSeeker</title>
+  <meta name="description" content="GeniusSeeker verified candidate profile." />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    .profile-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 24px;
+      align-items: start;
+      margin-top: 24px;
+    }
+    @media (max-width: 768px) { .profile-layout { grid-template-columns: 1fr; } }
+
+    .profile-sidebar { display: flex; flex-direction: column; gap: 16px; }
+
+    .avatar-block {
+      background: var(--surface, #1a1a1a);
+      border: 1px solid var(--border, #2a2a2a);
+      border-radius: 16px;
+      padding: 28px 20px;
+      text-align: center;
+    }
+    .avatar {
+      width: 88px; height: 88px; border-radius: 50%;
+      background: linear-gradient(135deg, #c9a84c 0%, #7a5c1e 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; font-weight: 700; color: #000;
+      margin: 0 auto 16px;
+      overflow: hidden;
+      position: relative;
+    }
+    .avatar img {
+      width: 100%; height: 100%; object-fit: cover;
+      position: absolute; top: 0; left: 0;
+      transition: opacity .3s;
+    }
+    .avatar-initials { position: relative; z-index: 1; pointer-events: none; }
+
+    .profile-name   { font-size: 1.15rem; font-weight: 600; margin-bottom: 4px; }
+    .profile-hedera { font-size: .75rem; opacity: .4; margin-bottom: 14px; word-break: break-all; }
+
+    .status-badge { display: inline-block; font-size: .72rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 4px 12px; border-radius: 999px; }
+    .status-looking     { background: rgba(76,175,144,.15);  color: #4caf90; border: 1px solid rgba(76,175,144,.3); }
+    .status-open        { background: rgba(201,168,76,.15);  color: #c9a84c; border: 1px solid rgba(201,168,76,.3); }
+    .status-not_looking { background: rgba(120,120,120,.1);  color: #888;    border: 1px solid rgba(120,120,120,.2); }
+
+    .sidebar-card { background: var(--surface, #1a1a1a); border: 1px solid var(--border, #2a2a2a); border-radius: 12px; padding: 18px 20px; }
+    .sidebar-card h4 { font-size: .8rem; text-transform: uppercase; letter-spacing: .1em; opacity: .5; margin-bottom: 12px; }
+
+    .social-links { display: flex; flex-direction: column; gap: 8px; }
+    .social-link  { display: flex; align-items: center; gap: 10px; font-size: .88rem; color: inherit; text-decoration: none; opacity: .7; transition: opacity .2s; }
+    .social-link:hover { opacity: 1; }
+    .social-icon  { width: 18px; height: 18px; flex-shrink: 0; opacity: .6; }
+
+    .profile-main { display: flex; flex-direction: column; gap: 16px; }
+
+    .steam-badge-card {
+      background: linear-gradient(135deg, rgba(201,168,76,.12) 0%, rgba(122,92,30,.08) 100%);
+      border: 1px solid rgba(201,168,76,.3);
+      border-radius: 12px; padding: 20px 22px;
+      display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+    }
+    .badge-icon  { width: 56px; height: 56px; border-radius: 50%; background: rgba(201,168,76,.2); border: 2px solid rgba(201,168,76,.4); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; flex-shrink: 0; }
+    .badge-info  { flex: 1; }
+    .badge-title { font-size: 1rem; font-weight: 600; color: #c9a84c; margin-bottom: 2px; }
+    .badge-meta  { font-size: .82rem; opacity: .6; }
+    .badge-level { background: rgba(201,168,76,.2); color: #c9a84c; font-size: .75rem; font-weight: 700; padding: 4px 12px; border-radius: 999px; border: 1px solid rgba(201,168,76,.3); }
+
+    .section-card { background: var(--surface, #1a1a1a); border: 1px solid var(--border, #2a2a2a); border-radius: 12px; padding: 20px 22px; }
+    .section-card h3 { font-size: .95rem; font-weight: 600; margin-bottom: 12px; }
+    .section-card p  { font-size: .92rem; line-height: 1.7; opacity: .8; }
+
+    .skills-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+    .skill-tag   { font-size: .8rem; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--border, #2a2a2a); background: rgba(255,255,255,.04); }
+
+    /* ── Expandable Full Profile ── */
+    .expand-card { background: var(--surface, #1a1a1a); border: 1px solid var(--border, #2a2a2a); border-radius: 12px; overflow: hidden; }
+    .expand-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 22px; cursor: pointer; user-select: none; transition: background .2s; }
+    .expand-header:hover { background: rgba(255,255,255,.03); }
+    .expand-header h3 { margin: 0; font-size: .95rem; font-weight: 600; }
+    .expand-header p  { margin: 2px 0 0; font-size: .78rem; opacity: .45; }
+    .expand-chevron   { transition: transform .25s; opacity: .4; flex-shrink: 0; }
+    .expand-chevron.open { transform: rotate(180deg); }
+
+    .expand-body { display: none; border-top: 1px solid var(--border, #2a2a2a); }
+    .expand-body.open { display: block; }
+
+    .expand-tabs { display: flex; border-bottom: 1px solid var(--border, #2a2a2a); }
+    .expand-tab  { flex: 1; padding: 10px 16px; font-size: .82rem; font-weight: 500; background: none; border: none; border-bottom: 2px solid transparent; color: inherit; cursor: pointer; opacity: .45; transition: all .2s; }
+    .expand-tab.active { opacity: 1; border-bottom-color: #c9a84c; color: #c9a84c; }
+    .expand-tab:hover  { opacity: .8; }
+
+    .expand-panel { display: none; padding: 20px 22px; }
+    .expand-panel.active { display: block; }
+
+    .linkedin-link-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 8px; background: rgba(10,102,194,.15); border: 1px solid rgba(10,102,194,.3); color: #5ba3d9; text-decoration: none; font-size: .88rem; font-weight: 500; transition: background .2s; }
+    .linkedin-link-btn:hover { background: rgba(10,102,194,.25); }
+
+    .resume-text-content { white-space: pre-wrap; font-size: .84rem; line-height: 1.75; opacity: .8; max-height: 480px; overflow-y: auto; padding: 4px; }
+    .resume-text-content::-webkit-scrollbar { width: 4px; }
+    .resume-text-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 4px; }
+
+    .pdf-viewer-wrap iframe { width: 100%; height: 580px; border: none; border-radius: 8px; background: #fff; }
+    .pdf-open-link { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; font-size: .82rem; opacity: .5; color: inherit; text-decoration: none; }
+    .pdf-open-link:hover { opacity: .9; }
+
+    .empty-tab    { text-align: center; padding: 32px 0; opacity: .35; font-size: .88rem; }
+    .owner-add-hint { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 8px; background: rgba(201,168,76,.06); border: 1px dashed rgba(201,168,76,.25); font-size: .82rem; color: #c9a84c; text-decoration: none; }
+    .owner-add-hint:hover { background: rgba(201,168,76,.1); }
+
+    .login-gate { background: var(--surface, #1a1a1a); border: 1px solid var(--border, #2a2a2a); border-radius: 12px; padding: 32px; text-align: center; margin-top: 24px; }
+    .login-gate h3 { margin-bottom: 8px; }
+    .login-gate p  { opacity: .6; margin-bottom: 20px; font-size: .9rem; }
+    .login-form    { display: flex; flex-direction: column; gap: 10px; max-width: 320px; margin: 0 auto; }
+    .login-form input { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border, #2a2a2a); background: var(--bg, #111); color: inherit; font-size: .9rem; }
+    .login-error { color: #e07b7b; font-size: .82rem; margin-top: 4px; }
+
+    .not-found { text-align: center; padding: 80px 0; opacity: .4; }
+    .loading   { text-align: center; padding: 60px 0; opacity: .4; }
+  </style>
+</head>
+<body>
+  <div id="site-header"></div>
+  <main class="page">
+    <section class="container">
+      <div id="profileRoot"><p class="loading">Loading profile…</p></div>
+    </section>
+  </main>
+  <div id="site-footer"></div>
+  <script src="/js/main.js"></script>
+  <script>
+    const apiBase   = document.querySelector('meta[name="gs-api"]')?.getAttribute("content") || "";
+    const TOKEN_KEY = "gs_employer_token";
+    const accountId = new URLSearchParams(location.search).get("id") ||
+                      localStorage.getItem("gs_hedera_account_id") || "";
+
+    const STEAM_ICONS = {
+      Science: "🔬", Technology: "💻", Engineering: "⚙️",
+      Arts: "🎨", Art: "🎨", Mathematics: "📐", Math: "📐", Other: "⭐"
+    };
+    const STATUS_LABELS = {
+      looking:     { label: "Actively Looking", cls: "status-looking" },
+      open:        { label: "Open to Offers",   cls: "status-open" },
+      not_looking: { label: "Not Looking",      cls: "status-not_looking" },
+    };
+
+    function initials(name) {
+      if (!name) return "?";
+      return name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+    }
+
+    // Avatar: layered — initials behind, photo on top fading in, hides itself on error
+    function avatarHtml(url, name) {
+      const init = initials(name);
+      if (!url) return `<span class="avatar-initials">${init}</span>`;
+      return `<span class="avatar-initials">${init}</span>
+        <img src="${url}" alt="avatar" style="opacity:0"
+          onload="this.style.opacity='1'"
+          onerror="this.style.display='none'" />`;
+    }
+
+    function toggleExpand() {
+      document.getElementById("expandBody").classList.toggle("open");
+      document.getElementById("expandChevron").classList.toggle("open");
+    }
+
+    function switchExpandTab(tab) {
+      ["linkedin","resume","pdf"].forEach(t => {
+        document.getElementById("etab-"   + t)?.classList.toggle("active", t === tab);
+        document.getElementById("epanel-" + t)?.classList.toggle("active", t === tab);
+      });
+    }
+
+    function renderProfile(profile, credentials, isOwner) {
+      const badge = credentials.find(c => c.credential_type === "STEAM_BADGE");
+      let badgeMeta = null;
+      if (badge) { try { badgeMeta = JSON.parse(badge.metadata_json); } catch {} }
+
+      const status     = STATUS_LABELS[profile.open_to_work] || STATUS_LABELS.open;
+      const steamCat   = badgeMeta?.badge?.category || badgeMeta?.badge?.name || "—";
+      const steamLevel = badgeMeta?.badge?.level || "—";
+      const steamIcon  = STEAM_ICONS[steamCat] || "⭐";
+      const skills     = Array.isArray(profile.skills) ? profile.skills : [];
+
+      const hasLinkedIn  = !!profile.linkedin_url;
+      const hasResumeTxt = !!profile.resume_text;
+      const hasResumePdf = !!profile.resume_pdf_url;
+      const showExpand   = hasLinkedIn || hasResumeTxt || hasResumePdf || isOwner;
+      const defaultTab   = hasLinkedIn ? "linkedin" : hasResumeTxt ? "resume" : "pdf";
+
+      const linkedinPanel = hasLinkedIn
+        ? `<div style="display:flex;flex-direction:column;gap:12px">
+             <p style="font-size:.85rem;opacity:.6;margin:0 0 10px">View ${profile.display_name || "this candidate"}'s full LinkedIn profile for their complete work history, recommendations, and connections.</p>
+             <a class="linkedin-link-btn" href="${profile.linkedin_url}" target="_blank">
+               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>
+               Open LinkedIn Profile →
+             </a>
+           </div>`
+        : isOwner
+          ? `<a class="owner-add-hint" href="/candidates.html">➕ Add your LinkedIn URL in Edit Profile</a>`
+          : `<div class="empty-tab">No LinkedIn profile linked.</div>`;
+
+      const resumePanel = hasResumeTxt
+        ? `<div class="resume-text-content">${profile.resume_text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}</div>`
+        : isOwner
+          ? `<a class="owner-add-hint" href="/candidates.html">➕ Paste your resume text via the AI Import tool on the Candidates page</a>`
+          : `<div class="empty-tab">No resume text provided.</div>`;
+
+      const pdfPanel = hasResumePdf
+        ? `<div class="pdf-viewer-wrap">
+             <iframe src="${profile.resume_pdf_url}" title="Resume PDF"></iframe>
+             <a class="pdf-open-link" href="${profile.resume_pdf_url}" target="_blank">↗ Open PDF in new tab</a>
+           </div>`
+        : isOwner
+          ? `<a class="owner-add-hint" href="/candidates.html">➕ Upload your resume PDF via the AI Import tool on the Candidates page</a>`
+          : `<div class="empty-tab">No PDF resume uploaded.</div>`;
+
+      document.getElementById("profileRoot").innerHTML = `
+        <div style="margin-bottom:8px"><p class="kicker">Candidate Profile</p></div>
+
+        <div class="profile-layout">
+
+          <aside class="profile-sidebar">
+            <div class="avatar-block">
+              <div class="avatar">${avatarHtml(profile.avatar_url, profile.display_name)}</div>
+              <div class="profile-name">${profile.display_name || "Anonymous"}</div>
+              ${profile.hedera_account_id ? `<div class="profile-hedera">${profile.hedera_account_id}</div>` : ""}
+              <span class="status-badge ${status.cls}">${status.label}</span>
+            </div>
+
+            ${(profile.linkedin_url || profile.github_url || profile.portfolio_url) ? `
+            <div class="sidebar-card">
+              <h4>Links</h4>
+              <div class="social-links">
+                ${profile.linkedin_url ? `<a class="social-link" href="${profile.linkedin_url}" target="_blank"><svg class="social-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>LinkedIn</a>` : ""}
+                ${profile.github_url   ? `<a class="social-link" href="${profile.github_url}"   target="_blank"><svg class="social-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>GitHub</a>` : ""}
+                ${profile.portfolio_url? `<a class="social-link" href="${profile.portfolio_url}" target="_blank"><svg class="social-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>Portfolio</a>` : ""}
+              </div>
+            </div>` : ""}
+          </aside>
+
+          <div class="profile-main">
+
+            ${badgeMeta ? `
+            <div class="steam-badge-card">
+              <div class="badge-icon">${steamIcon}</div>
+              <div class="badge-info">
+                <div class="badge-title">STEAM Badge — ${steamCat}</div>
+                <div class="badge-meta">Verified by GeniusSeeker · Quiz version ${badgeMeta.quizVersion || "STEAM_V1"}</div>
+              </div>
+              <span class="badge-level">Level ${steamLevel}</span>
+            </div>` : ""}
+
+            ${profile.bio ? `<div class="section-card"><h3>About</h3><p>${profile.bio}</p></div>` : ""}
+
+            ${skills.length > 0 ? `
+            <div class="section-card">
+              <h3>Skills</h3>
+              <div class="skills-list">${skills.map(s => `<span class="skill-tag">${s}</span>`).join("")}</div>
+            </div>` : ""}
+
+            ${showExpand ? `
+            <div class="expand-card">
+              <div class="expand-header" onclick="toggleExpand()">
+                <div>
+                  <h3>Full Profile</h3>
+                  <p>LinkedIn · Resume · PDF</p>
+                </div>
+                <svg class="expand-chevron" id="expandChevron" width="18" height="18"
+                  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </div>
+              <div class="expand-body" id="expandBody">
+                <div class="expand-tabs">
+                  <button class="expand-tab ${defaultTab==="linkedin"?"active":""}" id="etab-linkedin" onclick="switchExpandTab('linkedin')">🔗 LinkedIn</button>
+                  <button class="expand-tab ${defaultTab==="resume" ?"active":""}" id="etab-resume"   onclick="switchExpandTab('resume')">📝 Resume</button>
+                  <button class="expand-tab ${defaultTab==="pdf"    ?"active":""}" id="etab-pdf"      onclick="switchExpandTab('pdf')">📄 PDF</button>
+                </div>
+                <div class="expand-panel ${defaultTab==="linkedin"?"active":""}" id="epanel-linkedin">${linkedinPanel}</div>
+                <div class="expand-panel ${defaultTab==="resume" ?"active":""}" id="epanel-resume">${resumePanel}</div>
+                <div class="expand-panel ${defaultTab==="pdf"    ?"active":""}" id="epanel-pdf">${pdfPanel}</div>
+              </div>
+            </div>` : ""}
+
+            <div class="section-card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+              <div>
+                <strong>Interested in this candidate?</strong>
+                <p class="muted" style="margin:4px 0 0;font-size:.88rem">Contact Desiree to start the conversation.</p>
+              </div>
+              <a class="btn" href="/contact.html">Get in Touch</a>
+            </div>
+
+            ${isOwner ? `
+            <div class="section-card" style="background:rgba(201,168,76,.06);border-color:rgba(201,168,76,.2)">
+              <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+                <div>
+                  <strong>This is your profile</strong>
+                  <p class="muted" style="margin:4px 0 0;font-size:.85rem">Update your bio, skills, and preferences on the Candidates page.</p>
+                </div>
+                <a class="btn btn-ghost" href="/candidates.html">Edit Profile →</a>
+              </div>
+            </div>` : ""}
+
+          </div>
+        </div>`;
+    }
+
+    function renderLoginGate() {
+      document.getElementById("profileRoot").innerHTML = `
+        <div style="margin-bottom:8px">
+          <p class="kicker">Candidate Profile</p>
+          <h1>Employer Access Required</h1>
+        </div>
+        <div class="login-gate">
+          <h3>Sign in to view candidate profiles</h3>
+          <p>Candidate profiles are available to verified employers. Sign in with your employer credentials to continue.</p>
+          <div class="login-form">
+            <input id="empEmail" type="email" placeholder="Your email" />
+            <input id="empPass"  type="password" placeholder="Password" />
+            <button class="btn" onclick="doLogin()">Sign In</button>
+            <div class="login-error" id="loginError"></div>
+          </div>
+          <p style="margin-top:20px;font-size:.82rem;opacity:.5">Not an employer yet? <a href="/employers.html">Learn more →</a></p>
+        </div>`;
+    }
+
+    async function doLogin() {
+      const email = document.getElementById("empEmail").value.trim();
+      const pass  = document.getElementById("empPass").value.trim();
+      const err   = document.getElementById("loginError");
+      err.textContent = "";
+      try {
+        const res  = await fetch(apiBase + "/api/employer/login", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password: pass }),
+        });
+        const data = await res.json();
+        if (data.ok) { localStorage.setItem(TOKEN_KEY, data.token); loadProfile(); }
+        else err.textContent = "Invalid credentials.";
+      } catch { err.textContent = "Could not connect to server."; }
+    }
+
+    async function loadProfile() {
+      if (!accountId) {
+        document.getElementById("profileRoot").innerHTML =
+          `<div class="not-found"><h2>No profile ID specified.</h2><p>Add ?id=0.0.12345 to the URL.</p></div>`;
+        return;
+      }
+      const myAccountId  = localStorage.getItem("GS_HEDERA_ACCOUNT_ID") ||
+                           localStorage.getItem("gs_hedera_account_id") || "";
+      const isOwner      = !!(myAccountId && myAccountId === accountId);
+      const token        = localStorage.getItem(TOKEN_KEY) || "";
+      const isAuthorized = isOwner || !!token;
+
+      try {
+        const res  = await fetch(apiBase + "/api/profile/" + encodeURIComponent(accountId), {
+          headers: token ? { "Authorization": "Bearer " + token } : {}
+        });
+        const data = await res.json();
+
+        if (!data.profile) {
+          document.getElementById("profileRoot").innerHTML =
+            `<div class="not-found"><h2>Profile not found.</h2><p>This candidate hasn't set up their profile yet.</p></div>`;
+          return;
+        }
+        if (!isAuthorized) { renderLoginGate(); return; }
+        if (isOwner && !data.profile.hedera_account_id) data.profile.hedera_account_id = accountId;
+        renderProfile(data.profile, data.credentials || [], isOwner);
+      } catch {
+        if (!isAuthorized) renderLoginGate();
+        else document.getElementById("profileRoot").innerHTML =
+          `<div class="not-found"><h2>Could not load profile.</h2><p>Is the backend running?</p></div>`;
+      }
+    }
+
+    loadProfile();
+  </script>
+</body>
+</html>
