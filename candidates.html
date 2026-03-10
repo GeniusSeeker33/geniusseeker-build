@@ -616,6 +616,7 @@
         githubUrl:       document.getElementById("pe-github").value.trim()      || undefined,
         avatarUrl:       document.getElementById("pe-avatar").value.trim()      || undefined,
         openToWork:      document.getElementById("pe-open-to-work").value       || undefined,
+        resumeText:      document.getElementById("pe-resume-text")?.value.trim()  || undefined,
       };
 
       try {
@@ -715,6 +716,7 @@
     // ══════════════════════════════════════════════════════
     let importPdfBase64 = null;
     let importedData    = null;
+    let importRawText   = null;  // the source text — saved to resume_text on Apply
     let activeTab       = 'text';
 
     function toggleImport() {
@@ -791,9 +793,11 @@
 
       try {
         // Call backend — which relays to Anthropic server-side (avoids CORS)
+        const pastedText = document.getElementById("importTextarea").value.trim();
+        importRawText = activeTab === "text" ? pastedText : null;
         const payload = activeTab === "pdf"
           ? { pdfBase64: importPdfBase64 }
-          : { text: document.getElementById("importTextarea").value.trim() };
+          : { text: pastedText };
 
         const response = await fetch(getApiBase() + "/api/profile/import", {
           method: "POST",
@@ -883,6 +887,18 @@
       editorCard.style.transition = "box-shadow .4s";
       editorCard.style.boxShadow  = "0 0 0 2px rgba(201,168,76,.5)";
       setTimeout(() => { editorCard.style.boxShadow = ""; }, 1800);
+
+      // Save the raw source text into resume_text so profile.html can show it
+      if (importRawText) {
+        let rtEl = document.getElementById("pe-resume-text");
+        if (!rtEl) {
+          rtEl = document.createElement("input");
+          rtEl.type = "hidden";
+          rtEl.id   = "pe-resume-text";
+          document.getElementById("profileEditorCard").appendChild(rtEl);
+        }
+        rtEl.value = importRawText;
+      }
 
       showImportResult("success", "✅ Applied! Review the fields below and click Save Profile.");
       document.getElementById("importPreview").style.display = "none";
