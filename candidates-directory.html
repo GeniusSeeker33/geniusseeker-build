@@ -345,6 +345,23 @@
 
         if (res.status === 401) { logout(); return; }
 
+        if (res.status === 403) {
+          const data = await res.json();
+          document.getElementById("candidateList").innerHTML = `
+            <div style="max-width:520px;margin:60px auto;text-align:center;padding:40px 32px;
+              background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);border-radius:16px">
+              <div style="font-size:2rem;margin-bottom:12px">🔒</div>
+              <h3 style="margin-bottom:8px">Committed Tier Required</h3>
+              <p style="opacity:.55;font-size:.88rem;line-height:1.65;margin-bottom:20px">
+                Access to the candidate directory requires a <strong style="color:#c9a84c">Committed</strong>
+                or higher employer verification. Your current status:
+                <strong>${data.status || "pending"}</strong> / tier: <strong>${data.tier || "none"}</strong>.
+              </p>
+              <a class="btn" href="/employer-verify.html">Apply for Verification →</a>
+            </div>`;
+          return;
+        }
+
         const data = await res.json();
         ALL_CANDIDATES = data.candidates || [];
         renderDirectory();

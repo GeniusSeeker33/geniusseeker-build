@@ -65,6 +65,67 @@ db.exec(`
   );
 
 
+
+
+  CREATE TABLE IF NOT EXISTS recruiter_applications (
+    id              TEXT PRIMARY KEY,
+    full_name       TEXT NOT NULL,
+    email           TEXT NOT NULL UNIQUE,
+    phone           TEXT,
+    linkedin_url    TEXT,
+    steam_fields    TEXT,        -- comma-separated STEAM areas
+    experience      TEXT,        -- years recruiting experience
+    industries      TEXT,        -- industries they recruit in
+    why_join        TEXT,        -- why they want to join GeniusSeeker
+    referral_source TEXT,
+    status          TEXT NOT NULL DEFAULT 'pending',  -- pending | approved | rejected
+    admin_notes     TEXT,
+    created_at      TEXT NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS offers (
+    id               TEXT PRIMARY KEY,
+    employer_id      TEXT NOT NULL,       -- employer_profiles.id
+    employer_email   TEXT NOT NULL,
+    employer_company TEXT NOT NULL,
+    candidate_hedera TEXT NOT NULL,       -- profiles.hedera_account_id
+    candidate_name   TEXT,
+    role_title       TEXT NOT NULL,
+    contract_type    TEXT NOT NULL,       -- 'milestone' | 'hourly' | 'fixed'
+    rate             TEXT NOT NULL,       -- e.g. "5000" or "75/hr"
+    currency         TEXT DEFAULT 'USD',
+    start_date       TEXT,
+    scope            TEXT,
+    milestones_json  TEXT,               -- JSON array [{title, amount, due_date}]
+    status           TEXT NOT NULL DEFAULT 'pending',
+    -- pending | accepted | declined | countered | agreed | contracted | completed
+    counter_note     TEXT,               -- candidate's counter-offer note
+    placement_fee    TEXT,               -- GeniusSeeker fee amount
+    deel_contract_id TEXT,               -- set once Deel contract is created
+    created_at       TEXT NOT NULL,
+    updated_at       TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS contracts (
+    id               TEXT PRIMARY KEY,
+    offer_id         TEXT NOT NULL,
+    deel_contract_id TEXT NOT NULL UNIQUE,
+    deel_status      TEXT,               -- active | terminated | etc
+    signed_at        TEXT,
+    terminated_at    TEXT,
+    total_value      TEXT,
+    currency         TEXT DEFAULT 'USD',
+    created_at       TEXT NOT NULL,
+    updated_at       TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS deel_sync_log (
+    id          TEXT PRIMARY KEY,
+    event_type  TEXT NOT NULL,    -- webhook event or API call type
+    entity_id   TEXT,             -- offer_id or contract_id
+    payload_json TEXT,
+    status      TEXT,             -- ok | error
+    created_at  TEXT NOT NULL
+  );
   CREATE TABLE IF NOT EXISTS employer_profiles (
     id              TEXT PRIMARY KEY,
     company_name    TEXT NOT NULL,

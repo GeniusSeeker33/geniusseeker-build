@@ -155,7 +155,24 @@ app.get("/api/profile/:accountId", (req, res) => {
 /* =====================================================
    CANDIDATE DIRECTORY — employers only
 ===================================================== */
-app.get("/api/candidates", requireEmployer, (req, res) => {
+app.get("/api/candidates", requireEmployer, (req: any, res: any) => {
+  // Enforce Committed tier or above
+  const sessionToken = (req.headers.authorization || "").replace("Bearer ", "").trim();
+  const session = db.prepare("SELECT * FROM employer_sessions WHERE token=?").get(sessionToken) as any;
+  if (session) {
+    const employer = db.prepare(
+      "SELECT tier, status FROM employer_profiles WHERE contact_email=?"
+    ).get(session.email) as any;
+    const allowedTiers = ["committed", "invested", "exemplary"];
+    if (!employer || employer.status !== "approved" || !allowedTiers.includes(employer.tier)) {
+      return res.status(403).json({
+        error: "Access restricted. A Committed-tier or above verified employer account is required to browse the candidate directory.",
+        tier: employer?.tier || null,
+        status: employer?.status || null
+      });
+    }
+  }
+
   const { steam, open_to_work } = req.query as any;
 
   let query = `
@@ -557,6 +574,296 @@ app.get("/api/employer/reviews/:employerId", requireEmployer, (req, res) => {
     "SELECT * FROM employer_reviews WHERE employer_id=? ORDER BY created_at DESC"
   ).all(req.params.employerId);
   res.json({ ok: true, reviews });
+});
+
+
+
+/* =====================================================
+   RECRUITER APPLICATIONS
+===================================================== */
+
+// POST /api/recruiter/apply — public signup form
+app.post("/api/recruiter/apply", (req: any, res: any) => {
+  const {
+    fullName, email, phone, linkedinUrl,
+    steamFields, experience, industries,
+    whyJoin, referralSource
+  } = req.body || {};
+
+  if (!fullName || !email) {
+    return res.status(400).json({ error: "fullName and email are required" });
+  }
+
+  // Check for duplicate
+  const existing = db.prepare("SELECT id FROM recruiter_applications WHERE email=?").get(email);
+  if (existing) {
+    return res.status(409).json({ error: "An application with this email already exists." });
+  }
+
+  const id  = "rec_" + uuid();
+  const now = nowISO();
+
+  db.prepare(`
+    INSERT INTO recruiter_applications
+      (id, full_name, email, phone, linkedin_url, steam_fields,
+       experience, industries, why_join, referral_source, status, created_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,'pending',?)
+  `).run(
+    id, fullName, email, phone||null, linkedinUrl||null,
+    Array.isArray(steamFields) ? steamFields.join(",") : (steamFields||null),
+    experience||null, industries||null, whyJoin||null,
+    referralSource||null, now
+  );
+
+  res.json({ ok: true, id, message: "Application received! We'll be in touch soon." });
+});
+
+// GET /api/recruiter/applications — admin: list all recruiter applications
+app.get("/api/recruiter/applications", requireEmployer, (req: any, res: any) => {
+  const apps = db.prepare(
+    "SELECT * FROM recruiter_applications ORDER BY created_at DESC"
+  ).all();
+  res.json({ ok: true, applications: apps });
+});
+
+// POST /api/recruiter/applications/:id/approve
+app.post("/api/recruiter/applications/:id/approve", requireEmployer, (req: any, res: any) => {
+  const { adminNotes } = req.body || {};
+  db.prepare(
+    "UPDATE recruiter_applications SET status='approved', admin_notes=? WHERE id=?"
+  ).run(adminNotes||null, req.params.id);
+  res.json({ ok: true, status: "approved" });
+});
+
+// POST /api/recruiter/applications/:id/reject
+app.post("/api/recruiter/applications/:id/reject", requireEmployer, (req: any, res: any) => {
+  const { adminNotes } = req.body || {};
+  db.prepare(
+    "UPDATE recruiter_applications SET status='rejected', admin_notes=? WHERE id=?"
+  ).run(adminNotes||null, req.params.id);
+  res.json({ ok: true, status: "rejected" });
+});
+
+/* =====================================================
+   HIRE-TO-PAY FLOW — OFFERS & CONTRACTS
+===================================================== */
+
+// Helper: compute GeniusSeeker placement fee (10% of first month/contract value)
+function calcPlacementFee(rate: string, contractType: string): string {
+  const num = parseFloat(rate.replace(/[^0-9.]/g, "")) || 0;
+  if (contractType === "hourly") return (num * 160 * 0.10).toFixed(2); // 1 month @ 40hr/wk
+  return (num * 0.10).toFixed(2);
+}
+
+// POST /api/offers — employer makes an offer to a candidate
+app.post("/api/offers", requireEmployer, (req: any, res: any) => {
+  const {
+    employerId, employerEmail, employerCompany,
+    candidateHedera, candidateName,
+    roleTitle, contractType, rate, currency,
+    startDate, scope, milestonesJson
+  } = req.body || {};
+
+  if (!employerId || !candidateHedera || !roleTitle || !contractType || !rate) {
+    return res.status(400).json({ error: "employerId, candidateHedera, roleTitle, contractType, rate required" });
+  }
+
+  const id  = "offer_" + uuid();
+  const now = nowISO();
+  const fee = calcPlacementFee(rate, contractType);
+
+  db.prepare(`
+    INSERT INTO offers
+      (id, employer_id, employer_email, employer_company,
+       candidate_hedera, candidate_name, role_title, contract_type,
+       rate, currency, start_date, scope, milestones_json,
+       status, placement_fee, created_at, updated_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,'pending',?,?,?)
+  `).run(
+    id, employerId, employerEmail||"", employerCompany||"",
+    candidateHedera, candidateName||null,
+    roleTitle, contractType, rate, currency||"USD",
+    startDate||null, scope||null,
+    milestonesJson ? JSON.stringify(milestonesJson) : null,
+    fee, now, now
+  );
+
+  res.json({ ok: true, id, placementFee: fee });
+});
+
+// GET /api/offers/employer/:employerId — employer sees their sent offers
+app.get("/api/offers/employer/:employerId", requireEmployer, (req: any, res: any) => {
+  const offers = db.prepare(
+    "SELECT * FROM offers WHERE employer_id=? ORDER BY created_at DESC"
+  ).all(req.params.employerId);
+  res.json({ ok: true, offers });
+});
+
+// GET /api/offers/candidate/:hederaId — candidate sees received offers
+app.get("/api/offers/candidate/:hederaId", (req: any, res: any) => {
+  const offers = db.prepare(
+    "SELECT * FROM offers WHERE candidate_hedera=? ORDER BY created_at DESC"
+  ).all(req.params.hederaId);
+  res.json({ ok: true, offers });
+});
+
+// POST /api/offers/:id/accept — candidate accepts
+app.post("/api/offers/:id/accept", (req: any, res: any) => {
+  const { hederaId } = req.body || {};
+  const offer = db.prepare("SELECT * FROM offers WHERE id=?").get(req.params.id) as any;
+  if (!offer) return res.status(404).json({ error: "Offer not found" });
+  if (offer.candidate_hedera !== hederaId) return res.status(403).json({ error: "Not your offer" });
+  if (offer.status !== "pending" && offer.status !== "countered") {
+    return res.status(409).json({ error: `Offer is already ${offer.status}` });
+  }
+  db.prepare("UPDATE offers SET status='accepted', updated_at=? WHERE id=?").run(nowISO(), req.params.id);
+  res.json({ ok: true, status: "accepted" });
+});
+
+// POST /api/offers/:id/decline — candidate declines
+app.post("/api/offers/:id/decline", (req: any, res: any) => {
+  const { hederaId } = req.body || {};
+  const offer = db.prepare("SELECT * FROM offers WHERE id=?").get(req.params.id) as any;
+  if (!offer) return res.status(404).json({ error: "Offer not found" });
+  if (offer.candidate_hedera !== hederaId) return res.status(403).json({ error: "Not your offer" });
+  db.prepare("UPDATE offers SET status='declined', updated_at=? WHERE id=?").run(nowISO(), req.params.id);
+  res.json({ ok: true, status: "declined" });
+});
+
+// POST /api/offers/:id/counter — candidate counters with new terms
+app.post("/api/offers/:id/counter", (req: any, res: any) => {
+  const { hederaId, counterNote, rate, scope } = req.body || {};
+  const offer = db.prepare("SELECT * FROM offers WHERE id=?").get(req.params.id) as any;
+  if (!offer) return res.status(404).json({ error: "Offer not found" });
+  if (offer.candidate_hedera !== hederaId) return res.status(403).json({ error: "Not your offer" });
+  const fee = rate ? calcPlacementFee(rate, offer.contract_type) : offer.placement_fee;
+  db.prepare(`
+    UPDATE offers SET status='countered', counter_note=?,
+    rate=COALESCE(?,rate), scope=COALESCE(?,scope),
+    placement_fee=?, updated_at=? WHERE id=?
+  `).run(counterNote||null, rate||null, scope||null, fee, nowISO(), req.params.id);
+  res.json({ ok: true, status: "countered" });
+});
+
+// POST /api/offers/:id/agree — employer confirms agreed terms (after counter)
+app.post("/api/offers/:id/agree", requireEmployer, (req: any, res: any) => {
+  db.prepare("UPDATE offers SET status='agreed', updated_at=? WHERE id=?")
+    .run(nowISO(), req.params.id);
+  res.json({ ok: true, status: "agreed" });
+});
+
+// POST /api/offers/:id/create-deel-contract — GeniusSeeker calls Deel API
+// In sandbox/dev: simulates contract creation. In prod: calls Deel REST API.
+app.post("/api/offers/:id/create-deel-contract", requireEmployer, async (req: any, res: any) => {
+  const offer = db.prepare("SELECT * FROM offers WHERE id=?").get(req.params.id) as any;
+  if (!offer) return res.status(404).json({ error: "Offer not found" });
+  if (offer.status !== "agreed") return res.status(409).json({ error: "Offer must be agreed before creating contract" });
+
+  const DEEL_API_KEY = process.env.DEEL_API_KEY;
+  const now = nowISO();
+
+  // SANDBOX MODE — simulate contract creation if no Deel key
+  if (!DEEL_API_KEY) {
+    const fakeDeelId = "deel_sandbox_" + uuid().slice(0, 8);
+    db.prepare("UPDATE offers SET status='contracted', deel_contract_id=?, updated_at=? WHERE id=?")
+      .run(fakeDeelId, now, req.params.id);
+    db.prepare(`
+      INSERT INTO contracts (id, offer_id, deel_contract_id, deel_status, total_value, currency, created_at, updated_at)
+      VALUES (?,?,?,'active',?,?,?,?)
+    `).run("con_" + uuid(), offer.id, fakeDeelId, offer.rate, offer.currency||"USD", now, now);
+    db.prepare("INSERT INTO deel_sync_log (id,event_type,entity_id,payload_json,status,created_at) VALUES (?,?,?,?,?,?)")
+      .run("log_"+uuid(), "contract_created_sandbox", offer.id, JSON.stringify({mode:"sandbox",deelId:fakeDeelId}), "ok", now);
+    return res.json({ ok: true, mode: "sandbox", deelContractId: fakeDeelId,
+      message: "Sandbox mode — add DEEL_API_KEY to .env for live contracts" });
+  }
+
+  // LIVE MODE — call Deel Contractors API
+  try {
+    const deelPayload = {
+      title:         offer.role_title,
+      type:          offer.contract_type === "milestone" ? "milestone" : offer.contract_type === "hourly" ? "pay_as_you_go" : "fixed",
+      worker_email:  req.body.candidateEmail,   // needed for Deel to invite contractor
+      start_date:    offer.start_date || new Date().toISOString().split("T")[0],
+      payment_cycle: "monthly",
+      currency:      offer.currency || "USD",
+      rate:          parseFloat(offer.rate),
+      scope_of_work: offer.scope || offer.role_title,
+    };
+
+    const deelRes = await fetch("https://api.deel.com/rest/v2/contracts", {
+      method:  "POST",
+      headers: {
+        "Content-Type":  "application/json",
+        "Authorization": `Bearer ${DEEL_API_KEY}`,
+      },
+      body: JSON.stringify(deelPayload),
+    });
+
+    const deelData = await deelRes.json() as any;
+
+    if (!deelRes.ok) {
+      db.prepare("INSERT INTO deel_sync_log (id,event_type,entity_id,payload_json,status,created_at) VALUES (?,?,?,?,?,?)")
+        .run("log_"+uuid(), "contract_create_error", offer.id, JSON.stringify(deelData), "error", now);
+      return res.status(502).json({ error: "Deel API error", detail: deelData });
+    }
+
+    const deelContractId = deelData?.data?.id || deelData?.id;
+    db.prepare("UPDATE offers SET status='contracted', deel_contract_id=?, updated_at=? WHERE id=?")
+      .run(deelContractId, now, req.params.id);
+    db.prepare(`
+      INSERT INTO contracts (id, offer_id, deel_contract_id, deel_status, total_value, currency, created_at, updated_at)
+      VALUES (?,?,?,'active',?,?,?,?)
+    `).run("con_"+uuid(), offer.id, deelContractId, offer.rate, offer.currency||"USD", now, now);
+    db.prepare("INSERT INTO deel_sync_log (id,event_type,entity_id,payload_json,status,created_at) VALUES (?,?,?,?,?,?)")
+      .run("log_"+uuid(), "contract_created_live", offer.id, JSON.stringify(deelData), "ok", now);
+
+    res.json({ ok: true, mode: "live", deelContractId });
+  } catch (err: any) {
+    res.status(500).json({ error: "Contract creation failed", detail: err?.message });
+  }
+});
+
+// POST /api/webhooks/deel — receive Deel webhook events (contract signed, payment sent, etc)
+app.post("/api/webhooks/deel", (req: any, res: any) => {
+  const event = req.body;
+  const now   = nowISO();
+
+  db.prepare("INSERT INTO deel_sync_log (id,event_type,entity_id,payload_json,status,created_at) VALUES (?,?,?,?,?,?)")
+    .run("log_"+uuid(), event?.type||"unknown", event?.data?.contract_id||null, JSON.stringify(event), "ok", now);
+
+  // Handle key events
+  if (event?.type === "contract.activated" || event?.type === "contract.signed") {
+    const deelContractId = event?.data?.id;
+    if (deelContractId) {
+      db.prepare("UPDATE contracts SET deel_status='active', signed_at=? WHERE deel_contract_id=?").run(now, deelContractId);
+      db.prepare("UPDATE offers SET status='contracted', updated_at=? WHERE deel_contract_id=?").run(now, deelContractId);
+    }
+  }
+
+  if (event?.type === "payment.completed") {
+    const deelContractId = event?.data?.contract_id;
+    if (deelContractId) {
+      db.prepare("UPDATE contracts SET deel_status='payment_completed', updated_at=? WHERE deel_contract_id=?").run(now, deelContractId);
+    }
+  }
+
+  if (event?.type === "contract.terminated") {
+    const deelContractId = event?.data?.id;
+    if (deelContractId) {
+      db.prepare("UPDATE contracts SET deel_status='terminated', terminated_at=?, updated_at=? WHERE deel_contract_id=?")
+        .run(now, now, deelContractId);
+      db.prepare("UPDATE offers SET status='completed', updated_at=? WHERE deel_contract_id=?").run(now, deelContractId);
+    }
+  }
+
+  res.json({ received: true });
+});
+
+// GET /api/contracts/:offerId — get contract status for an offer
+app.get("/api/contracts/:offerId", (req: any, res: any) => {
+  const contract = db.prepare("SELECT * FROM contracts WHERE offer_id=?").get(req.params.offerId);
+  if (!contract) return res.status(404).json({ error: "No contract found for this offer" });
+  res.json({ ok: true, contract });
 });
 
 /* =====================================================

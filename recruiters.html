@@ -1,68 +1,365 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="gs-api" content="https://organic-enigma-wx4jj76vg6x25p7q-8787.app.github.dev" />
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Recruiters | GeniusSeeker</title>
-  <meta name="description" content="Join GeniusSeeker as an independent recruiter. Get early access to opportunities and earn commission when your referral is hired." />
+  <meta name="description" content="Join GeniusSeeker as an independent recruiter. Earn commission sharing STEAM roles with our vetted candidate network." />
   <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    .rec-hero { max-width: 760px; margin: 0 auto 48px; text-align: center; }
+    .rec-hero h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); margin-bottom: 12px; }
+    .rec-hero p  { opacity: .6; font-size: 1rem; max-width: 540px; margin: 0 auto; }
+
+    /* How it works */
+    .how-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+      margin-bottom: 56px;
+    }
+    @media(max-width:640px){ .how-grid{ grid-template-columns:1fr; } }
+    .how-card {
+      background: var(--surface, #1a1a1a);
+      border: 1px solid var(--border, #2a2a2a);
+      border-radius: 14px; padding: 24px 22px;
+      position: relative;
+    }
+    .how-num {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, #c9a84c, #7a5c1e);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .8rem; font-weight: 800; color: #000;
+      margin-bottom: 14px;
+    }
+    .how-card h3 { font-size: .95rem; margin-bottom: 6px; }
+    .how-card p  { font-size: .83rem; opacity: .55; line-height: 1.6; }
+
+    /* Earnings highlight */
+    .earnings-bar {
+      background: linear-gradient(135deg, rgba(201,168,76,.1), rgba(122,92,30,.06));
+      border: 1px solid rgba(201,168,76,.25);
+      border-radius: 16px; padding: 28px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 20px; margin-bottom: 52px;
+    }
+    .earn-item { text-align: center; }
+    .earn-num  { font-size: 1.8rem; font-weight: 800; color: #c9a84c; line-height: 1; }
+    .earn-label{ font-size: .78rem; opacity: .45; margin-top: 4px; }
+
+    /* Form */
+    .form-wrap { max-width: 640px; margin: 0 auto; }
+    .form-section {
+      background: var(--surface, #1a1a1a);
+      border: 1px solid var(--border, #2a2a2a);
+      border-radius: 14px; padding: 26px 28px; margin-bottom: 16px;
+    }
+    .section-label {
+      font-size: .72rem; text-transform: uppercase; letter-spacing: .12em;
+      opacity: .4; margin-bottom: 18px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-label::after { content:""; flex:1; height:1px; background: var(--border,#2a2a2a); }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media(max-width:560px){ .form-grid{ grid-template-columns:1fr; } }
+    .full { grid-column: 1/-1; }
+
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label { font-size: .8rem; font-weight: 500; opacity: .6; }
+    .field input, .field select, .field textarea {
+      padding: 10px 12px; border-radius: 8px;
+      border: 1px solid var(--border, #2a2a2a);
+      background: rgba(255,255,255,.03); color: inherit;
+      font-size: .9rem; font-family: inherit; transition: border-color .2s;
+      width: 100%; box-sizing: border-box;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      outline: none; border-color: rgba(201,168,76,.5);
+    }
+    .field textarea { resize: vertical; min-height: 90px; }
+    .field select option { background: #1a1a1a; }
+
+    /* STEAM multi-select chips */
+    .steam-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .steam-chip {
+      padding: 6px 14px; border-radius: 999px; font-size: .8rem; font-weight: 500;
+      border: 1px solid var(--border, #2a2a2a);
+      background: none; color: inherit; cursor: pointer; transition: all .2s;
+      user-select: none;
+    }
+    .steam-chip.selected {
+      border-color: rgba(201,168,76,.5);
+      background: rgba(201,168,76,.1); color: #c9a84c;
+    }
+
+    .form-msg {
+      padding: 14px 18px; border-radius: 10px; font-size: .88rem;
+      margin-top: 14px; display: none;
+    }
+    .form-msg.success { background: rgba(76,175,144,.1); border: 1px solid rgba(76,175,144,.3); color: #4caf90; }
+    .form-msg.error   { background: rgba(224,123,123,.1); border: 1px solid rgba(224,123,123,.3); color: #e07b7b; }
+
+    .already-applied {
+      text-align: center; padding: 40px 20px;
+      background: rgba(76,175,144,.06); border: 1px solid rgba(76,175,144,.2);
+      border-radius: 14px; display: none;
+    }
+    .already-applied h3 { color: #4caf90; margin-bottom: 8px; }
+  </style>
 </head>
 <body>
   <div id="site-header"></div>
-
   <main class="page">
-    <section class="container hero">
-      <div class="hero-inner">
-        <div>
-          <p class="kicker">Recruiters</p>
-          <h1>Join as an Independent Recruiter</h1>
-          <p class="muted">Get early access to opportunities. Earn commission if your referral is hired.</p>
+    <section class="container">
 
-          <div class="grid" style="margin-top:14px">
-            <div class="card">
-              <h3>How it works</h3>
-              <p>We share roles with you. You refer aligned talent. If hired, you earn commission.</p>
-            </div>
-            <div class="card">
-              <h3>Best for</h3>
-              <p>Independent recruiters, community connectors, and niche network builders.</p>
-            </div>
-            <div class="card">
-              <h3>Response time</h3>
-              <p>We aim to respond within 2 business days.</p>
-            </div>
-          </div>
+      <!-- Hero -->
+      <div class="rec-hero">
+        <p class="kicker">Independent Recruiters</p>
+        <h1>Earn by connecting genius to opportunity</h1>
+        <p>Join GeniusSeeker's recruiter network. Share verified roles with our STEAM talent pool and earn commission on every successful placement.</p>
+      </div>
+
+      <!-- How it works -->
+      <div class="how-grid">
+        <div class="how-card">
+          <div class="how-num">1</div>
+          <h3>Apply & get approved</h3>
+          <p>Tell us about your background and the STEAM fields you recruit in. We review and onboard you to the platform.</p>
+        </div>
+        <div class="how-card">
+          <div class="how-num">2</div>
+          <h3>Share verified roles</h3>
+          <p>Access employer-verified job postings. Share them with your network through your unique recruiter link — track every referral.</p>
+        </div>
+        <div class="how-card">
+          <div class="how-num">3</div>
+          <h3>Earn on placement</h3>
+          <p>When a candidate you referred gets hired, you earn a commission. The more placements, the more you earn — no cap.</p>
+        </div>
+      </div>
+
+      <!-- Earnings highlight -->
+      <div class="earnings-bar">
+        <div class="earn-item">
+          <div class="earn-num">10–15%</div>
+          <div class="earn-label">Commission on placement fees</div>
+        </div>
+        <div class="earn-item">
+          <div class="earn-num">$0</div>
+          <div class="earn-label">Upfront cost to join</div>
+        </div>
+        <div class="earn-item">
+          <div class="earn-num">∞</div>
+          <div class="earn-label">No cap on earnings</div>
+        </div>
+        <div class="earn-item">
+          <div class="earn-num">30-day</div>
+          <div class="earn-label">Employer response guarantee</div>
+        </div>
+      </div>
+
+      <!-- Application Form -->
+      <div class="form-wrap">
+        <div style="margin-bottom:24px">
+          <h2 style="margin-bottom:6px">Apply to Join</h2>
+          <p style="opacity:.5;font-size:.9rem">We review every application personally. Expect a response within 3–5 business days.</p>
         </div>
 
-        <aside class="hero-card">
-          <h3>Recruiter application</h3>
-          <p class="muted">Join GeniusSeeker as a Recruiter and get paid for referring your network. 
+        <div class="already-applied" id="alreadyApplied">
+          <h3>✅ Application already submitted</h3>
+          <p style="opacity:.6;font-size:.88rem">We have your application on file and will be in touch soon.</p>
+        </div>
 
-          <form class="form" method="post" action="https://formspree.io/f/xnjgjgdp">
-            <div class="field">
-              <label for="name">Name</label>
-              <input id="name" name="name" type="text" autocomplete="name" required />
+        <div id="appForm">
+          <!-- Contact Info -->
+          <div class="form-section">
+            <div class="section-label">Contact Info</div>
+            <div class="form-grid">
+              <div class="field">
+                <label>Full Name *</label>
+                <input id="fullName" type="text" placeholder="Jane Smith" />
+              </div>
+              <div class="field">
+                <label>Email Address *</label>
+                <input id="email" type="email" placeholder="jane@example.com" />
+              </div>
+              <div class="field">
+                <label>Phone (optional)</label>
+                <input id="phone" type="tel" placeholder="(555) 000-0000" />
+              </div>
+              <div class="field">
+                <label>LinkedIn URL (optional)</label>
+                <input id="linkedinUrl" type="url" placeholder="linkedin.com/in/janesmith" />
+              </div>
             </div>
-            <div class="field">
-              <label for="email">Email</label>
-              <input id="email" name="email" type="email" autocomplete="email" required />
+          </div>
+
+          <!-- STEAM Focus -->
+          <div class="form-section">
+            <div class="section-label">Your STEAM Focus</div>
+            <p style="font-size:.82rem;opacity:.5;margin-bottom:14px">Select all areas you actively recruit in.</p>
+            <div class="steam-chips" id="steamChips">
+              <button class="steam-chip" data-val="Science"       onclick="toggleChip(this)">🔬 Science</button>
+              <button class="steam-chip" data-val="Technology"    onclick="toggleChip(this)">💻 Technology</button>
+              <button class="steam-chip" data-val="Engineering"   onclick="toggleChip(this)">⚙️ Engineering</button>
+              <button class="steam-chip" data-val="Arts & Design" onclick="toggleChip(this)">🎨 Arts & Design</button>
+              <button class="steam-chip" data-val="Mathematics"   onclick="toggleChip(this)">📐 Mathematics</button>
+              <button class="steam-chip" data-val="Finance"       onclick="toggleChip(this)">💰 Finance</button>
+              <button class="steam-chip" data-val="Healthcare"    onclick="toggleChip(this)">🏥 Healthcare</button>
+              <button class="steam-chip" data-val="Education"     onclick="toggleChip(this)">📚 Education</button>
+              <button class="steam-chip" data-val="Sales"         onclick="toggleChip(this)">🤝 Sales</button>
             </div>
-            <div class="field">
-              <label for="focus">Recruiting Focus</label>
-              <input id="focus" name="focus" type="text" placeholder="e.g., Engineering, Security, Sales..." />
+          </div>
+
+          <!-- Experience -->
+          <div class="form-section">
+            <div class="section-label">Recruiting Background</div>
+            <div class="form-grid">
+              <div class="field">
+                <label>Years of Recruiting Experience</label>
+                <select id="experience">
+                  <option value="">Select…</option>
+                  <option value="0-1">Less than 1 year</option>
+                  <option value="1-3">1–3 years</option>
+                  <option value="3-5">3–5 years</option>
+                  <option value="5-10">5–10 years</option>
+                  <option value="10+">10+ years</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>How did you hear about GeniusSeeker?</label>
+                <select id="referralSource">
+                  <option value="">Select…</option>
+                  <option value="social">Social Media</option>
+                  <option value="referral">Referral from someone</option>
+                  <option value="search">Search / Google</option>
+                  <option value="podcast">Podcast or Interview</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="field full">
+                <label>Industries you recruit in most</label>
+                <input id="industries" type="text" placeholder="e.g. SaaS, Biotech, FinTech, Government Contracting…" />
+              </div>
+              <div class="field full">
+                <label>Why do you want to join GeniusSeeker? *</label>
+                <textarea id="whyJoin" placeholder="Tell us about your approach to recruiting, why our mission resonates with you, and what you'd bring to the network…"></textarea>
+              </div>
             </div>
-            <div class="field">
-              <label for="note">Anything we should know?</label>
-              <textarea id="note" name="note"></textarea>
-            </div>
-            <button class="btn" type="submit">Submit Application</button>
-          </form>
-        </aside>
+          </div>
+
+          <button class="btn" style="width:100%;padding:14px;font-size:1rem" onclick="submitApplication()">
+            Submit Application →
+          </button>
+          <div class="form-msg" id="formMsg"></div>
+          <p style="font-size:.75rem;opacity:.35;text-align:center;margin-top:10px">
+            By applying you agree to GeniusSeeker's recruiter terms. We never share your contact info with employers without your consent.
+          </p>
+        </div>
       </div>
+
     </section>
   </main>
-
   <div id="site-footer"></div>
   <script src="/js/main.js"></script>
+  <script>
+    const apiBase = document.querySelector('meta[name="gs-api"]')?.getAttribute("content") || "";
+    let selectedSteam = [];
+
+    function toggleChip(el) {
+      const val = el.dataset.val;
+      el.classList.toggle("selected");
+      if (selectedSteam.includes(val)) {
+        selectedSteam = selectedSteam.filter(v => v !== val);
+      } else {
+        selectedSteam.push(val);
+      }
+    }
+
+    async function submitApplication() {
+      const fullName      = document.getElementById("fullName")?.value.trim();
+      const email         = document.getElementById("email")?.value.trim();
+      const phone         = document.getElementById("phone")?.value.trim();
+      const linkedinUrl   = document.getElementById("linkedinUrl")?.value.trim();
+      const experience    = document.getElementById("experience")?.value;
+      const industries    = document.getElementById("industries")?.value.trim();
+      const whyJoin       = document.getElementById("whyJoin")?.value.trim();
+      const referralSource= document.getElementById("referralSource")?.value;
+
+      if (!fullName || !email) {
+        showMsg("error", "Please fill in your full name and email address.");
+        return;
+      }
+      if (!whyJoin) {
+        showMsg("error", "Please tell us why you want to join GeniusSeeker.");
+        return;
+      }
+      if (selectedSteam.length === 0) {
+        showMsg("error", "Please select at least one STEAM area you recruit in.");
+        return;
+      }
+
+      const btn = document.querySelector("button[onclick='submitApplication()']");
+      if (btn) { btn.disabled = true; btn.textContent = "Submitting…"; }
+
+      try {
+        const res  = await fetch(apiBase + "/api/recruiter/apply", {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fullName, email, phone: phone||null,
+            linkedinUrl: linkedinUrl||null,
+            steamFields: selectedSteam,
+            experience:  experience||null,
+            industries:  industries||null,
+            whyJoin,
+            referralSource: referralSource||null,
+          }),
+        });
+        const data = await res.json();
+
+        if (res.ok && data.ok) {
+          document.getElementById("appForm").style.display = "none";
+          document.getElementById("alreadyApplied").style.display = "block";
+          document.getElementById("alreadyApplied").innerHTML = `
+            <h3>✅ Application received!</h3>
+            <p style="opacity:.6;font-size:.88rem">
+              Thanks, ${fullName}! We'll review your application and be in touch within 3–5 business days at <strong>${email}</strong>.
+            </p>`;
+          // Also submit to Formspree as backup notification to Desiree
+          try {
+            await fetch("https://formspree.io/f/xlgpgpnl", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "Accept": "application/json" },
+              body: JSON.stringify({
+                _subject: `New Recruiter Application — ${fullName}`,
+                name: fullName, email, phone, linkedinUrl,
+                steamFields: selectedSteam.join(", "),
+                experience, industries, whyJoin, referralSource,
+                source: "recruiters.html"
+              })
+            });
+          } catch { /* formspree backup is non-critical */ }
+        } else if (res.status === 409) {
+          document.getElementById("appForm").style.display = "none";
+          document.getElementById("alreadyApplied").style.display = "block";
+        } else {
+          showMsg("error", data.error || "Something went wrong. Please try again.");
+          if (btn) { btn.disabled = false; btn.textContent = "Submit Application →"; }
+        }
+      } catch {
+        showMsg("error", "Could not connect to server. Please try again in a moment.");
+        if (btn) { btn.disabled = false; btn.textContent = "Submit Application →"; }
+      }
+    }
+
+    function showMsg(type, text) {
+      const el = document.getElementById("formMsg");
+      el.className = "form-msg " + type;
+      el.textContent = text;
+      el.style.display = "block";
+      el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  </script>
 </body>
 </html>
