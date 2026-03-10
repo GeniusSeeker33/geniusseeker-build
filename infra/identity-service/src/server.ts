@@ -399,6 +399,166 @@ app.get("/api/value/events", (_req, res) => {
    EMAIL QUIZ RESULTS (Formspree relay)
    Sends results to your Formspree form: https://formspree.io/f/xdalgvva
 ===================================================== */
+
+/* =====================================================
+   EMPLOYER VERIFICATION SYSTEM
+===================================================== */
+
+// POST /api/employer/apply — submit verification application
+app.post("/api/employer/apply", (req, res) => {
+  const {
+    companyName, website, contactName, contactEmail, contactTitle,
+    companySize, industry, ein,
+    // attestations
+    postsSalary, hasDeiPolicy, diversePanels, structuredFeedback,
+    flexibleWork, tracksEquity, pipelinePrograms, payEquityAudit,
+    deiPolicyUrl, equityReportUrl, additionalNotes
+  } = req.body || {};
+
+  if (!companyName || !contactName || !contactEmail) {
+    return res.status(400).json({ error: "companyName, contactName, and contactEmail are required" });
+  }
+
+  // Check for duplicate
+  const existing = db.prepare("SELECT id FROM employer_profiles WHERE contact_email=?").get(contactEmail);
+  if (existing) {
+    return res.status(409).json({ error: "An application with this email already exists" });
+  }
+
+  const empId = "emp_" + uuid();
+  const now   = nowISO();
+
+  db.prepare(`
+    INSERT INTO employer_profiles
+      (id, company_name, website, contact_name, contact_email, contact_title,
+       company_size, industry, ein, tier, status, created_at)
+    VALUES (?,?,?,?,?,?,?,?,?,'pending','pending',?)
+  `).run(empId, companyName, website||null, contactName, contactEmail,
+         contactTitle||null, companySize||null, industry||null, ein||null, now);
+
+  // Score the attestations to suggest initial tier
+  const score = [postsSalary, hasDeiPolicy, diversePanels, structuredFeedback,
+                 flexibleWork, tracksEquity, pipelinePrograms, payEquityAudit]
+    .filter(Boolean).length;
+
+  db.prepare(`
+    INSERT INTO employer_attestations
+      (id, employer_id, posts_salary, has_dei_policy, diverse_panels,
+       structured_feedback, flexible_work, tracks_equity, pipeline_programs,
+       pay_equity_audit, dei_policy_url, equity_report_url, additional_notes, created_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+  `).run(
+    "att_" + uuid(), empId,
+    postsSalary?1:0, hasDeiPolicy?1:0, diversePanels?1:0,
+    structuredFeedback?1:0, flexibleWork?1:0, tracksEquity?1:0,
+    pipelinePrograms?1:0, payEquityAudit?1:0,
+    deiPolicyUrl||null, equityReportUrl||null, additionalNotes||null, now
+  );
+
+  res.json({ ok: true, id: empId, attestationScore: score });
+});
+
+// GET /api/employer/applications — admin: list all pending applications
+app.get("/api/employer/applications", requireEmployer, (req, res) => {
+  const rows = db.prepare(`
+    SELECT p.*, a.posts_salary, a.has_dei_policy, a.diverse_panels,
+           a.structured_feedback, a.flexible_work, a.tracks_equity,
+           a.pipeline_programs, a.pay_equity_audit,
+           a.dei_policy_url, a.equity_report_url, a.additional_notes,
+           (a.posts_salary + a.has_dei_policy + a.diverse_panels +
+            a.structured_feedback + a.flexible_work + a.tracks_equity +
+            a.pipeline_programs + a.pay_equity_audit) as attestation_score
+    FROM employer_profiles p
+    LEFT JOIN employer_attestations a ON a.employer_id = p.id
+    ORDER BY p.created_at DESC
+  `).all();
+  res.json({ ok: true, applications: rows });
+});
+
+// POST /api/employer/applications/:id/approve — admin approve with tier
+app.post("/api/employer/applications/:id/approve", requireEmployer, (req, res) => {
+  const { tier, adminNotes } = req.body || {};
+  const validTiers = ["listed","committed","invested","exemplary"];
+  if (!validTiers.includes(tier)) {
+    return res.status(400).json({ error: "tier must be listed, committed, invested, or exemplary" });
+  }
+  const now = nowISO();
+  db.prepare(`
+    UPDATE employer_profiles
+    SET status='approved', tier=?, admin_notes=?, reviewed_at=?
+    WHERE id=?
+  `).run(tier, adminNotes||null, now, req.params.id);
+  res.json({ ok: true });
+});
+
+// POST /api/employer/applications/:id/reject — admin reject
+app.post("/api/employer/applications/:id/reject", requireEmployer, (req, res) => {
+  const { adminNotes } = req.body || {};
+  db.prepare(`
+    UPDATE employer_profiles
+    SET status='rejected', admin_notes=?, reviewed_at=?
+    WHERE id=?
+  `).run(adminNotes||null, nowISO(), req.params.id);
+  res.json({ ok: true });
+});
+
+// GET /api/employer/status/:email — let employer check their status
+app.get("/api/employer/status/:email", (req, res) => {
+  const emp = db.prepare(
+    "SELECT id, company_name, tier, status, created_at, reviewed_at FROM employer_profiles WHERE contact_email=?"
+  ).get(req.params.email);
+  if (!emp) return res.status(404).json({ error: "Not found" });
+  res.json({ ok: true, employer: emp });
+});
+
+// POST /api/employer/review — candidate submits a review after application
+app.post("/api/employer/review", (req, res) => {
+  const {
+    employerId, applicationId, reviewerHedera, stage,
+    accurateDescription, clearCommunication, respectfulProcess,
+    salaryMatched, wouldApplyAgain, comments
+  } = req.body || {};
+
+  if (!employerId || !applicationId || !reviewerHedera) {
+    return res.status(400).json({ error: "employerId, applicationId and reviewerHedera required" });
+  }
+
+  // Prevent duplicate reviews for same application+stage
+  const existing = db.prepare(
+    "SELECT id FROM employer_reviews WHERE application_id=? AND stage=?"
+  ).get(applicationId, stage||"application");
+  if (existing) return res.status(409).json({ error: "Review already submitted for this application" });
+
+  db.prepare(`
+    INSERT INTO employer_reviews
+      (id, employer_id, application_id, reviewer_hedera, stage,
+       accurate_description, clear_communication, respectful_process,
+       salary_matched, would_apply_again, comments, created_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+  `).run(
+    "rev_" + uuid(), employerId, applicationId, reviewerHedera,
+    stage||"application",
+    accurateDescription||null, clearCommunication||null, respectfulProcess||null,
+    salaryMatched||null, wouldApplyAgain||null, comments||null, nowISO()
+  );
+
+  // Recompute employer score (avg of all 5-star ratings)
+  const reviews = db.prepare(`
+    SELECT accurate_description, clear_communication, respectful_process,
+           would_apply_again FROM employer_reviews WHERE employer_id=?
+  `).all(employerId) as any[];
+
+  res.json({ ok: true, totalReviews: reviews.length });
+});
+
+// GET /api/employer/reviews/:employerId — get reviews for an employer
+app.get("/api/employer/reviews/:employerId", requireEmployer, (req, res) => {
+  const reviews = db.prepare(
+    "SELECT * FROM employer_reviews WHERE employer_id=? ORDER BY created_at DESC"
+  ).all(req.params.employerId);
+  res.json({ ok: true, reviews });
+});
+
 /* =====================================================
    AI PROFILE IMPORT
    POST /api/profile/import

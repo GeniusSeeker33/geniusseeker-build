@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="gs-api" content="https://organic-enigma-wx4jj76vg6x25p7q-8787.app.github.dev" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Get Verified | GeniusSeeker Employers</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    .verify-hero { text-align:center; padding:56px 0 40px; max-width:640px; margin:0 auto; }
+    .verify-hero h1 { font-size:2rem; margin-bottom:12px; }
+    .verify-hero p  { font-size:1rem; opacity:.65; line-height:1.7; }
+    .tier-ladder { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:40px 0; }
+    @media(max-width:768px){ .tier-ladder{ grid-template-columns:1fr 1fr; } }
+    @media(max-width:480px){ .tier-ladder{ grid-template-columns:1fr; } }
+    .tier-card { background:var(--surface,#1a1a1a); border:1px solid var(--border,#2a2a2a); border-radius:12px; padding:18px 16px; text-align:center; }
+    .tier-card.highlight { border-color:rgba(201,168,76,.4); background:rgba(201,168,76,.05); }
+    .tier-icon { font-size:1.8rem; margin-bottom:8px; }
+    .tier-name { font-size:.82rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; margin-bottom:6px; }
+    .tier-name.listed    { color:#888; }
+    .tier-name.committed { color:#c97c4c; }
+    .tier-name.invested  { color:#9e9e9e; }
+    .tier-name.exemplary { color:#c9a84c; }
+    .tier-desc { font-size:.78rem; opacity:.5; line-height:1.5; }
+    .form-card { background:var(--surface,#1a1a1a); border:1px solid var(--border,#2a2a2a); border-radius:16px; padding:32px; max-width:760px; margin:0 auto 40px; }
+    .form-section { margin-bottom:32px; }
+    .form-section h3 { font-size:.8rem; text-transform:uppercase; letter-spacing:.1em; opacity:.5; margin-bottom:18px; padding-bottom:10px; border-bottom:1px solid var(--border,#2a2a2a); }
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    @media(max-width:600px){ .form-grid{ grid-template-columns:1fr; } }
+    .form-grid.full { grid-template-columns:1fr; }
+    .field { display:flex; flex-direction:column; gap:6px; }
+    .field label { font-size:.82rem; opacity:.6; }
+    .field input,.field select,.field textarea { padding:10px 12px; border-radius:8px; border:1px solid var(--border,#2a2a2a); background:var(--bg,#111); color:inherit; font-size:.9rem; font-family:inherit; }
+    .field input:focus,.field select:focus,.field textarea:focus { outline:none; border-color:rgba(201,168,76,.4); }
+    .field textarea { resize:vertical; min-height:80px; }
+    .field .hint { font-size:.75rem; opacity:.4; margin-top:2px; }
+    .attest-grid { display:grid; grid-template-columns:1fr 1fr; gap:0; }
+    @media(max-width:600px){ .attest-grid{ grid-template-columns:1fr; } }
+    .attest-item { display:flex; align-items:flex-start; gap:12px; padding:14px 12px; border-bottom:1px solid var(--border,#2a2a2a); cursor:pointer; transition:background .15s; }
+    .attest-item:hover { background:rgba(255,255,255,.02); }
+    .attest-item:nth-child(odd) { border-right:1px solid var(--border,#2a2a2a); }
+    .attest-item input[type=checkbox] { width:17px; height:17px; margin-top:2px; flex-shrink:0; accent-color:#c9a84c; cursor:pointer; }
+    .attest-label { font-size:.88rem; line-height:1.4; }
+    .attest-label span { display:block; font-size:.74rem; opacity:.45; margin-top:2px; }
+    .tier-badge-preview { display:flex; align-items:center; gap:10px; padding:12px 16px; border-radius:8px; margin-top:16px; background:rgba(201,168,76,.07); border:1px solid rgba(201,168,76,.2); font-size:.88rem; transition:all .3s; }
+    .submit-row { display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-top:8px; }
+    .submit-note { font-size:.8rem; opacity:.4; }
+    .form-status { padding:12px 16px; border-radius:8px; font-size:.88rem; margin-top:12px; display:none; }
+    .form-status.success { background:rgba(76,175,144,.1); border:1px solid rgba(76,175,144,.25); color:#4caf90; }
+    .form-status.error   { background:rgba(224,123,123,.1); border:1px solid rgba(224,123,123,.25); color:#e07b7b; }
+    .status-checker { max-width:760px; margin:0 auto 60px; background:var(--surface,#1a1a1a); border:1px solid var(--border,#2a2a2a); border-radius:12px; padding:20px 24px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    .status-checker p { font-size:.85rem; opacity:.5; margin:0; flex:1; min-width:160px; }
+    .status-checker input { padding:8px 12px; border-radius:8px; border:1px solid var(--border,#2a2a2a); background:var(--bg,#111); color:inherit; font-size:.88rem; flex:2; min-width:200px; }
+    .status-result { width:100%; font-size:.88rem; margin-top:4px; }
+  </style>
+</head>
+<body>
+  <div id="site-header"></div>
+  <main class="page">
+    <section class="container">
+
+      <div class="verify-hero">
+        <p class="kicker">For Employers</p>
+        <h1>Get Verified on GeniusSeeker</h1>
+        <p>GeniusSeeker connects verified, values-aligned employers with STEAM talent. Our verification process ensures candidates can trust the companies they apply to — and that you stand out as an employer of choice.</p>
+      </div>
+
+      <div class="tier-ladder">
+        <div class="tier-card">
+          <div class="tier-icon">⚪</div>
+          <div class="tier-name listed">Listed</div>
+          <div class="tier-desc">Real company, no major violations, salary transparency on all postings.</div>
+        </div>
+        <div class="tier-card highlight">
+          <div class="tier-icon">🥉</div>
+          <div class="tier-name committed">Committed</div>
+          <div class="tier-desc">DEI policy, diverse panels, structured feedback, flexible work. <strong style="color:#c9a84c;font-size:.75rem">Unlocks candidate directory.</strong></div>
+        </div>
+        <div class="tier-card">
+          <div class="tier-icon">🥈</div>
+          <div class="tier-name invested">Invested</div>
+          <div class="tier-desc">Tracks equity metrics, mentorship programs, active pipeline partnerships.</div>
+        </div>
+        <div class="tier-card">
+          <div class="tier-icon">🏆</div>
+          <div class="tier-name exemplary">Exemplary</div>
+          <div class="tier-desc">Audited pay equity, demonstrated outcomes, top candidate review scores.</div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="form-section">
+          <h3>Company Information</h3>
+          <div class="form-grid">
+            <div class="field"><label>Company Name *</label><input id="f-company" type="text" placeholder="Acme Corp" /></div>
+            <div class="field"><label>Company Website</label><input id="f-website" type="url" placeholder="https://acme.com" /></div>
+            <div class="field">
+              <label>Industry</label>
+              <select id="f-industry">
+                <option value="">Select industry…</option>
+                <option>Technology</option><option>Healthcare</option><option>Finance</option>
+                <option>Education</option><option>Manufacturing</option>
+                <option>Government / Public Sector</option><option>Nonprofit</option>
+                <option>Media & Creative</option><option>Energy & Environment</option><option>Other</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Company Size</label>
+              <select id="f-size">
+                <option value="">Select size…</option>
+                <option value="1-10">1–10</option><option value="11-50">11–50</option>
+                <option value="51-200">51–200</option><option value="201-500">201–500</option>
+                <option value="501-1000">501–1,000</option><option value="1000+">1,000+</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>EIN (optional)</label>
+              <input id="f-ein" type="text" placeholder="XX-XXXXXXX" />
+              <span class="hint">Helps us verify your business registration.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Primary Contact</h3>
+          <div class="form-grid">
+            <div class="field"><label>Your Full Name *</label><input id="f-contact-name" type="text" placeholder="Jane Smith" /></div>
+            <div class="field"><label>Work Email *</label><input id="f-contact-email" type="email" placeholder="jane@acme.com" /></div>
+            <div class="field"><label>Your Title</label><input id="f-contact-title" type="text" placeholder="Head of Talent" /></div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Culture &amp; Commitments</h3>
+          <p style="font-size:.85rem;opacity:.55;margin:-8px 0 16px">Check everything that honestly applies. We verify these over time through candidate reviews.</p>
+          <div class="attest-grid">
+            <label class="attest-item">
+              <input type="checkbox" id="a-salary" onchange="updateTierPreview()" />
+              <span class="attest-label">Salary ranges on all job postings<span>You never post "competitive compensation" without a number.</span></span>
+            </label>
+            <label class="attest-item">
+              <input type="checkbox" id="a-dei" onchange="updateTierPreview()" />
+              <span class="attest-label">Written DEI policy<span>A documented, accessible statement of your inclusion commitments.</span></span>
+            </label>
+            <label class="attest-item">
+              <input type="checkbox" id="a-panels" onchange="updateTierPreview()" />
+              <span class="attest-label">Diverse interview panels<span>Candidates meet a panel that reflects a range of backgrounds.</span></span>
+            </label>
+            <label class="attest-item">
+              <input type="checkbox" id="a-feedback" onchange="updateTierPreview()" />
+              <span class="attest-label">Structured feedback to all candidates<span>Every applicant gets a decision and meaningful feedback.</span></span>
+            </label>
+            <label class="attest-item">
+              <input type="checkbox" id="a-flexible" onchange="updateTierPreview()" />
+              <span class="attest-label">Flexible / remote work options<span>Roles can be remote, hybrid, or have flexible hours where possible.</span></span>
+            </label>
+            <label class="attest-item">
+              <input type="checkbox" id="a-equity" onchange="updateTierPreview()" />
+              <span class="attest-label">Track &amp; report retention equity<span>You measure promotion and retention rates by demographic.</span></span>
+            </label>
+            <label class="attest-item">
+              <input type="checkbox" id="a-pipeline" onchange="updateTierPreview()" />
+              <span class="attest-label">Active pipeline programs<span>Partnerships with HBCUs, community colleges, or similar.</span></span>
+            </label>
+            <label class="attest-item">
+              <input type="checkbox" id="a-audit" onchange="updateTierPreview()" />
+              <span class="attest-label">Pay equity audit conducted<span>An independent audit has verified equitable pay across demographics.</span></span>
+            </label>
+          </div>
+          <div class="tier-badge-preview" id="tierPreview">
+            <span id="tierPreviewIcon">⚪</span>
+            <span style="opacity:.7">Based on your selections, you qualify for <strong id="tierPreviewLabel" style="color:#c9a84c">Listed</strong> tier. Desiree will review and confirm your final tier.</span>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Supporting Links &amp; Notes</h3>
+          <div class="form-grid">
+            <div class="field"><label>DEI Policy URL</label><input id="f-dei-url" type="url" placeholder="https://acme.com/diversity" /></div>
+            <div class="field"><label>Equity Report URL</label><input id="f-equity-url" type="url" placeholder="https://acme.com/equity-report" /></div>
+          </div>
+          <div class="form-grid full" style="margin-top:14px">
+            <div class="field">
+              <label>Anything else you'd like us to know?</label>
+              <textarea id="f-notes" placeholder="Tell us about your culture, recent DEI initiatives, hiring goals, or why GeniusSeeker is a good fit…"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="submit-row">
+          <button class="btn" id="submitBtn" onclick="submitApplication()">Submit Verification Application</button>
+          <span class="submit-note">We review every application personally. You'll hear back within 2 business days.</span>
+        </div>
+        <div class="form-status" id="formStatus"></div>
+      </div>
+
+      <div class="status-checker">
+        <p>Already applied? Check your status:</p>
+        <input id="statusEmail" type="email" placeholder="your work email" onkeydown="if(event.key==='Enter')checkStatus()" />
+        <button class="btn btn-ghost" onclick="checkStatus()">Check Status</button>
+        <div class="status-result" id="statusResult"></div>
+      </div>
+
+    </section>
+  </main>
+  <div id="site-footer"></div>
+  <script src="/js/main.js"></script>
+  <script>
+    const apiBase = document.querySelector('meta[name="gs-api"]')?.getAttribute("content") || "";
+    const TIERS = [
+      { min:0, icon:"⚪", name:"Listed" },
+      { min:3, icon:"🥉", name:"Committed" },
+      { min:6, icon:"🥈", name:"Invested" },
+      { min:8, icon:"🏆", name:"Exemplary" },
+    ];
+    function countChecked() {
+      return ["a-salary","a-dei","a-panels","a-feedback","a-flexible","a-equity","a-pipeline","a-audit"]
+        .filter(id => document.getElementById(id)?.checked).length;
+    }
+    function updateTierPreview() {
+      const score = countChecked();
+      const tier  = [...TIERS].reverse().find(t => score >= t.min) || TIERS[0];
+      document.getElementById("tierPreviewIcon").textContent  = tier.icon;
+      document.getElementById("tierPreviewLabel").textContent = tier.name;
+    }
+    async function submitApplication() {
+      const statusEl = document.getElementById("formStatus");
+      statusEl.style.display = "none";
+      const companyName  = document.getElementById("f-company").value.trim();
+      const contactName  = document.getElementById("f-contact-name").value.trim();
+      const contactEmail = document.getElementById("f-contact-email").value.trim();
+      if (!companyName || !contactName || !contactEmail) {
+        statusEl.className = "form-status error";
+        statusEl.textContent = "Please fill in Company Name, Your Name, and Work Email.";
+        statusEl.style.display = "block"; return;
+      }
+      const payload = {
+        companyName, contactName, contactEmail,
+        website:       document.getElementById("f-website").value.trim()       || undefined,
+        contactTitle:  document.getElementById("f-contact-title").value.trim() || undefined,
+        companySize:   document.getElementById("f-size").value                 || undefined,
+        industry:      document.getElementById("f-industry").value             || undefined,
+        ein:           document.getElementById("f-ein").value.trim()           || undefined,
+        postsSalary:      document.getElementById("a-salary").checked,
+        hasDeiPolicy:     document.getElementById("a-dei").checked,
+        diversePanels:    document.getElementById("a-panels").checked,
+        structuredFeedback: document.getElementById("a-feedback").checked,
+        flexibleWork:     document.getElementById("a-flexible").checked,
+        tracksEquity:     document.getElementById("a-equity").checked,
+        pipelinePrograms: document.getElementById("a-pipeline").checked,
+        payEquityAudit:   document.getElementById("a-audit").checked,
+        deiPolicyUrl:   document.getElementById("f-dei-url").value.trim()    || undefined,
+        equityReportUrl:document.getElementById("f-equity-url").value.trim() || undefined,
+        additionalNotes:document.getElementById("f-notes").value.trim()      || undefined,
+      };
+      try {
+        const res  = await fetch(apiBase + "/api/employer/apply", {
+          method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+          statusEl.className = "form-status success";
+          statusEl.textContent = "Application submitted! Desiree will review within 2 business days. Check your status below.";
+          statusEl.style.display = "block";
+          document.getElementById("submitBtn").disabled = true;
+          document.getElementById("submitBtn").textContent = "Application Submitted";
+        } else {
+          statusEl.className = "form-status error";
+          statusEl.textContent = data.error || "Submission failed. Please try again.";
+          statusEl.style.display = "block";
+        }
+      } catch {
+        statusEl.className = "form-status error";
+        statusEl.textContent = "Could not connect to server.";
+        statusEl.style.display = "block";
+      }
+    }
+    async function checkStatus() {
+      const email  = document.getElementById("statusEmail").value.trim();
+      const result = document.getElementById("statusResult");
+      if (!email) return;
+      try {
+        const res  = await fetch(apiBase + "/api/employer/status/" + encodeURIComponent(email));
+        const data = await res.json();
+        if (!res.ok || !data.ok) { result.innerHTML = `<span style="color:#e07b7b">No application found for that email.</span>`; return; }
+        const e = data.employer;
+        const col = e.status === "approved" ? "#4caf90" : e.status === "rejected" ? "#e07b7b" : "#c9a84c";
+        const icons = { listed:"⚪", committed:"🥉", invested:"🥈", exemplary:"🏆", pending:"⏳" };
+        result.innerHTML = `<span style="color:${col};font-weight:600">${icons[e.status]||"⏳"} ${e.company_name} — ${e.status.toUpperCase()}${e.status==="approved"?` · Tier: ${icons[e.tier]||""} ${e.tier}`:""}</span> <span style="opacity:.4;font-size:.78rem">Applied ${new Date(e.created_at).toLocaleDateString()}</span>`;
+      } catch { result.innerHTML = `<span style="color:#e07b7b">Could not connect.</span>`; }
+    }
+  </script>
+</body>
+</html>

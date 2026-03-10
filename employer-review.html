@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="gs-api" content="https://organic-enigma-wx4jj76vg6x25p7q-8787.app.github.dev" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rate Your Experience | GeniusSeeker</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    .review-wrap {
+      max-width: 580px;
+      margin: 48px auto 80px;
+    }
+    .review-hero { margin-bottom: 32px; }
+    .review-hero h1 { font-size: 1.6rem; margin-bottom: 8px; }
+    .review-hero p  { opacity: .55; font-size: .95rem; }
+
+    .review-card {
+      background: var(--surface, #1a1a1a);
+      border: 1px solid var(--border, #2a2a2a);
+      border-radius: 14px;
+      padding: 28px 30px;
+      margin-bottom: 16px;
+    }
+    .review-card h3 { font-size: .78rem; text-transform: uppercase; letter-spacing: .12em; opacity: .45; margin-bottom: 20px; }
+
+    /* Company context banner */
+    .company-banner {
+      display: flex; align-items: center; gap: 14px;
+      padding: 16px 20px;
+      background: linear-gradient(135deg, rgba(201,168,76,.08), rgba(122,92,30,.04));
+      border: 1px solid rgba(201,168,76,.2);
+      border-radius: 12px;
+      margin-bottom: 24px;
+    }
+    .company-avatar {
+      width: 44px; height: 44px; border-radius: 10px;
+      background: rgba(201,168,76,.2); border: 1px solid rgba(201,168,76,.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; font-weight: 700; color: #c9a84c; flex-shrink: 0;
+    }
+    .company-name { font-weight: 600; font-size: .95rem; }
+    .company-job  { font-size: .8rem; opacity: .45; margin-top: 2px; }
+
+    /* Star rating */
+    .star-question { margin-bottom: 22px; }
+    .star-question label { font-size: .88rem; margin-bottom: 10px; display: block; line-height: 1.4; }
+    .stars { display: flex; gap: 6px; }
+    .star {
+      font-size: 1.5rem; cursor: pointer; opacity: .25;
+      transition: opacity .15s, transform .15s;
+      user-select: none;
+    }
+    .star.active   { opacity: 1; }
+    .star:hover, .stars:hover .star { opacity: .5; }
+    .stars:hover .star:hover, .stars:hover .star:hover ~ .star { opacity: 1; }
+    .stars:hover .star:hover ~ .star { opacity: .25; }
+
+    /* Hmm — flex row reversed trick for hover-before */
+    .stars { flex-direction: row-reverse; justify-content: flex-end; }
+    .stars:hover .star { opacity: 1; }
+    .stars .star:hover ~ .star { opacity: .25; }
+
+    /* Yes/No question */
+    .yn-question { margin-bottom: 22px; }
+    .yn-question label { font-size: .88rem; margin-bottom: 10px; display: block; }
+    .yn-opts { display: flex; gap: 10px; }
+    .yn-btn {
+      flex: 1; padding: 10px;
+      border-radius: 8px; border: 1px solid var(--border, #2a2a2a);
+      background: none; color: inherit; cursor: pointer;
+      font-size: .88rem; font-weight: 500;
+      transition: all .2s;
+    }
+    .yn-btn.selected-yes { border-color: rgba(76,175,144,.5); background: rgba(76,175,144,.1); color: #4caf90; }
+    .yn-btn.selected-no  { border-color: rgba(224,123,123,.5); background: rgba(224,123,123,.1); color: #e07b7b; }
+    .yn-btn:not(.selected-yes):not(.selected-no):hover { border-color: rgba(201,168,76,.3); }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: .8rem; font-weight: 500; opacity: .65; }
+    .field textarea {
+      padding: 10px 12px; border-radius: 8px;
+      border: 1px solid var(--border, #2a2a2a);
+      background: rgba(255,255,255,.03);
+      color: inherit; font-size: .88rem; font-family: inherit;
+      resize: vertical; min-height: 90px;
+      transition: border-color .2s;
+    }
+    .field textarea:focus { outline: none; border-color: rgba(201,168,76,.5); }
+
+    .stage-select {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;
+    }
+    .stage-btn {
+      padding: 7px 16px; border-radius: 999px; font-size: .8rem; font-weight: 600;
+      border: 1px solid var(--border, #2a2a2a);
+      background: none; color: inherit; cursor: pointer; transition: all .2s;
+    }
+    .stage-btn.active {
+      background: rgba(201,168,76,.15);
+      border-color: rgba(201,168,76,.4); color: #c9a84c;
+    }
+
+    .submit-area { margin-top: 8px; }
+    .form-msg {
+      padding: 14px 18px; border-radius: 10px; font-size: .88rem;
+      margin-top: 14px; display: none;
+    }
+    .form-msg.success { background: rgba(76,175,144,.1); border: 1px solid rgba(76,175,144,.3); color: #4caf90; }
+    .form-msg.error   { background: rgba(224,123,123,.1); border: 1px solid rgba(224,123,123,.3); color: #e07b7b; }
+
+    .anon-note { font-size: .78rem; opacity: .35; margin-top: 8px; }
+
+    .not-found { text-align: center; padding: 80px 0; opacity: .4; }
+  </style>
+</head>
+<body>
+  <div id="site-header"></div>
+  <main class="page">
+    <section class="container">
+      <div id="reviewRoot"><p style="text-align:center;padding:60px 0;opacity:.4">Loading…</p></div>
+    </section>
+  </main>
+  <div id="site-footer"></div>
+  <script src="/js/main.js"></script>
+  <script>
+    const apiBase = document.querySelector('meta[name="gs-api"]')?.getAttribute("content") || "";
+
+    // URL params: ?employer=emp_xxx&application=app_xxx&company=Acme&job=Engineer
+    const params      = new URLSearchParams(location.search);
+    const employerId  = params.get("employer")    || "";
+    const appId       = params.get("application") || "";
+    const companyName = params.get("company")     || "this employer";
+    const jobTitle    = params.get("job")         || "the role";
+    const reviewerHed = localStorage.getItem("GS_HEDERA_ACCOUNT_ID") ||
+                        localStorage.getItem("gs_hedera_account_id") || "";
+
+    // State
+    let stage    = "application";
+    const ratings = {
+      accurateDescription: 0,
+      clearCommunication:  0,
+      respectfulProcess:   0,
+    };
+    const ynState = {
+      salaryMatched:    null,
+      wouldApplyAgain:  null,
+    };
+
+    function companyInitials(name) {
+      return name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+    }
+
+    function render() {
+      if (!employerId || !appId) {
+        document.getElementById("reviewRoot").innerHTML =
+          `<div class="not-found"><h2>Invalid review link.</h2><p>This link may have expired or is missing parameters.</p></div>`;
+        return;
+      }
+
+      document.getElementById("reviewRoot").innerHTML = `
+        <div class="review-wrap">
+          <div class="review-hero">
+            <p class="kicker">Candidate Review</p>
+            <h1>How was your experience?</h1>
+            <p>Your honest feedback helps GeniusSeeker hold employers accountable and helps other candidates make informed decisions.</p>
+          </div>
+
+          <!-- Company context -->
+          <div class="company-banner">
+            <div class="company-avatar">${companyInitials(companyName)}</div>
+            <div>
+              <div class="company-name">${companyName}</div>
+              <div class="company-job">${jobTitle}</div>
+            </div>
+          </div>
+
+          <!-- Stage selector -->
+          <div class="review-card">
+            <h3>Which stage are you reviewing?</h3>
+            <div class="stage-select">
+              <button class="stage-btn active" id="stg-application" onclick="setStage('application')">📋 Application Process</button>
+              <button class="stage-btn" id="stg-interview" onclick="setStage('interview')">🎤 Interview Experience</button>
+              <button class="stage-btn" id="stg-offer" onclick="setStage('offer')">📄 Offer / Decision</button>
+              <button class="stage-btn" id="stg-employment" onclick="setStage('employment')">🏢 Employment (90-day)</button>
+            </div>
+          </div>
+
+          <!-- Star ratings -->
+          <div class="review-card">
+            <h3>Rate Your Experience</h3>
+
+            <div class="star-question">
+              <label>Was the job description accurate and complete?</label>
+              ${renderStars("accurateDescription")}
+            </div>
+            <div class="star-question">
+              <label>Did they communicate clearly and keep you informed?</label>
+              ${renderStars("clearCommunication")}
+            </div>
+            <div class="star-question">
+              <label>Was the process respectful of your time and effort?</label>
+              ${renderStars("respectfulProcess")}
+            </div>
+          </div>
+
+          <!-- Yes/No questions -->
+          <div class="review-card">
+            <h3>Quick Questions</h3>
+
+            <div class="yn-question">
+              <label>Did the salary match what was posted or discussed?</label>
+              <div class="yn-opts">
+                <button class="yn-btn" id="yn-sm-yes" onclick="setYN('salaryMatched', 5)">👍 Yes</button>
+                <button class="yn-btn" id="yn-sm-no"  onclick="setYN('salaryMatched', 1)">👎 No</button>
+                <button class="yn-btn" id="yn-sm-na"  onclick="setYN('salaryMatched', null)">N/A</button>
+              </div>
+            </div>
+
+            <div class="yn-question">
+              <label>Would you apply to this company again?</label>
+              <div class="yn-opts">
+                <button class="yn-btn" id="yn-wa-yes" onclick="setYN('wouldApplyAgain', 5)">👍 Yes</button>
+                <button class="yn-btn" id="yn-wa-no"  onclick="setYN('wouldApplyAgain', 1)">👎 No</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Comments -->
+          <div class="review-card">
+            <h3>Tell Us More (Optional)</h3>
+            <div class="field">
+              <label>Anything specific you'd like to share — positive or constructive?</label>
+              <textarea id="reviewComments" placeholder="The recruiter was responsive and the panel was diverse. The take-home project felt longer than necessary for the role…"></textarea>
+            </div>
+            <p class="anon-note">Reviews are anonymous to the employer. GeniusSeeker may share aggregated feedback.</p>
+          </div>
+
+          <div class="submit-area">
+            <button class="btn" style="width:100%;padding:14px" onclick="submitReview()">Submit Review</button>
+            <div class="form-msg" id="formMsg"></div>
+          </div>
+        </div>`;
+
+      // Wire up star interactions after render
+      wireStars();
+    }
+
+    function renderStars(field) {
+      // Reversed order (CSS flex-reverse trick) for pure-CSS hover-before
+      return `<div class="stars" id="stars-${field}">
+        ${[5,4,3,2,1].map(n =>
+          `<span class="star ${ratings[field] >= n ? "active" : ""}"
+            data-field="${field}" data-val="${n}">★</span>`
+        ).join("")}
+      </div>`;
+    }
+
+    function wireStars() {
+      document.querySelectorAll(".star").forEach(star => {
+        star.addEventListener("click", () => {
+          const field = star.dataset.field;
+          const val   = parseInt(star.dataset.val);
+          ratings[field] = val;
+          // Update display
+          document.querySelectorAll(`.star[data-field="${field}"]`).forEach(s => {
+            s.classList.toggle("active", parseInt(s.dataset.val) <= val);
+          });
+        });
+      });
+    }
+
+    function setStage(s) {
+      stage = s;
+      document.querySelectorAll(".stage-btn").forEach(b => b.classList.remove("active"));
+      document.getElementById("stg-" + s)?.classList.add("active");
+    }
+
+    function setYN(field, val) {
+      ynState[field] = val;
+      const prefix = field === "salaryMatched" ? "yn-sm" : "yn-wa";
+      document.querySelectorAll(`[id^="${prefix}"]`).forEach(b => {
+        b.classList.remove("selected-yes", "selected-no");
+      });
+      if (val === 5) document.getElementById(prefix + "-yes")?.classList.add("selected-yes");
+      if (val === 1) document.getElementById(prefix + "-no" )?.classList.add("selected-no");
+    }
+
+    async function submitReview() {
+      if (!reviewerHed) {
+        showMsg("error", "You need a GeniusSeeker profile to submit a review. Visit the Candidates page to set one up.");
+        return;
+      }
+
+      const hasAnyRating = Object.values(ratings).some(v => v > 0) ||
+                           Object.values(ynState).some(v => v !== null);
+      if (!hasAnyRating) {
+        showMsg("error", "Please rate at least one question before submitting.");
+        return;
+      }
+
+      const payload = {
+        employerId,
+        applicationId:      appId,
+        reviewerHedera:     reviewerHed,
+        stage,
+        accurateDescription: ratings.accurateDescription || null,
+        clearCommunication:  ratings.clearCommunication  || null,
+        respectfulProcess:   ratings.respectfulProcess   || null,
+        salaryMatched:       ynState.salaryMatched,
+        wouldApplyAgain:     ynState.wouldApplyAgain,
+        comments: document.getElementById("reviewComments")?.value.trim() || null,
+      };
+
+      try {
+        const res  = await fetch(apiBase + "/api/employer/review", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+          showMsg("success", "✅ Thank you — your review has been submitted. It helps make GeniusSeeker better for everyone.");
+          document.querySelector(".review-wrap").style.opacity   = ".4";
+          document.querySelector(".review-wrap").style.pointerEvents = "none";
+        } else if (res.status === 409) {
+          showMsg("error", "You've already submitted a review for this application at this stage.");
+        } else {
+          showMsg("error", data.error || "Something went wrong. Please try again.");
+        }
+      } catch {
+        showMsg("error", "Could not connect to server. Is the backend running?");
+      }
+    }
+
+    function showMsg(type, text) {
+      const el = document.getElementById("formMsg");
+      el.className   = "form-msg " + type;
+      el.textContent = text;
+      el.style.display = "block";
+      el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    render();
+  </script>
+</body>
+</html>

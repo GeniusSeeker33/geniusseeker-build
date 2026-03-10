@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="gs-api" content="https://organic-enigma-wx4jj76vg6x25p7q-8787.app.github.dev" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin — Employer Applications | GeniusSeeker</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    .admin-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:28px; }
+    .admin-header h1 { font-size:1.5rem; margin:0; }
+    .filter-bar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
+    .filter-btn { padding:6px 14px; border-radius:999px; font-size:.8rem; font-weight:600; cursor:pointer; border:1px solid var(--border,#2a2a2a); background:transparent; color:inherit; opacity:.5; transition:all .2s; }
+    .filter-btn.active { opacity:1; border-color:#c9a84c; color:#c9a84c; background:rgba(201,168,76,.08); }
+
+    .app-card { background:var(--surface,#1a1a1a); border:1px solid var(--border,#2a2a2a); border-radius:12px; margin-bottom:16px; overflow:hidden; transition:border-color .2s; }
+    .app-card.approved { border-left:3px solid #4caf90; }
+    .app-card.rejected { border-left:3px solid #e07b7b; opacity:.6; }
+    .app-card.pending  { border-left:3px solid #c9a84c; }
+
+    .app-header { display:flex; align-items:center; gap:14px; padding:16px 20px; cursor:pointer; transition:background .15s; }
+    .app-header:hover { background:rgba(255,255,255,.02); }
+    .app-company { font-weight:600; font-size:.95rem; flex:1; }
+    .app-meta    { font-size:.78rem; opacity:.45; }
+    .app-score-bar { display:flex; gap:4px; }
+    .score-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.12); }
+    .score-dot.filled { background:#c9a84c; }
+    .app-status-badge { font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; padding:3px 10px; border-radius:999px; }
+    .badge-pending  { background:rgba(201,168,76,.15); color:#c9a84c; border:1px solid rgba(201,168,76,.3); }
+    .badge-approved { background:rgba(76,175,144,.15); color:#4caf90; border:1px solid rgba(76,175,144,.3); }
+    .badge-rejected { background:rgba(224,123,123,.15); color:#e07b7b; border:1px solid rgba(224,123,123,.3); }
+    .chevron { transition:transform .25s; opacity:.35; }
+    .chevron.open { transform:rotate(180deg); }
+
+    .app-detail { display:none; padding:0 20px 20px; border-top:1px solid var(--border,#2a2a2a); }
+    .app-detail.open { display:block; }
+
+    .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:16px 0; }
+    @media(max-width:600px){ .detail-grid{ grid-template-columns:1fr; } }
+    .detail-field label { font-size:.75rem; opacity:.4; text-transform:uppercase; letter-spacing:.07em; display:block; margin-bottom:3px; }
+    .detail-field p { font-size:.88rem; margin:0; }
+    .detail-field a { color:#c9a84c; font-size:.88rem; }
+
+    .attest-chips { display:flex; flex-wrap:wrap; gap:6px; margin:12px 0; }
+    .attest-chip { font-size:.75rem; padding:3px 10px; border-radius:999px; }
+    .attest-chip.yes { background:rgba(76,175,144,.12); color:#4caf90; border:1px solid rgba(76,175,144,.25); }
+    .attest-chip.no  { background:rgba(255,255,255,.04); color:inherit; opacity:.3; border:1px solid var(--border,#2a2a2a); }
+
+    .decision-row { display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap; margin-top:16px; padding-top:16px; border-top:1px solid var(--border,#2a2a2a); }
+    .decision-row .field { flex:1; min-width:160px; }
+    .decision-row label { font-size:.8rem; opacity:.5; display:block; margin-bottom:5px; }
+    .decision-row select,.decision-row textarea,.decision-row input { width:100%; padding:8px 10px; border-radius:8px; border:1px solid var(--border,#2a2a2a); background:var(--bg,#111); color:inherit; font-size:.88rem; font-family:inherit; }
+    .decision-row textarea { resize:vertical; min-height:60px; }
+    .btn-approve { background:rgba(76,175,144,.15); border:1px solid rgba(76,175,144,.3); color:#4caf90; }
+    .btn-approve:hover { background:rgba(76,175,144,.25); }
+    .btn-reject  { background:rgba(224,123,123,.1); border:1px solid rgba(224,123,123,.25); color:#e07b7b; }
+    .btn-reject:hover  { background:rgba(224,123,123,.2); }
+    .decision-msg { font-size:.82rem; margin-top:8px; }
+    .decision-msg.success { color:#4caf90; }
+    .decision-msg.error   { color:#e07b7b; }
+
+    .reviews-section { margin-top:20px; padding-top:16px; border-top:1px solid var(--border,#2a2a2a); }
+    .reviews-section h4 { font-size:.8rem; text-transform:uppercase; letter-spacing:.08em; opacity:.4; margin-bottom:12px; }
+    .review-card { background:rgba(255,255,255,.03); border-radius:8px; padding:12px 14px; margin-bottom:8px; font-size:.84rem; }
+    .review-stars { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:6px; }
+    .star-row { display:flex; align-items:center; gap:4px; opacity:.7; }
+    .stars { color:#c9a84c; font-size:.85rem; }
+    .review-comment { opacity:.6; font-style:italic; }
+    .no-reviews { opacity:.35; font-size:.84rem; }
+
+    .empty-state { text-align:center; padding:60px 0; opacity:.35; }
+    .loading-state { text-align:center; padding:60px 0; opacity:.35; }
+
+    .login-wrap { max-width:380px; margin:80px auto; text-align:center; }
+    .login-wrap h2 { margin-bottom:8px; }
+    .login-wrap p  { opacity:.5; font-size:.9rem; margin-bottom:24px; }
+    .login-fields { display:flex; flex-direction:column; gap:10px; }
+    .login-fields input { padding:10px 12px; border-radius:8px; border:1px solid var(--border,#2a2a2a); background:var(--bg,#111); color:inherit; font-size:.9rem; }
+    .login-err { color:#e07b7b; font-size:.82rem; margin-top:4px; }
+
+    .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:24px; }
+    @media(max-width:600px){ .stats-row{ grid-template-columns:1fr 1fr; } }
+    .stat-card { background:var(--surface,#1a1a1a); border:1px solid var(--border,#2a2a2a); border-radius:10px; padding:14px 16px; text-align:center; }
+    .stat-num  { font-size:1.6rem; font-weight:700; color:#c9a84c; }
+    .stat-lbl  { font-size:.75rem; opacity:.45; margin-top:2px; }
+  </style>
+</head>
+<body>
+  <div id="site-header"></div>
+  <main class="page">
+    <section class="container">
+      <div id="adminRoot"><div class="loading-state">Loading…</div></div>
+    </section>
+  </main>
+  <div id="site-footer"></div>
+  <script src="/js/main.js"></script>
+  <script>
+    const apiBase   = document.querySelector('meta[name="gs-api"]')?.getAttribute("content") || "";
+    const TOKEN_KEY = "gs_employer_token";
+    const TIER_ICONS = { pending:"⏳", listed:"⚪", committed:"🥉", invested:"🥈", exemplary:"🏆" };
+    const ATTEST_LABELS = {
+      posts_salary:"Salary ranges posted", has_dei_policy:"DEI policy",
+      diverse_panels:"Diverse panels", structured_feedback:"Structured feedback",
+      flexible_work:"Flexible work", tracks_equity:"Tracks equity",
+      pipeline_programs:"Pipeline programs", pay_equity_audit:"Pay equity audit"
+    };
+
+    let allApps    = [];
+    let activeFilter = "all";
+
+    function starsHtml(val) {
+      if (!val) return '<span style="opacity:.3">—</span>';
+      return "★".repeat(val) + '<span style="opacity:.25">' + "★".repeat(5-val) + "</span>";
+    }
+
+    function renderLogin() {
+      document.getElementById("adminRoot").innerHTML = `
+        <div class="login-wrap">
+          <h2>Admin Login</h2>
+          <p>Sign in to review employer applications.</p>
+          <div class="login-fields">
+            <input id="loginEmail" type="email" placeholder="Email" />
+            <input id="loginPass"  type="password" placeholder="Password" />
+            <button class="btn" onclick="doLogin()">Sign In</button>
+            <div class="login-err" id="loginErr"></div>
+          </div>
+        </div>`;
+    }
+
+    async function doLogin() {
+      const email = document.getElementById("loginEmail").value.trim();
+      const pass  = document.getElementById("loginPass").value.trim();
+      const err   = document.getElementById("loginErr");
+      try {
+        const res  = await fetch(apiBase + "/api/employer/login", {
+          method:"POST", headers:{"Content-Type":"application/json"},
+          body: JSON.stringify({ email, password: pass })
+        });
+        const data = await res.json();
+        if (data.ok) { localStorage.setItem(TOKEN_KEY, data.token); loadApps(); }
+        else err.textContent = "Invalid credentials.";
+      } catch { err.textContent = "Could not connect."; }
+    }
+
+    function authHeaders() {
+      const token = localStorage.getItem(TOKEN_KEY) || "";
+      return { "Content-Type":"application/json", "Authorization":"Bearer " + token };
+    }
+
+    async function loadApps() {
+      try {
+        const res  = await fetch(apiBase + "/api/employer/applications", { headers: authHeaders() });
+        if (res.status === 401) { renderLogin(); return; }
+        const data = await res.json();
+        allApps = data.applications || [];
+        renderDashboard();
+      } catch { document.getElementById("adminRoot").innerHTML = `<div class="empty-state">Could not load. Is the backend running?</div>`; }
+    }
+
+    function filteredApps() {
+      if (activeFilter === "all") return allApps;
+      return allApps.filter(a => a.status === activeFilter);
+    }
+
+    function renderDashboard() {
+      const pending  = allApps.filter(a => a.status === "pending").length;
+      const approved = allApps.filter(a => a.status === "approved").length;
+      const rejected = allApps.filter(a => a.status === "rejected").length;
+      const total    = allApps.length;
+
+      document.getElementById("adminRoot").innerHTML = `
+        <div class="admin-header">
+          <div>
+            <p class="kicker">Admin</p>
+            <h1>Employer Applications</h1>
+          </div>
+          <button class="btn btn-ghost" onclick="localStorage.removeItem('${TOKEN_KEY}');renderLogin()">Sign Out</button>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-lbl">Total</div></div>
+          <div class="stat-card"><div class="stat-num" style="color:#c9a84c">${pending}</div><div class="stat-lbl">Pending Review</div></div>
+          <div class="stat-card"><div class="stat-num" style="color:#4caf90">${approved}</div><div class="stat-lbl">Approved</div></div>
+          <div class="stat-card"><div class="stat-num" style="color:#e07b7b">${rejected}</div><div class="stat-lbl">Rejected</div></div>
+        </div>
+
+        <div class="filter-bar">
+          ${["all","pending","approved","rejected"].map(f =>
+            `<button class="filter-btn ${activeFilter===f?"active":""}" onclick="setFilter('${f}')">${f.charAt(0).toUpperCase()+f.slice(1)}${f==="all"?" ("+total+")":f==="pending"?" ("+pending+")":f==="approved"?" ("+approved+")":f==="rejected"?" ("+rejected+")":" "}</button>`
+          ).join("")}
+        </div>
+
+        <div id="appList">${renderAppList()}</div>`;
+    }
+
+    function renderAppList() {
+      const apps = filteredApps();
+      if (!apps.length) return `<div class="empty-state">No ${activeFilter === "all" ? "" : activeFilter + " "}applications.</div>`;
+      return apps.map(a => renderAppCard(a)).join("");
+    }
+
+    function renderAppCard(a) {
+      const score = parseInt(a.attestation_score) || 0;
+      const dots  = Array.from({length:8},(_,i) =>
+        `<div class="score-dot ${i < score ? "filled" : ""}"></div>`).join("");
+
+      const attestItems = Object.entries(ATTEST_LABELS).map(([key, label]) =>
+        `<span class="attest-chip ${a[key]?"yes":"no"}">${a[key]?"✓":"✗"} ${label}</span>`
+      ).join("");
+
+      return `
+      <div class="app-card ${a.status}" id="card-${a.id}">
+        <div class="app-header" onclick="toggleCard('${a.id}')">
+          <div>
+            <div class="app-company">${a.company_name} <span style="opacity:.35;font-weight:400;font-size:.82rem">${a.industry||""} ${a.company_size ? "· "+a.company_size : ""}</span></div>
+            <div class="app-meta">${a.contact_name} · ${a.contact_email} · Applied ${new Date(a.created_at).toLocaleDateString()}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="app-score-bar" title="${score}/8 attestations">${dots}</div>
+            <span class="app-status-badge badge-${a.status}">${TIER_ICONS[a.status]||""} ${a.status}</span>
+            ${a.status==="approved" ? `<span class="app-status-badge badge-approved">${TIER_ICONS[a.tier]||""} ${a.tier}</span>` : ""}
+            <svg class="chevron" id="chev-${a.id}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+        </div>
+        <div class="app-detail" id="detail-${a.id}">
+          <div class="detail-grid">
+            <div class="detail-field"><label>Website</label><p>${a.website ? `<a href="${a.website}" target="_blank">${a.website}</a>` : "—"}</p></div>
+            <div class="detail-field"><label>EIN</label><p>${a.ein||"—"}</p></div>
+            <div class="detail-field"><label>Contact Title</label><p>${a.contact_title||"—"}</p></div>
+            <div class="detail-field"><label>Attestation Score</label><p>${score}/8</p></div>
+            ${a.dei_policy_url    ? `<div class="detail-field"><label>DEI Policy</label><p><a href="${a.dei_policy_url}" target="_blank">${a.dei_policy_url}</a></p></div>` : ""}
+            ${a.equity_report_url ? `<div class="detail-field"><label>Equity Report</label><p><a href="${a.equity_report_url}" target="_blank">${a.equity_report_url}</a></p></div>` : ""}
+          </div>
+          <div><div style="font-size:.78rem;opacity:.4;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Attestations</div><div class="attest-chips">${attestItems}</div></div>
+          ${a.additional_notes ? `<div style="margin-top:12px"><div style="font-size:.78rem;opacity:.4;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Their Notes</div><div style="font-size:.88rem;opacity:.7;line-height:1.6">${a.additional_notes}</div></div>` : ""}
+          ${a.admin_notes ? `<div style="margin-top:12px;padding:10px 12px;background:rgba(201,168,76,.06);border-radius:8px;font-size:.84rem"><strong style="opacity:.5;font-size:.75rem;text-transform:uppercase;letter-spacing:.07em">Admin Notes:</strong> ${a.admin_notes}</div>` : ""}
+
+          ${a.status === "pending" ? `
+          <div class="decision-row">
+            <div class="field">
+              <label>Assign Tier</label>
+              <select id="tier-${a.id}">
+                <option value="listed">⚪ Listed</option>
+                <option value="committed">🥉 Committed</option>
+                <option value="invested">🥈 Invested</option>
+                <option value="exemplary">🏆 Exemplary</option>
+              </select>
+            </div>
+            <div class="field" style="flex:2">
+              <label>Admin Notes (visible to team only)</label>
+              <textarea id="notes-${a.id}" placeholder="Optional notes about this application…"></textarea>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <button class="btn btn-approve" onclick="approve('${a.id}')">✓ Approve</button>
+              <button class="btn btn-reject"  onclick="reject('${a.id}')">✗ Reject</button>
+            </div>
+          </div>
+          <div class="decision-msg" id="msg-${a.id}"></div>` : ""}
+
+          <div class="reviews-section" id="reviews-${a.id}">
+            <h4>Candidate Reviews</h4>
+            <div class="no-reviews">Loading reviews…</div>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    function toggleCard(id) {
+      const detail = document.getElementById("detail-" + id);
+      const chev   = document.getElementById("chev-"   + id);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      chev.classList.toggle("open", !isOpen);
+      if (!isOpen) loadReviews(id);
+    }
+
+    async function loadReviews(empId) {
+      const wrap = document.getElementById("reviews-" + empId);
+      try {
+        const res  = await fetch(apiBase + "/api/employer/reviews/" + empId, { headers: authHeaders() });
+        const data = await res.json();
+        const revs = data.reviews || [];
+        if (!revs.length) { wrap.innerHTML = `<h4>Candidate Reviews</h4><div class="no-reviews">No reviews yet.</div>`; return; }
+        wrap.innerHTML = `<h4>Candidate Reviews (${revs.length})</h4>` + revs.map(r => `
+          <div class="review-card">
+            <div class="review-stars">
+              <div class="star-row"><span style="opacity:.45;font-size:.75rem">Description</span> <span class="stars">${starsHtml(r.accurate_description)}</span></div>
+              <div class="star-row"><span style="opacity:.45;font-size:.75rem">Communication</span> <span class="stars">${starsHtml(r.clear_communication)}</span></div>
+              <div class="star-row"><span style="opacity:.45;font-size:.75rem">Respectful</span> <span class="stars">${starsHtml(r.respectful_process)}</span></div>
+              <div class="star-row"><span style="opacity:.45;font-size:.75rem">Would Apply Again</span> <span class="stars">${starsHtml(r.would_apply_again)}</span></div>
+            </div>
+            ${r.comments ? `<div class="review-comment">"${r.comments}"</div>` : ""}
+            <div style="font-size:.75rem;opacity:.3;margin-top:6px">${r.stage} · ${new Date(r.created_at).toLocaleDateString()}</div>
+          </div>`).join("");
+      } catch { wrap.innerHTML = `<h4>Candidate Reviews</h4><div class="no-reviews">Could not load reviews.</div>`; }
+    }
+
+    async function approve(id) {
+      const tier  = document.getElementById("tier-"  + id).value;
+      const notes = document.getElementById("notes-" + id).value.trim();
+      const msg   = document.getElementById("msg-"   + id);
+      try {
+        const res  = await fetch(apiBase + "/api/employer/applications/" + id + "/approve", {
+          method:"POST", headers: authHeaders(),
+          body: JSON.stringify({ tier, adminNotes: notes || undefined })
+        });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+          msg.className = "decision-msg success"; msg.textContent = "✓ Approved as " + tier;
+          const card = document.getElementById("card-" + id);
+          card.classList.remove("pending"); card.classList.add("approved");
+          // update the app in memory
+          const a = allApps.find(x => x.id === id);
+          if (a) { a.status = "approved"; a.tier = tier; a.admin_notes = notes; }
+        } else { msg.className = "decision-msg error"; msg.textContent = data.error || "Failed."; }
+      } catch { msg.className = "decision-msg error"; msg.textContent = "Could not connect."; }
+    }
+
+    async function reject(id) {
+      const notes = document.getElementById("notes-" + id).value.trim();
+      const msg   = document.getElementById("msg-"   + id);
+      if (!confirm("Reject this application?")) return;
+      try {
+        const res  = await fetch(apiBase + "/api/employer/applications/" + id + "/reject", {
+          method:"POST", headers: authHeaders(),
+          body: JSON.stringify({ adminNotes: notes || undefined })
+        });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+          msg.className = "decision-msg error"; msg.textContent = "✗ Application rejected.";
+          const card = document.getElementById("card-" + id);
+          card.classList.remove("pending"); card.classList.add("rejected");
+          const a = allApps.find(x => x.id === id);
+          if (a) { a.status = "rejected"; }
+        } else { msg.className = "decision-msg error"; msg.textContent = data.error || "Failed."; }
+      } catch { msg.className = "decision-msg error"; msg.textContent = "Could not connect."; }
+    }
+
+    function setFilter(f) {
+      activeFilter = f;
+      renderDashboard();
+    }
+
+    // Boot
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (token) loadApps(); else renderLogin();
+  </script>
+</body>
+</html>

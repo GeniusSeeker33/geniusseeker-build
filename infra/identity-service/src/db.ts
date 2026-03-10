@@ -64,6 +64,56 @@ db.exec(`
     created_at  TEXT NOT NULL
   );
 
+
+  CREATE TABLE IF NOT EXISTS employer_profiles (
+    id              TEXT PRIMARY KEY,
+    company_name    TEXT NOT NULL,
+    website         TEXT,
+    contact_name    TEXT NOT NULL,
+    contact_email   TEXT NOT NULL UNIQUE,
+    contact_title   TEXT,
+    company_size    TEXT,
+    industry        TEXT,
+    ein             TEXT,
+    tier            TEXT NOT NULL DEFAULT 'pending',
+    status          TEXT NOT NULL DEFAULT 'pending',
+    admin_notes     TEXT,
+    reviewed_by     TEXT,
+    reviewed_at     TEXT,
+    created_at      TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS employer_attestations (
+    id                TEXT PRIMARY KEY,
+    employer_id       TEXT NOT NULL,
+    posts_salary      INTEGER DEFAULT 0,
+    has_dei_policy    INTEGER DEFAULT 0,
+    diverse_panels    INTEGER DEFAULT 0,
+    structured_feedback INTEGER DEFAULT 0,
+    flexible_work     INTEGER DEFAULT 0,
+    tracks_equity     INTEGER DEFAULT 0,
+    pipeline_programs INTEGER DEFAULT 0,
+    pay_equity_audit  INTEGER DEFAULT 0,
+    dei_policy_url    TEXT,
+    equity_report_url TEXT,
+    additional_notes  TEXT,
+    created_at        TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS employer_reviews (
+    id              TEXT PRIMARY KEY,
+    employer_id     TEXT NOT NULL,
+    application_id  TEXT NOT NULL,
+    reviewer_hedera TEXT NOT NULL,
+    stage           TEXT NOT NULL DEFAULT 'application',
+    accurate_description INTEGER,
+    clear_communication  INTEGER,
+    respectful_process   INTEGER,
+    salary_matched       INTEGER,
+    would_apply_again    INTEGER,
+    comments        TEXT,
+    created_at      TEXT NOT NULL
+  );
   CREATE TABLE IF NOT EXISTS employer_sessions (
     id         TEXT PRIMARY KEY,
     email      TEXT NOT NULL,
