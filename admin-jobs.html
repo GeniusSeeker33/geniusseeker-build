@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="gs-api" content="https://organic-enigma-wx4jj76vg6x25p7q-8787.app.github.dev" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin · Job Submissions | GeniusSeeker</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .badge {
+      display: inline-block;
+      font-size: .72rem;
+      font-weight: 600;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 999px;
+    }
+    .badge-pending  { background: rgba(201,168,76,.15);  color: #c9a84c; border: 1px solid rgba(201,168,76,.3); }
+    .badge-approved { background: rgba(76,175,144,.15);  color: #4caf90; border: 1px solid rgba(76,175,144,.3); }
+    .badge-rejected { background: rgba(224,123,123,.15); color: #e07b7b; border: 1px solid rgba(224,123,123,.3); }
+
+    .submission-card {
+      background: var(--surface, #1a1a1a);
+      border: 1px solid var(--border, #2a2a2a);
+      border-radius: 12px;
+      padding: 20px 22px;
+      margin-bottom: 14px;
+    }
+    .submission-card.approved { border-left: 3px solid #4caf90; }
+    .submission-card.rejected { border-left: 3px solid #e07b7b; opacity: .6; }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .card-title { font-size: 1rem; font-weight: 600; }
+    .card-company { font-size: .88rem; opacity: .6; margin-top: 2px; }
+
+    .card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+      font-size: .82rem;
+      opacity: .65;
+    }
+    .card-meta span::before { content: "· "; }
+    .card-meta span:first-child::before { content: ""; }
+
+    .card-desc {
+      font-size: .88rem;
+      opacity: .7;
+      line-height: 1.6;
+      margin-bottom: 14px;
+      white-space: pre-wrap;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .btn-approve {
+      background: rgba(76,175,144,.15);
+      border: 1px solid rgba(76,175,144,.4);
+      color: #4caf90;
+      padding: 7px 18px;
+      border-radius: 8px;
+      font-size: .85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .btn-approve:hover { background: rgba(76,175,144,.3); }
+
+    .btn-reject {
+      background: rgba(224,123,123,.1);
+      border: 1px solid rgba(224,123,123,.35);
+      color: #e07b7b;
+      padding: 7px 18px;
+      border-radius: 8px;
+      font-size: .85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .btn-reject:hover { background: rgba(224,123,123,.25); }
+
+    .action-status { font-size: .82rem; opacity: .55; }
+
+    .filter-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .tab {
+      padding: 6px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--border, #2a2a2a);
+      background: none;
+      color: inherit;
+      font-size: .85rem;
+      cursor: pointer;
+      opacity: .6;
+      transition: opacity .2s, border-color .2s;
+    }
+    .tab.active {
+      opacity: 1;
+      border-color: var(--accent, #c9a84c);
+      color: var(--accent, #c9a84c);
+    }
+    .empty { text-align: center; padding: 40px 0; opacity: .4; font-size: .95rem; }
+    .contact-link { font-size: .8rem; opacity: .5; }
+  </style>
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main class="page">
+    <section class="container">
+
+      <div class="admin-header">
+        <div>
+          <p class="kicker">Admin</p>
+          <h1>Job Submissions</h1>
+          <p class="muted">Approve jobs to publish them on the public board. Reject to archive.</p>
+        </div>
+        <a class="btn btn-ghost" href="/jobs.html">View Public Board →</a>
+      </div>
+
+      <div class="filter-tabs">
+        <button class="tab active" onclick="setFilter('all', this)">All</button>
+        <button class="tab" onclick="setFilter('pending', this)">Pending</button>
+        <button class="tab" onclick="setFilter('approved', this)">Approved</button>
+        <button class="tab" onclick="setFilter('rejected', this)">Rejected</button>
+      </div>
+
+      <div id="submissionList"><p class="empty">Loading…</p></div>
+
+    </section>
+  </main>
+
+  <div id="site-footer"></div>
+  <script src="/js/main.js"></script>
+  <script>
+    const apiBase = document.querySelector('meta[name="gs-api"]')?.getAttribute("content") || "";
+    let allJobs = [];
+    let currentFilter = "all";
+
+    async function loadJobs() {
+      try {
+        const res = await fetch(apiBase + "/api/job-submissions");
+        const data = await res.json();
+        allJobs = data.jobs || [];
+        render();
+      } catch (e) {
+        document.getElementById("submissionList").innerHTML =
+          `<p class="empty">⚠️ Could not connect to backend. Is the server running?</p>`;
+      }
+    }
+
+    function setFilter(filter, btn) {
+      currentFilter = filter;
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      btn.classList.add("active");
+      render();
+    }
+
+    function render() {
+      const filtered = currentFilter === "all"
+        ? allJobs
+        : allJobs.filter(j => j.status === currentFilter);
+
+      const list = document.getElementById("submissionList");
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<p class="empty">No ${currentFilter === "all" ? "" : currentFilter} submissions.</p>`;
+        return;
+      }
+
+      list.innerHTML = filtered.map(job => `
+        <div class="submission-card ${job.status}" id="card-${job.id}">
+          <div class="card-top">
+            <div>
+              <div class="card-title">${job.title}</div>
+              <div class="card-company">${job.company}${job.website ? ` · <a href="${job.website}" target="_blank" style="opacity:.7">${job.website}</a>` : ""}</div>
+            </div>
+            <span class="badge badge-${job.status}">${job.status}</span>
+          </div>
+
+          <div class="card-meta">
+            <span>${job.steam || "—"}</span>
+            <span>${job.type || "—"}</span>
+            <span>${job.remote || "—"}</span>
+            <span>${job.location || "—"}</span>
+            <span>${job.pay || "No pay listed"}</span>
+            <span>Deadline: ${job.deadline || "—"}</span>
+          </div>
+
+          ${job.description ? `<div class="card-desc">${job.description}</div>` : ""}
+
+          <div class="card-actions">
+            ${job.status !== "approved" ? `<button class="btn-approve" onclick="updateStatus('${job.id}', 'approve')">✓ Approve</button>` : ""}
+            ${job.status !== "rejected" ? `<button class="btn-reject"  onclick="updateStatus('${job.id}', 'reject')">✕ Reject</button>` : ""}
+            <span class="action-status" id="status-${job.id}"></span>
+            <span class="contact-link">Submitted by: ${job.email} · ${new Date(job.created_at).toLocaleDateString()}</span>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    async function updateStatus(id, action) {
+      const statusEl = document.getElementById(`status-${id}`);
+      statusEl.textContent = "Saving…";
+
+      try {
+        const res = await fetch(`${apiBase}/api/job-submissions/${id}/${action}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+          // Update local data and re-render
+          const job = allJobs.find(j => j.id === id);
+          if (job) job.status = data.status;
+          render();
+        } else {
+          statusEl.textContent = "⚠️ Failed";
+        }
+      } catch (e) {
+        statusEl.textContent = "⚠️ Error — is the server running?";
+      }
+    }
+
+    loadJobs();
+  </script>
+</body>
+</html>

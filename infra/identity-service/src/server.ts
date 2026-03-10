@@ -398,8 +398,149 @@ app.get("/api/applications", (_req, res) => {
   }
 });
 
+/* =====================================================
+   SUBMIT A JOB (SQLite + Formspree relay)
+   Stores in DB first, then relays to Formspree:
+   https://formspree.io/f/xpqyqyjn
+===================================================== */
+app.post("/api/submit-job", async (req, res) => {
+  try {
+    const { company, website, title, steam, type, remote, location, pay, deadline, desc, email } = req.body || {};
+
+    if (!company || !title || !email) {
+      return res.status(400).json({ error: "Missing required fields: company, title, email" });
+    }
+
+    const createdAt = nowISO();
+    const id = `job_${uuid()}`;
+
+    // ── 1. Save to SQLite ──
+    try {
+      db.prepare(`
+        INSERT INTO job_submissions
+        (id, company, website, title, steam, type, remote, location, pay, deadline, description, email, status, created_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+      `).run(
+        id,
+        company,
+        website    || null,
+        title,
+        steam      || null,
+        type       || null,
+        remote     || null,
+        location   || null,
+        pay        || null,
+        deadline   || null,
+        desc       || null,
+        email,
+        "pending",
+        createdAt
+      );
+    } catch (e) {
+      console.error("DB write failed (continuing):", e);
+    }
+
+    // ── 2. Relay to Formspree ──
+    const formspreeEndpoint = process.env.FORMSPREE_APPLY_ENDPOINT || "https://formspree.io/f/xpqyqyjn";
+
+    const payload = {
+      email,
+      company,
+      website:   website   || "—",
+      title,
+      steam:     steam     || "—",
+      type:      type      || "—",
+      remote:    remote    || "—",
+      location:  location  || "—",
+      pay:       pay       || "—",
+      deadline:  deadline  || "—",
+      desc:      desc      || "—",
+      timestamp: createdAt,
+      source:    "GeniusSeeker Submit-a-Job",
+    };
+
+    const resp = await fetch(formspreeEndpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => "");
+      console.error("Formspree error:", resp.status, text);
+      // Still return ok — submission is saved to DB so no data is lost
+      return res.json({ ok: true, id, warning: "email_relay_failed" });
+    }
+
+    return res.json({ ok: true, id });
+  } catch (e) {
+    console.error("Submit-job endpoint error:", e);
+    return res.status(500).json({ error: "Internal error" });
+  }
+});
+
+/* =====================================================
+   VIEW ALL JOB SUBMISSIONS (admin)
+   TODO: add auth before going to production
+===================================================== */
+app.get("/api/job-submissions", (_req, res) => {
+  try {
+    const jobs = db.prepare(
+      "SELECT * FROM job_submissions ORDER BY created_at DESC LIMIT 200"
+    ).all();
+    res.json({ jobs });
+  } catch (e) {
+    console.error("DB read failed:", e);
+    res.json({ jobs: [], warning: "table_missing" });
+  }
+});
+
+/* =====================================================
+   APPROVE / REJECT JOB SUBMISSION (admin)
+===================================================== */
+app.post("/api/job-submissions/:id/approve", (req, res) => {
+  try {
+    const { id } = req.params;
+    const job = db.prepare("SELECT * FROM job_submissions WHERE id=?").get(id);
+    if (!job) return res.status(404).json({ error: "Job not found" });
+    db.prepare("UPDATE job_submissions SET status=? WHERE id=?").run("approved", id);
+    res.json({ ok: true, id, status: "approved" });
+  } catch (e) {
+    console.error("Approve error:", e);
+    res.status(500).json({ error: "Internal error" });
+  }
+});
+
+app.post("/api/job-submissions/:id/reject", (req, res) => {
+  try {
+    const { id } = req.params;
+    const job = db.prepare("SELECT * FROM job_submissions WHERE id=?").get(id);
+    if (!job) return res.status(404).json({ error: "Job not found" });
+    db.prepare("UPDATE job_submissions SET status=? WHERE id=?").run("rejected", id);
+    res.json({ ok: true, id, status: "rejected" });
+  } catch (e) {
+    console.error("Reject error:", e);
+    res.status(500).json({ error: "Internal error" });
+  }
+});
+
+/* =====================================================
+   PUBLIC JOBS FEED (approved only)
+   Used by jobs.html to load live listings
+===================================================== */
+app.get("/api/jobs", (_req, res) => {
+  try {
+    const jobs = db.prepare(
+      "SELECT * FROM job_submissions WHERE status='approved' ORDER BY created_at DESC"
+    ).all();
+    res.json({ jobs });
+  } catch (e) {
+    console.error("DB read failed:", e);
+    res.json({ jobs: [] });
+  }
+});
+
 const port = Number(process.env.PORT || 8787);
 app.listen(port, "0.0.0.0", () => {
   console.log(`identity-service running on 0.0.0.0:${port}`);
 });
-

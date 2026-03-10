@@ -46,4 +46,21 @@ db.exec(`
     cover_note   TEXT,
     created_at   TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS job_submissions (
+    id          TEXT PRIMARY KEY,
+    company     TEXT NOT NULL,
+    website     TEXT,
+    title       TEXT NOT NULL,
+    steam       TEXT,
+    type        TEXT,
+    remote      TEXT,
+    location    TEXT,
+    pay         TEXT,
+    deadline    TEXT,
+    description TEXT,
+    email       TEXT NOT NULL,
+    status      TEXT NOT NULL DEFAULT 'pending',
+    created_at  TEXT NOT NULL
+  );
 `);

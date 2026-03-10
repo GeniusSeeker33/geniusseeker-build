@@ -1,11 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="gs-api" content="https://organic-enigma-wx4jj76vg6x25p7q-8787.app.github.dev" />
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Submit a Job | GeniusSeeker</title>
   <meta name="description" content="Submit your open position. We review the details and post it to the public job board." />
   <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    .submit-status {
+      display: none;
+      padding: 14px 16px;
+      border-radius: 8px;
+      font-size: .9rem;
+      margin-top: 12px;
+    }
+    .submit-status.success {
+      display: block;
+      background: rgba(76,175,144,.12);
+      border: 1px solid rgba(76,175,144,.35);
+      color: #4caf90;
+    }
+    .submit-status.error {
+      display: block;
+      background: rgba(224,123,123,.12);
+      border: 1px solid rgba(224,123,123,.35);
+      color: #e07b7b;
+    }
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 500px) { .field-row { grid-template-columns: 1fr; } }
+  </style>
 </head>
 <body>
   <div id="site-header"></div>
@@ -17,55 +45,110 @@
           <p class="kicker">Employers</p>
           <h1>Submit Your Open Position</h1>
           <p class="muted">
-            Submit your position and after we review the information we will post it on our public Job Board (coming soon).
+            Submit your position and after we review the information we will post it on our public job board within 2 business days.
           </p>
 
-          <div class="card" style="margin-top:14px">
-            <h3>What happens next?</h3>
-            <p class="muted">We respond within 2 business days with any questions and next steps.</p>
+          <div class="grid" style="margin-top:14px">
+            <div class="card">
+              <h3>Review process</h3>
+              <p class="muted">We check every submission for quality and STEAM alignment before publishing.</p>
+            </div>
+            <div class="card">
+              <h3>Response time</h3>
+              <p class="muted">We respond within 2 business days with any questions and next steps.</p>
+            </div>
+            <div class="card">
+              <h3>No cost to post</h3>
+              <p class="muted">Posting is free. Commission applies only if GeniusSeeker places a candidate.</p>
+            </div>
           </div>
         </div>
 
         <aside class="hero-card">
           <h3>Job submission request</h3>
-          <form class="form" method="post" action="#">
-            <div class="field">
-              <label for="company">Company</label>
-              <input id="company" name="company" type="text" required />
+
+          <form class="form" id="jobSubmitForm">
+
+            <div class="field-row">
+              <div class="field">
+                <label for="company">Company *</label>
+                <input id="company" name="company" type="text" required />
+              </div>
+              <div class="field">
+                <label for="website">Company website</label>
+                <input id="website" name="website" type="url" placeholder="https://" />
+              </div>
             </div>
+
             <div class="field">
-              <label for="title">Role title</label>
+              <label for="title">Role title *</label>
               <input id="title" name="title" type="text" required />
             </div>
+
             <div class="field">
-              <label for="type">Job type</label>
-              <select id="type" name="type">
-                <option>Full-time</option>
-                <option>Contract</option>
-                <option>Part-time</option>
-                <option>Freelance</option>
-                <option>Internship</option>
-                <option>Temporary</option>
-                <option>Volunteer</option>
+              <label for="steam">STEAM category *</label>
+              <select id="steam" name="steam" required>
+                <option value="" disabled selected>Select a category</option>
+                <option value="Science">Science</option>
+                <option value="Technology">Technology</option>
+                <option value="Engineering">Engineering</option>
+                <option value="Art">Art</option>
+                <option value="Mathematics">Mathematics</option>
+                <option value="Other">Other</option>  <!-- ADD THIS -->
               </select>
             </div>
-            <div class="field">
-              <label for="remote">Work style</label>
-              <select id="remote" name="remote">
-                <option>On-site</option>
-                <option>Hybrid</option>
-                <option>Remote</option>
-              </select>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="type">Job type *</label>
+                <select id="type" name="type" required>
+                  <option value="Full-time">Full-time</option>
+                  <option value="Contract">Contract</option>
+                  <option value="Part-time">Part-time</option>
+                  <option value="Freelance">Freelance</option>
+                  <option value="Internship">Internship</option>
+                  <option value="Temporary">Temporary</option>
+                  <option value="Volunteer">Volunteer</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="remote">Work style *</label>
+                <select id="remote" name="remote" required>
+                  <option value="On-site">On-site</option>
+                  <option value="Hybrid">Hybrid</option>
+                  <option value="Remote">Remote</option>
+                </select>
+              </div>
             </div>
+
             <div class="field">
-              <label for="desc">Role description</label>
-              <textarea id="desc" name="desc" required></textarea>
+              <label for="location">Location</label>
+              <input id="location" name="location" type="text" placeholder="City, State or Remote (US)" />
             </div>
+
             <div class="field">
-              <label for="email">Your email</label>
+              <label for="pay">Pay rate / salary range</label>
+              <input id="pay" name="pay" type="text" placeholder="e.g. $80k–$110k or $65–$85/hr" />
+            </div>
+
+            <div class="field">
+              <label for="deadline">Application deadline</label>
+              <input id="deadline" name="deadline" type="date" />
+            </div>
+
+            <div class="field">
+              <label for="desc">Role description *</label>
+              <textarea id="desc" name="desc" rows="5" placeholder="Describe the role, responsibilities, and ideal candidate…" required></textarea>
+            </div>
+
+            <div class="field">
+              <label for="email">Your email *</label>
               <input id="email" name="email" type="email" required />
             </div>
-            <button class="btn" type="submit">Submit Job</button>
+
+            <button class="btn" type="submit" id="submitBtn">Submit Job</button>
+            <div class="submit-status" id="submitStatus"></div>
+
           </form>
         </aside>
       </div>
@@ -74,5 +157,77 @@
 
   <div id="site-footer"></div>
   <script src="/js/main.js"></script>
+  <script>
+    const form    = document.getElementById("jobSubmitForm");
+    const btn     = document.getElementById("submitBtn");
+    const status  = document.getElementById("submitStatus");
+
+    // Use backend if available, otherwise fall back to Formspree directly
+    const apiBase   = document.querySelector('meta[name="gs-api"]')?.getAttribute("content") || "";
+    const BACKEND   = apiBase + "/api/submit-job";
+    const FORMSPREE = "https://formspree.io/f/mdawapqj";
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      btn.disabled = true;
+      btn.textContent = "Submitting…";
+      status.className = "submit-status";
+      status.textContent = "";
+
+      const payload = {
+        company:   document.getElementById("company").value.trim(),
+        website:   document.getElementById("website").value.trim(),
+        title:     document.getElementById("title").value.trim(),
+        steam:     document.getElementById("steam").value,
+        type:      document.getElementById("type").value,
+        remote:    document.getElementById("remote").value,
+        location:  document.getElementById("location").value.trim(),
+        pay:       document.getElementById("pay").value.trim(),
+        deadline:  document.getElementById("deadline").value,
+        desc:      document.getElementById("desc").value.trim(),
+        email:     document.getElementById("email").value.trim(),
+        source:    "GeniusSeeker Submit-a-Job",
+      };
+
+      // Try backend first, fall back to Formspree
+      let success = false;
+      try {
+        const res = await fetch(BACKEND, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) success = true;
+      } catch (_) {
+        // backend unreachable — fall through to Formspree
+      }
+
+      if (!success) {
+        try {
+          const res = await fetch(FORMSPREE, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify(payload),
+          });
+          if (res.ok) success = true;
+        } catch (_) {}
+      }
+
+      btn.disabled = false;
+      btn.textContent = "Submit Job";
+
+      if (success) {
+        status.className = "submit-status success";
+        status.textContent = "✅ Submission received! We'll review it and follow up within 2 business days.";
+        form.reset();
+      } else {
+        status.className = "submit-status error";
+        status.textContent = "⚠️ Submission failed. Please email us directly at hello@geniusseeker.com.";
+      }
+
+      status.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+  </script>
 </body>
 </html>
