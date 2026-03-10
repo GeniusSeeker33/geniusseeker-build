@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="gs-api" content="https://organic-enigma-wx4jj76vg6x25p7q-8787.app.github.dev" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Make an Offer | GeniusSeeker</title>
+  <meta name="description" content="Send a contract offer to a GeniusSeeker candidate." />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    .offer-wrap { max-width: 680px; margin: 40px auto 80px; }
+
+    .candidate-banner {
+      display: flex; align-items: center; gap: 16px;
+      padding: 18px 22px;
+      background: linear-gradient(135deg, rgba(201,168,76,.1), rgba(122,92,30,.05));
+      border: 1px solid rgba(201,168,76,.25);
+      border-radius: 14px; margin-bottom: 24px;
+    }
+    .c-avatar {
+      width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg, #c9a84c, #7a5c1e);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; font-weight: 700; color: #000;
+    }
+    .c-name  { font-size: 1rem; font-weight: 600; }
+    .c-hedera{ font-size: .75rem; opacity: .4; margin-top: 2px; }
+
+    .form-card {
+      background: var(--surface, #1a1a1a);
+      border: 1px solid var(--border, #2a2a2a);
+      border-radius: 14px; padding: 26px 28px; margin-bottom: 16px;
+    }
+    .form-card-title {
+      font-size: .75rem; text-transform: uppercase; letter-spacing: .12em;
+      opacity: .4; margin-bottom: 18px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .form-card-title::after { content:""; flex:1; height:1px; background: var(--border, #2a2a2a); }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media(max-width:580px){ .form-grid{ grid-template-columns:1fr; } }
+    .full { grid-column: 1/-1; }
+
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label { font-size: .8rem; font-weight: 500; opacity: .6; }
+    .field input, .field select, .field textarea {
+      padding: 10px 12px; border-radius: 8px;
+      border: 1px solid var(--border, #2a2a2a);
+      background: rgba(255,255,255,.03); color: inherit;
+      font-size: .9rem; font-family: inherit; transition: border-color .2s;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      outline: none; border-color: rgba(201,168,76,.5);
+    }
+    .field textarea { resize: vertical; min-height: 80px; }
+    .field select option { background: #1a1a1a; }
+
+    /* Contract type selector */
+    .type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .type-btn {
+      padding: 14px 10px; border-radius: 10px; text-align: center;
+      border: 1px solid var(--border, #2a2a2a);
+      background: none; color: inherit; cursor: pointer;
+      transition: all .2s; user-select: none;
+    }
+    .type-btn:hover { border-color: rgba(201,168,76,.3); }
+    .type-btn.active {
+      border-color: rgba(201,168,76,.5);
+      background: rgba(201,168,76,.08);
+    }
+    .type-btn .type-icon { font-size: 1.4rem; margin-bottom: 5px; }
+    .type-btn .type-label { font-size: .82rem; font-weight: 600; }
+    .type-btn .type-desc { font-size: .72rem; opacity: .45; margin-top: 2px; }
+
+    /* Milestone builder */
+    .milestone-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+    .milestone-row {
+      display: grid; grid-template-columns: 1fr 120px 140px 32px; gap: 8px; align-items: center;
+    }
+    @media(max-width:580px){ .milestone-row{ grid-template-columns: 1fr 1fr; } }
+    .milestone-row input {
+      padding: 8px 10px; border-radius: 7px;
+      border: 1px solid var(--border, #2a2a2a);
+      background: rgba(255,255,255,.03); color: inherit;
+      font-size: .85rem; font-family: inherit;
+    }
+    .remove-ms {
+      width: 28px; height: 28px; border-radius: 6px;
+      border: 1px solid var(--border, #2a2a2a);
+      background: none; color: inherit; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      opacity: .4; transition: all .2s;
+    }
+    .remove-ms:hover { opacity: 1; border-color: #e07b7b; color: #e07b7b; }
+    .add-ms-btn {
+      font-size: .82rem; color: #c9a84c; background: none;
+      border: 1px dashed rgba(201,168,76,.3); border-radius: 8px;
+      padding: 8px 14px; cursor: pointer; width: 100%; transition: all .2s;
+    }
+    .add-ms-btn:hover { background: rgba(201,168,76,.06); }
+
+    /* Fee preview */
+    .fee-preview {
+      background: rgba(201,168,76,.06);
+      border: 1px solid rgba(201,168,76,.2);
+      border-radius: 10px; padding: 14px 16px;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 8px;
+    }
+    .fee-preview p { margin: 0; font-size: .85rem; opacity: .6; }
+    .fee-amount { font-size: 1rem; font-weight: 700; color: #c9a84c; }
+
+    /* Deel badge */
+    .powered-by {
+      display: flex; align-items: center; gap: 8px;
+      font-size: .78rem; opacity: .4; margin-top: 6px;
+    }
+    .powered-by strong { color: #c9a84c; opacity: 1; }
+
+    .form-msg {
+      padding: 14px 18px; border-radius: 10px; font-size: .88rem;
+      margin-top: 14px; display: none;
+    }
+    .form-msg.success { background: rgba(76,175,144,.1); border: 1px solid rgba(76,175,144,.3); color: #4caf90; }
+    .form-msg.error   { background: rgba(224,123,123,.1); border: 1px solid rgba(224,123,123,.3); color: #e07b7b; }
+
+    .login-gate { text-align: center; padding: 60px 0; opacity: .5; }
+  </style>
+</head>
+<body>
+  <div id="site-header"></div>
+  <main class="page">
+    <section class="container">
+      <div id="offerRoot"><p style="text-align:center;padding:60px 0;opacity:.4">Loading…</p></div>
+    </section>
+  </main>
+  <div id="site-footer"></div>
+  <script src="/js/main.js"></script>
+  <script>
+    const apiBase = document.querySelector('meta[name="gs-api"]')?.getAttribute("content") || "";
+    const TOKEN_KEY = "gs_employer_token";
+
+    const params        = new URLSearchParams(location.search);
+    const candidateId   = params.get("candidate") || "";
+    const candidateName = params.get("name")      || "this candidate";
+    const employerId    = params.get("employer")  || localStorage.getItem("gs_employer_id") || "";
+    const employerEmail = localStorage.getItem("gs_employer_email") || "";
+    const employerCo    = localStorage.getItem("gs_employer_company") || "";
+
+    let contractType  = "milestone";
+    let milestoneCount = 1;
+
+    function token() { return localStorage.getItem(TOKEN_KEY) || ""; }
+
+    function initials(name) {
+      return name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+    }
+
+    function render() {
+      if (!token()) {
+        document.getElementById("offerRoot").innerHTML = `
+          <div class="login-gate">
+            <h2>Employer Sign In Required</h2>
+            <p>You need a verified employer account to make offers.</p>
+            <a class="btn" href="/candidates-directory.html">Sign In →</a>
+          </div>`;
+        return;
+      }
+
+      document.getElementById("offerRoot").innerHTML = `
+        <div class="offer-wrap">
+          <div style="margin-bottom:20px">
+            <p class="kicker">Employer Dashboard</p>
+            <h1>Make an Offer</h1>
+          </div>
+
+          <!-- Candidate banner -->
+          <div class="candidate-banner">
+            <div class="c-avatar">${initials(candidateName)}</div>
+            <div>
+              <div class="c-name">${candidateName}</div>
+              <div class="c-hedera">${candidateId}</div>
+            </div>
+            <a class="btn btn-ghost btn-sm" href="/profile.html?id=${candidateId}" target="_blank"
+               style="margin-left:auto">View Profile →</a>
+          </div>
+
+          <!-- Contract type -->
+          <div class="form-card">
+            <div class="form-card-title">Contract Type</div>
+            <div class="type-grid">
+              <div class="type-btn active" id="type-milestone" onclick="setType('milestone')">
+                <div class="type-icon">🎯</div>
+                <div class="type-label">Milestone</div>
+                <div class="type-desc">Defined deliverables, fixed amounts</div>
+              </div>
+              <div class="type-btn" id="type-hourly" onclick="setType('hourly')">
+                <div class="type-icon">⏱️</div>
+                <div class="type-label">Hourly</div>
+                <div class="type-desc">Track hours, pay as you go</div>
+              </div>
+              <div class="type-btn" id="type-fixed" onclick="setType('fixed')">
+                <div class="type-icon">📦</div>
+                <div class="type-label">Fixed Price</div>
+                <div class="type-desc">One deliverable, one payment</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Role details -->
+          <div class="form-card">
+            <div class="form-card-title">Role Details</div>
+            <div class="form-grid">
+              <div class="field full">
+                <label>Role / Project Title *</label>
+                <input id="roleTitle" type="text" placeholder="e.g. Frontend Developer, Q2 Marketing Campaign" />
+              </div>
+              <div class="field">
+                <label id="rateLabel">Rate (USD) *</label>
+                <input id="rate" type="text" placeholder="e.g. 5000" oninput="updateFeePreview()" />
+              </div>
+              <div class="field">
+                <label>Start Date</label>
+                <input id="startDate" type="date" />
+              </div>
+              <div class="field full">
+                <label>Scope of Work</label>
+                <textarea id="scope" placeholder="Describe what you need done, expected outcomes, and any relevant context…"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Milestones (shown for milestone type) -->
+          <div class="form-card" id="milestonesCard">
+            <div class="form-card-title">Milestones</div>
+            <div style="display:grid;grid-template-columns:1fr 120px 140px 32px;gap:8px;margin-bottom:6px;padding:0 2px">
+              <span style="font-size:.72rem;opacity:.4;text-transform:uppercase;letter-spacing:.08em">Title</span>
+              <span style="font-size:.72rem;opacity:.4;text-transform:uppercase;letter-spacing:.08em">Amount ($)</span>
+              <span style="font-size:.72rem;opacity:.4;text-transform:uppercase;letter-spacing:.08em">Due Date</span>
+              <span></span>
+            </div>
+            <div class="milestone-list" id="milestoneList">
+              ${milestoneRowHtml(1)}
+            </div>
+            <button class="add-ms-btn" onclick="addMilestone()">+ Add Milestone</button>
+          </div>
+
+          <!-- Candidate email (needed for Deel to invite) -->
+          <div class="form-card">
+            <div class="form-card-title">Contact Info</div>
+            <div class="form-grid">
+              <div class="field full">
+                <label>Candidate's Email Address *</label>
+                <input id="candidateEmail" type="email" placeholder="Required so Deel can send the contract for signing" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Fee preview -->
+          <div class="fee-preview">
+            <div>
+              <p><strong>GeniusSeeker Placement Fee</strong></p>
+              <p>10% of contract value, invoiced separately after contract is signed.</p>
+            </div>
+            <div class="fee-amount" id="feeAmount">—</div>
+          </div>
+          <div class="powered-by">
+            Contract management &amp; payments powered by <strong>Deel</strong> —
+            compliance, e-signature, and global payouts handled automatically.
+          </div>
+
+          <div style="margin-top:20px">
+            <button class="btn" style="width:100%;padding:14px;font-size:1rem" onclick="sendOffer()">
+              Send Offer to ${candidateName} →
+            </button>
+            <div class="form-msg" id="formMsg"></div>
+          </div>
+        </div>`;
+    }
+
+    function milestoneRowHtml(n) {
+      return `<div class="milestone-row" id="ms-row-${n}">
+        <input type="text"   id="ms-title-${n}" placeholder="Milestone ${n}" />
+        <input type="number" id="ms-amount-${n}" placeholder="0.00" oninput="updateFeePreview()" />
+        <input type="date"   id="ms-due-${n}" />
+        <button class="remove-ms" onclick="removeMilestone(${n})" title="Remove">✕</button>
+      </div>`;
+    }
+
+    function addMilestone() {
+      milestoneCount++;
+      document.getElementById("milestoneList").insertAdjacentHTML("beforeend", milestoneRowHtml(milestoneCount));
+    }
+
+    function removeMilestone(n) {
+      document.getElementById("ms-row-" + n)?.remove();
+      updateFeePreview();
+    }
+
+    function setType(t) {
+      contractType = t;
+      ["milestone","hourly","fixed"].forEach(x => {
+        document.getElementById("type-" + x)?.classList.toggle("active", x === t);
+      });
+      document.getElementById("milestonesCard").style.display = t === "milestone" ? "block" : "none";
+      const rateLabel = document.getElementById("rateLabel");
+      if (rateLabel) {
+        rateLabel.textContent = t === "hourly" ? "Hourly Rate (USD) *" :
+                                t === "fixed"  ? "Total Price (USD) *" : "Total Contract Value (USD) *";
+      }
+      updateFeePreview();
+    }
+
+    function updateFeePreview() {
+      let total = 0;
+      if (contractType === "milestone") {
+        for (let i = 1; i <= milestoneCount; i++) {
+          const v = parseFloat(document.getElementById("ms-amount-" + i)?.value || "0");
+          if (!isNaN(v)) total += v;
+        }
+      } else {
+        total = parseFloat(document.getElementById("rate")?.value || "0") || 0;
+        if (contractType === "hourly") total = total * 160; // estimate 1 month
+      }
+      const fee = (total * 0.10).toFixed(2);
+      const el  = document.getElementById("feeAmount");
+      if (el) el.textContent = total > 0 ? `$${parseFloat(fee).toLocaleString()}` : "—";
+    }
+
+    function getMilestones() {
+      const ms = [];
+      for (let i = 1; i <= milestoneCount; i++) {
+        const title  = document.getElementById("ms-title-"  + i)?.value.trim();
+        const amount = document.getElementById("ms-amount-" + i)?.value;
+        const due    = document.getElementById("ms-due-"    + i)?.value;
+        if (title || amount) ms.push({ title: title || `Milestone ${i}`, amount, dueDate: due });
+      }
+      return ms;
+    }
+
+    async function sendOffer() {
+      const roleTitle     = document.getElementById("roleTitle")?.value.trim();
+      const rate          = contractType === "milestone"
+        ? getMilestones().reduce((s, m) => s + (parseFloat(m.amount) || 0), 0).toString()
+        : document.getElementById("rate")?.value.trim();
+      const startDate     = document.getElementById("startDate")?.value;
+      const scope         = document.getElementById("scope")?.value.trim();
+      const candidateEmail = document.getElementById("candidateEmail")?.value.trim();
+
+      if (!roleTitle || !rate || !candidateId || !candidateEmail) {
+        showMsg("error", "Please fill in Role Title, Rate, and Candidate Email.");
+        return;
+      }
+
+      const payload = {
+        employerId,
+        employerEmail,
+        employerCompany:  employerCo,
+        candidateHedera:  candidateId,
+        candidateName,
+        candidateEmail,
+        roleTitle,
+        contractType,
+        rate,
+        currency: "USD",
+        startDate:      startDate || null,
+        scope:          scope     || null,
+        milestonesJson: contractType === "milestone" ? getMilestones() : null,
+      };
+
+      try {
+        const res  = await fetch(apiBase + "/api/offers", {
+          method:  "POST",
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token() },
+          body:    JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+          showMsg("success",
+            `✅ Offer sent! ${candidateName} will be notified. ` +
+            `GeniusSeeker placement fee: $${parseFloat(data.placementFee).toLocaleString()} ` +
+            `(invoiced after contract is signed).`);
+          document.querySelector(".offer-wrap").style.opacity = ".4";
+          document.querySelector(".offer-wrap").style.pointerEvents = "none";
+        } else {
+          showMsg("error", data.error || "Failed to send offer.");
+        }
+      } catch { showMsg("error", "Could not connect to server."); }
+    }
+
+    function showMsg(type, text) {
+      const el = document.getElementById("formMsg");
+      el.className = "form-msg " + type;
+      el.textContent = text;
+      el.style.display = "block";
+      el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    render();
+    // Initialize milestone card visibility
+    setTimeout(() => setType("milestone"), 50);
+  </script>
+</body>
+</html>
