@@ -10,6 +10,7 @@ const uuid_1 = require("uuid");
 const db_1 = require("./db");
 const validators_1 = require("./validators");
 const hedera_1 = require("./hedera");
+const badge_metadata_1 = require("./badge-metadata");
 const app = (0, express_1.default)();
 // CORS — dev friendly. Lock down via CORS_ORIGIN in prod.
 app.use((0, cors_1.default)({ origin: process.env.CORS_ORIGIN || "*" }));
@@ -196,7 +197,7 @@ app.post("/api/credentials/verify", async (req, res) => {
     if (tokenId) {
         try {
             const payload = { credentialType, hederaAccountId, metadata, issuedAt: createdAt, issuer: "GeniusSeeker" };
-            const bytes = Buffer.from(id);    
+            const bytes = badge_metadata_1.getBadgeMetadataBytes(badge.category, badge.level);    
             const minted = await (0, hedera_1.mintNftToTreasury)({ tokenId, metadataBytes: bytes });
             hederaTokenId = tokenId;
             hederaSerial = minted.serial;
@@ -271,7 +272,7 @@ app.post("/api/badges/issue", async (req, res) => {
     console.log("🔑 tokenId:", tokenId, "env:", process.env.HEDERA_BADGE_TOKEN_ID);
 	if (tokenId) {
         try {
-            const bytes = Buffer.from(id);
+            const bytes = badge_metadata_1.getBadgeMetadataBytes(badge.category, badge.level);
             const minted = await (0, hedera_1.mintNftToTreasury)({ tokenId, metadataBytes: bytes });
             hederaTokenId = tokenId;
             hederaSerial = minted.serial;

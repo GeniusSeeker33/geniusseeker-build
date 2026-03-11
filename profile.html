@@ -60,17 +60,35 @@
 
     .profile-main { display: flex; flex-direction: column; gap: 16px; }
 
+    /* ── Badge Card ── */
     .steam-badge-card {
       background: linear-gradient(135deg, rgba(201,168,76,.12) 0%, rgba(122,92,30,.08) 100%);
       border: 1px solid rgba(201,168,76,.3);
       border-radius: 12px; padding: 20px 22px;
       display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
     }
-    .badge-icon  { width: 56px; height: 56px; border-radius: 50%; background: rgba(201,168,76,.2); border: 2px solid rgba(201,168,76,.4); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; flex-shrink: 0; }
-    .badge-info  { flex: 1; }
-    .badge-title { font-size: 1rem; font-weight: 600; color: #c9a84c; margin-bottom: 2px; }
-    .badge-meta  { font-size: .82rem; opacity: .6; }
+    .badge-artwork-wrap {
+      width: 90px; height: 90px; flex-shrink: 0;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 2px solid rgba(201,168,76,.35);
+      background: rgba(201,168,76,.08);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .badge-artwork-wrap img {
+      width: 100%; height: 100%; object-fit: cover;
+      display: block;
+    }
+    .badge-artwork-fallback {
+      font-size: 2.2rem;
+    }
+    .badge-info  { flex: 1; min-width: 160px; }
+    .badge-title { font-size: 1rem; font-weight: 600; color: #c9a84c; margin-bottom: 4px; }
+    .badge-meta  { font-size: .82rem; opacity: .6; margin-bottom: 8px; }
+    .badge-footer { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .badge-level { background: rgba(201,168,76,.2); color: #c9a84c; font-size: .75rem; font-weight: 700; padding: 4px 12px; border-radius: 999px; border: 1px solid rgba(201,168,76,.3); }
+    .badge-nft-link { font-size: .72rem; opacity: .45; color: inherit; text-decoration: none; padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,.1); }
+    .badge-nft-link:hover { opacity: .8; }
 
     .section-card { background: var(--surface, #1a1a1a); border: 1px solid var(--border, #2a2a2a); border-radius: 12px; padding: 20px 22px; }
     .section-card h3 { font-size: .95rem; font-weight: 600; margin-bottom: 12px; }
@@ -79,7 +97,6 @@
     .skills-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
     .skill-tag   { font-size: .8rem; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--border, #2a2a2a); background: rgba(255,255,255,.04); }
 
-    /* ── Expandable Full Profile ── */
     .expand-card { background: var(--surface, #1a1a1a); border: 1px solid var(--border, #2a2a2a); border-radius: 12px; overflow: hidden; }
     .expand-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 22px; cursor: pointer; user-select: none; transition: background .2s; }
     .expand-header:hover { background: rgba(255,255,255,.03); }
@@ -150,12 +167,48 @@
       not_looking: { label: "Not Looking",      cls: "status-not_looking" },
     };
 
+    // ── Badge image lookup ──
+    const BADGE_GATEWAY = "https://ipfs.filebase.io/ipfs";
+    const BADGE_PNG_CIDS = {
+      "Arts_1":        "QmXsHqXskqhfzx37BYiGEbZdm9f4CCv9Q8tZcKSt5338Si",
+      "Arts_2":        "QmSrK24JkWESNpDst7ypmBkwcNgPE9Pk5Dtd7wUz8aV8Tz",
+      "Arts_3":        "QmYEwyFKafuEFChcJXXMATGLXtGQ6VnNC4v8zPW5D7yW5X",
+      "Arts_4":        "QmdWL551YLrTKjA5KY4bWuPiMJd94xfhjFW1f2Aijr64CZ",
+      "Arts_5":        "QmfGJATaW4AJtmSEM6b5o6oWVPrxHey27NoM6J8zYBo7NE",
+      "Engineering_1": "QmXdX75qVtdo7GKgpPqAxvhNEaGh372xPWbViJf1yX5XoR",
+      "Engineering_2": "QmYeZymJJNTpzdgDTTsFeTR4HKCeQfd7reJqnPMByPFAx7",
+      "Engineering_3": "QmUHSFBLvFCSfpmmFcW1oYusXSpvzRvWRHv3xaL7o7Qb8i",
+      "Engineering_4": "QmbEaSh4TtzvFz7obSYRLtJigyN8pht3gDSBFSPJR5kDQ5",
+      "Engineering_5": "QmRLtfiwcAYKwQNBZh6z9manT4FpUVjP37t2jBTtKqSQrT",
+      "Math_1":        "QmPGBGyisrHYaiww7Y442opcPCykRuxgBS24QxBBUtnFZi",
+      "Math_2":        "QmWySvJ8Wep6K6qP8nMvWALoHsgw443vUrbxfTgWAW2G6K",
+      "Math_3":        "Qmcjya8EAeNfqxzX9tt4W26YFsC2Y4W5KZD7Hakkwy712A",
+      "Math_4":        "QmXPgXRYUarcgxVs6RN9CF2pwrmX6fNv7i493suQSpsrBj",
+      "Math_5":        "QmdtuBmp4Mfq3cpMbdwCjMUmx6gTaymwbM6aBsiUNvLdVo",
+      "Science_1":     "Qmc1V1Py7sTNaW8b2Efax3G8WuRbXMuVF52kQ9788PzwmK",
+      "Science_2":     "QmYoYK8FwecifVPGBKDp1mNPKp1GWo4HmbKsRwvyepDER2",
+      "Science_3":     "QmTF72EzyBN7voKNzPtFMACFhEAkBTpiyDVkN7SVnKQLnE",
+      "Science_4":     "QmcZVPPiMktHip3ddYqrqrz3LAbzCWcuNhy28TEheTsuAk",
+      "Science_5":     "QmPqJWMm48zrXX2PEkbsF3yezKXLBKLBZX56oxxPHNdSnE",
+      "Technology_1":  "QmSAS71YkEnBg69L1Mcit5J6CqmoyKGdKiQQ2NH92x4E3o",
+      "Technology_2":  "QmbKiQoYjGL1NroKBS6fSKLq2PwoL45tsWWgctTjBcWmjk",
+      "Technology_3":  "Qme1kF56aAWS4UxLHknw3ciyvZJpVDnhyyBcyWLAHG96Vj",
+      "Technology_4":  "QmTee1cj4xzeSx5Es8b7NdV4oNYfrN1wFAWLLeWTLpuigt",
+      "Technology_5":  "Qmeyq3NxHbSSEJje2iQ4mf9FGTbLKdHZgPV1DQQhQWazJH",
+    };
+    const CAT_MAP = { "Mathematics":"Math", "Math":"Math", "Arts":"Arts", "Engineering":"Engineering", "Science":"Science", "Technology":"Technology" };
+
+    function getBadgeImageUrl(category, level) {
+      const cat = CAT_MAP[category] || category;
+      const cid = BADGE_PNG_CIDS[`${cat}_${level}`];
+      return cid ? `${BADGE_GATEWAY}/${cid}` : null;
+    }
+
     function initials(name) {
       if (!name) return "?";
       return name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
     }
 
-    // Avatar: layered — initials behind, photo on top fading in, hides itself on error
     function avatarHtml(url, name) {
       const init = initials(name);
       if (!url) return `<span class="avatar-initials">${init}</span>`;
@@ -186,7 +239,15 @@
       const steamCat   = badgeMeta?.badge?.category || badgeMeta?.badge?.name || "—";
       const steamLevel = badgeMeta?.badge?.level || "—";
       const steamIcon  = STEAM_ICONS[steamCat] || "⭐";
+      const badgeImgUrl = getBadgeImageUrl(steamCat, steamLevel);
       const skills     = Array.isArray(profile.skills) ? profile.skills : [];
+
+      // HashScan link if we have token info
+      const hederaTokenId = badgeMeta?.hederaTokenId || badge?.hedera_token_id || "";
+      const hederaSerial  = badgeMeta?.hederaSerial  || badge?.hedera_serial  || "";
+      const hashscanUrl   = hederaTokenId && hederaSerial
+        ? `https://hashscan.io/testnet/token/${hederaTokenId}/${hederaSerial}`
+        : "";
 
       const hasLinkedIn  = !!profile.linkedin_url;
       const hasResumeTxt = !!profile.resume_text;
@@ -249,12 +310,21 @@
 
             ${badgeMeta ? `
             <div class="steam-badge-card">
-              <div class="badge-icon">${steamIcon}</div>
+              <div class="badge-artwork-wrap">
+                ${badgeImgUrl
+                  ? `<img src="${badgeImgUrl}" alt="${steamCat} Badge Level ${steamLevel}"
+                       onerror="this.parentElement.innerHTML='<span class=\\'badge-artwork-fallback\\'>${steamIcon}</span>'" />`
+                  : `<span class="badge-artwork-fallback">${steamIcon}</span>`
+                }
+              </div>
               <div class="badge-info">
                 <div class="badge-title">STEAM Badge — ${steamCat}</div>
-                <div class="badge-meta">Verified by GeniusSeeker · Quiz version ${badgeMeta.quizVersion || "STEAM_V1"}</div>
+                <div class="badge-meta">Genius Certified · Quiz version ${badgeMeta.quizVersion || "STEAM_V1"}</div>
+                <div class="badge-footer">
+                  <span class="badge-level">Level ${steamLevel}</span>
+                  ${hashscanUrl ? `<a class="badge-nft-link" href="${hashscanUrl}" target="_blank">View NFT ↗</a>` : ""}
+                </div>
               </div>
-              <span class="badge-level">Level ${steamLevel}</span>
             </div>` : ""}
 
             ${profile.bio ? `<div class="section-card"><h3>About</h3><p>${profile.bio}</p></div>` : ""}
