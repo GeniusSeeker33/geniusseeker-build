@@ -22,3 +22,8 @@ Thumbs.db
 *.pem
 *.key
 *.p12
+*.bak
+*.sqlite-shm
+*.sqlite-wal
+create-tokens.js
+associate-tokens.js

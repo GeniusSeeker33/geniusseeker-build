@@ -275,7 +275,7 @@ export default function Quiz() {
     };
     try {
       const response = await fetch(
-        "https://symphonious-sunshine-96ba29.netlify.app/.netlify/functions/upload",
+        "/api/quiz/submit",
         { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(fileData) }
       );
       try { await response.json(); } catch {}

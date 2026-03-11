@@ -1,51 +1,431 @@
-<div class="card" style="margin-bottom:14px">
-  <h3>Connect your Talent Identity</h3>
-  <p class="muted">Enter your Hedera Account ID (we’ll add wallet connect next).</p>
+<!-- connect-identity.html — HashPack Wallet Connect partial -->
+<!-- Drop-in replacement. Requires /js/identity-client.js to be loaded on the host page. -->
+<!-- HashConnect v1 loaded from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/hashconnect@1.2.0/dist/hashconnect.js"></script>
 
-  <div class="form" style="display:grid;gap:10px">
-    <label>
-      Hedera Account ID
-      <input id="gsAccountId" type="text" placeholder="0.0.12345" />
-    </label>
+<style>
+  /* ── Wallet Connect Card ── */
+  .gs-wallet-card {
+    background: #0f1117;
+    border: 1px solid #1e2330;
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .gs-wallet-card::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 180px; height: 180px;
+    background: radial-gradient(circle, rgba(100,220,180,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .gs-wallet-card h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #f0f4f8;
+    margin: 0 0 4px 0;
+    letter-spacing: -0.01em;
+  }
+  .gs-wallet-card .gs-subtitle {
+    font-size: 0.82rem;
+    color: #5a6478;
+    margin: 0 0 20px 0;
+  }
 
-    <label>
-      Display Name (optional)
-      <input id="gsDisplayName" type="text" placeholder="Your name" />
-    </label>
+  /* ── States ── */
+  #gs-state-disconnected,
+  #gs-state-pairing,
+  #gs-state-connected { display: none; }
+  #gs-state-disconnected { display: block; } /* default visible */
 
-    <button class="btn" id="gsSaveIdentity" type="button">Save Identity</button>
-    <div id="gsIdentityStatus" class="muted"></div>
+  /* ── Buttons ── */
+  .gs-btn-hashpack {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, #3ecf8e 0%, #2db67d 100%);
+    color: #0a1a12;
+    font-weight: 700;
+    font-size: 0.9rem;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 20px;
+    cursor: pointer;
+    width: 100%;
+    justify-content: center;
+    transition: opacity 0.15s, transform 0.1s;
+    letter-spacing: 0.01em;
+  }
+  .gs-btn-hashpack:hover { opacity: 0.9; transform: translateY(-1px); }
+  .gs-btn-hashpack:active { transform: translateY(0); }
+  .gs-btn-hashpack svg { flex-shrink: 0; }
+
+  .gs-btn-manual {
+    background: none;
+    border: 1px solid #2a3040;
+    color: #5a6478;
+    font-size: 0.78rem;
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 8px;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .gs-btn-manual:hover { border-color: #3ecf8e; color: #3ecf8e; }
+
+  .gs-btn-disconnect {
+    background: none;
+    border: 1px solid #2a3040;
+    color: #5a6478;
+    font-size: 0.78rem;
+    border-radius: 8px;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .gs-btn-disconnect:hover { border-color: #e05a5a; color: #e05a5a; }
+
+  /* ── QR / Pairing ── */
+  .gs-pairing-box {
+    background: #161b27;
+    border: 1px solid #1e2330;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+  }
+  .gs-pairing-box p {
+    color: #7a8496;
+    font-size: 0.82rem;
+    margin: 0 0 14px 0;
+  }
+  #gs-qr-container canvas,
+  #gs-qr-container img {
+    border-radius: 8px;
+    max-width: 200px;
+  }
+  .gs-pairing-string {
+    font-family: monospace;
+    font-size: 0.72rem;
+    color: #3ecf8e;
+    word-break: break-all;
+    background: #0a0e14;
+    padding: 8px 10px;
+    border-radius: 6px;
+    margin-top: 12px;
+    display: block;
+  }
+  .gs-loader {
+    display: inline-block;
+    width: 18px; height: 18px;
+    border: 2px solid #2a3040;
+    border-top-color: #3ecf8e;
+    border-radius: 50%;
+    animation: gs-spin 0.7s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  @keyframes gs-spin { to { transform: rotate(360deg); } }
+
+  /* ── Connected ── */
+  .gs-connected-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .gs-identity-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #161b27;
+    border: 1px solid #1e2330;
+    border-radius: 10px;
+    padding: 10px 14px;
+    flex: 1;
+    min-width: 0;
+  }
+  .gs-dot {
+    width: 8px; height: 8px;
+    background: #3ecf8e;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 6px #3ecf8e88;
+  }
+  .gs-account-id {
+    font-family: monospace;
+    font-size: 0.88rem;
+    color: #d0d8e8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .gs-verified-badge {
+    font-size: 0.7rem;
+    background: rgba(62,207,142,0.12);
+    color: #3ecf8e;
+    border: 1px solid rgba(62,207,142,0.25);
+    border-radius: 20px;
+    padding: 2px 8px;
+    flex-shrink: 0;
+  }
+
+  /* ── Manual fallback ── */
+  .gs-manual-form {
+    display: none;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #1e2330;
+  }
+  .gs-manual-form.visible { display: block; }
+  .gs-manual-form label {
+    display: block;
+    font-size: 0.78rem;
+    color: #5a6478;
+    margin-bottom: 6px;
+  }
+  .gs-manual-form input {
+    width: 100%;
+    background: #161b27;
+    border: 1px solid #2a3040;
+    border-radius: 8px;
+    color: #d0d8e8;
+    font-size: 0.88rem;
+    padding: 9px 12px;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .gs-manual-form input:focus { border-color: #3ecf8e; }
+  .gs-manual-form input::placeholder { color: #3a4050; }
+  .gs-btn-save {
+    margin-top: 10px;
+    background: #1e2330;
+    border: 1px solid #2a3040;
+    color: #d0d8e8;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 9px 18px;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .gs-btn-save:hover { background: #252d3d; border-color: #3ecf8e; }
+
+  .gs-status-msg {
+    font-size: 0.78rem;
+    margin-top: 10px;
+    color: #5a6478;
+    min-height: 18px;
+  }
+  .gs-status-msg.ok  { color: #3ecf8e; }
+  .gs-status-msg.err { color: #e05a5a; }
+</style>
+
+<div class="gs-wallet-card">
+  <h3>Connect Your Talent Identity</h3>
+  <p class="gs-subtitle">Link your Hedera wallet to unlock on-chain credentials &amp; badges.</p>
+
+  <!-- STATE: DISCONNECTED -->
+  <div id="gs-state-disconnected">
+    <button class="gs-btn-hashpack" id="gs-btn-connect">
+      <!-- HashPack icon -->
+      <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
+        <rect width="32" height="32" rx="8" fill="#fff"/>
+        <path d="M8 24V8h4v6h8V8h4v16h-4v-6H12v6H8z" fill="#0a0a0a"/>
+      </svg>
+      Connect HashPack Wallet
+    </button>
+    <button class="gs-btn-manual" id="gs-btn-manual-toggle">
+      Enter Account ID manually instead
+    </button>
+
+    <!-- Manual fallback form -->
+    <div class="gs-manual-form" id="gs-manual-form">
+      <label for="gs-acct-input">Hedera Account ID</label>
+      <input id="gs-acct-input" type="text" placeholder="0.0.12345" autocomplete="off" />
+      <label for="gs-name-input" style="margin-top:10px">Display Name (optional)</label>
+      <input id="gs-name-input" type="text" placeholder="Your name" />
+      <button class="gs-btn-save" id="gs-btn-save-manual">Save Identity</button>
+    </div>
+
+    <div class="gs-status-msg" id="gs-status-disconnected"></div>
+  </div>
+
+  <!-- STATE: PAIRING (waiting for wallet approval) -->
+  <div id="gs-state-pairing">
+    <div class="gs-pairing-box">
+      <p><span class="gs-loader"></span>Waiting for HashPack approval…</p>
+      <div id="gs-qr-container"></div>
+      <span class="gs-pairing-string" id="gs-pairing-str"></span>
+      <p style="margin-top:12px;font-size:0.75rem;color:#3a4050">
+        Open HashPack → Connect dApp → paste the pairing string above,<br>or scan the QR code.
+      </p>
+      <button class="gs-btn-manual" id="gs-btn-cancel-pair" style="margin-top:12px">Cancel</button>
+    </div>
+  </div>
+
+  <!-- STATE: CONNECTED -->
+  <div id="gs-state-connected">
+    <div class="gs-connected-row">
+      <div class="gs-identity-pill">
+        <span class="gs-dot"></span>
+        <span class="gs-account-id" id="gs-connected-account">—</span>
+        <span class="gs-verified-badge">✓ Linked</span>
+      </div>
+      <button class="gs-btn-disconnect" id="gs-btn-disconnect">Disconnect</button>
+    </div>
+    <div class="gs-status-msg ok" id="gs-status-connected">Identity linked. You're ready to earn badges.</div>
   </div>
 </div>
 
 <script src="/js/identity-client.js"></script>
 <script>
-  (function () {
-    const acct = document.getElementById("gsAccountId");
-    const name = document.getElementById("gsDisplayName");
-    const btn  = document.getElementById("gsSaveIdentity");
-    const msg  = document.getElementById("gsIdentityStatus");
-
-    // preload
-    const saved = GSIdentity.getAccountId();
-    if (saved) acct.value = saved;
-
-    btn.addEventListener("click", async () => {
-      const hederaAccountId = (acct.value || "").trim();
-      const displayName = (name.value || "").trim();
-
-      if (!hederaAccountId) {
-        msg.textContent = "Please enter a Hedera Account ID (e.g., 0.0.12345).";
-        return;
-      }
-
-      try {
-        GSIdentity.setAccountId(hederaAccountId);
-        const r = await GSIdentity.upsertProfile({ hederaAccountId, displayName });
-        msg.textContent = "Saved ✅ " + r.profile.hedera_account_id;
-      } catch (e) {
-        msg.textContent = "Error saving identity: " + e.message;
-      }
+(function () {
+  // ── State helpers ──
+  function showState(name) {
+    ['disconnected','pairing','connected'].forEach(s => {
+      document.getElementById('gs-state-' + s).style.display = s === name ? 'block' : 'none';
     });
-  })();
+  }
+
+  // ── Check if already connected ──
+  const savedId = GSIdentity.getAccountId();
+  if (savedId) {
+    document.getElementById('gs-connected-account').textContent = savedId;
+    showState('connected');
+  }
+
+  // ── Manual toggle ──
+  document.getElementById('gs-btn-manual-toggle').addEventListener('click', function () {
+    const form = document.getElementById('gs-manual-form');
+    const isVisible = form.classList.contains('visible');
+    form.classList.toggle('visible', !isVisible);
+    this.textContent = isVisible ? 'Enter Account ID manually instead' : 'Hide manual entry';
+    // preload saved account
+    const saved = GSIdentity.getAccountId();
+    if (saved) document.getElementById('gs-acct-input').value = saved;
+  });
+
+  // ── Manual save ──
+  document.getElementById('gs-btn-save-manual').addEventListener('click', async function () {
+    const hederaAccountId = document.getElementById('gs-acct-input').value.trim();
+    const displayName     = document.getElementById('gs-name-input').value.trim();
+    const msg = document.getElementById('gs-status-disconnected');
+
+    if (!hederaAccountId || !/^\d+\.\d+\.\d+$/.test(hederaAccountId)) {
+      msg.textContent = 'Please enter a valid Hedera Account ID (e.g. 0.0.12345).';
+      msg.className   = 'gs-status-msg err';
+      return;
+    }
+    msg.textContent = 'Saving…';
+    msg.className   = 'gs-status-msg';
+    try {
+      await GSIdentity.upsertProfile({ hederaAccountId, displayName });
+      GSIdentity.setAccountId(hederaAccountId);
+      if (displayName) GSIdentity.setDisplayName(displayName);
+      document.getElementById('gs-connected-account').textContent = hederaAccountId;
+      document.getElementById('gs-status-connected').textContent  = 'Identity linked manually. You\'re ready to earn badges.';
+      showState('connected');
+    } catch (e) {
+      msg.textContent = 'Error: ' + e.message;
+      msg.className   = 'gs-status-msg err';
+    }
+  });
+
+  // ── Disconnect ──
+  document.getElementById('gs-btn-disconnect').addEventListener('click', function () {
+    GSIdentity.setAccountId('');
+    GSIdentity.setDisplayName('');
+    if (window._gsHashConnect) {
+      try { window._gsHashConnect.disconnect(window._gsHashSession); } catch (_) {}
+    }
+    showState('disconnected');
+  });
+
+  // ── HashConnect ──
+  document.getElementById('gs-btn-connect').addEventListener('click', async function () {
+    if (typeof HashConnect === 'undefined') {
+      const msg = document.getElementById('gs-status-disconnected');
+      msg.textContent = 'HashConnect SDK not loaded. Try the manual option below.';
+      msg.className = 'gs-status-msg err';
+      return;
+    }
+
+    showState('pairing');
+
+    try {
+      const hashconnect = new HashConnect();
+      window._gsHashConnect = hashconnect;
+
+      const appMetadata = {
+        name:        'GeniusSeeker',
+        description: 'STEAM talent platform — on-chain credentials & badges',
+        icon:        'https://geniusseeker.com/favicon.ico'
+      };
+
+      const initData = await hashconnect.init(appMetadata, 'testnet', false);
+      const pairingString = initData.pairingString;
+
+      // Show pairing string
+      document.getElementById('gs-pairing-str').textContent = pairingString;
+
+      // Generate QR code if qrcode.js is available, otherwise just show string
+      if (window.QRCode) {
+        const qrEl = document.getElementById('gs-qr-container');
+        qrEl.innerHTML = '';
+        new QRCode(qrEl, { text: pairingString, width: 180, height: 180 });
+      }
+
+      // Listen for pairing
+      hashconnect.pairingEvent.on(async (pairingData) => {
+        const accountId = pairingData.accountIds?.[0];
+        if (!accountId) return;
+
+        window._gsHashSession = pairingData.topic;
+        GSIdentity.setAccountId(accountId);
+
+        // Upsert profile on backend
+        try {
+          await GSIdentity.upsertProfile({ hederaAccountId: accountId });
+        } catch (e) {
+          console.warn('Profile upsert failed:', e);
+        }
+
+        document.getElementById('gs-connected-account').textContent = accountId;
+        document.getElementById('gs-status-connected').textContent  = 'HashPack connected ✓ You\'re ready to earn badges.';
+        showState('connected');
+
+        // Dispatch event so other page scripts can react
+        window.dispatchEvent(new CustomEvent('gs:walletConnected', { detail: { accountId } }));
+      });
+
+    } catch (err) {
+      console.error('HashConnect error:', err);
+      const msg = document.getElementById('gs-status-disconnected');
+      msg.textContent = 'Connection failed: ' + err.message + '. Try the manual option.';
+      msg.className = 'gs-status-msg err';
+      showState('disconnected');
+    }
+  });
+
+  // Cancel pairing
+  document.getElementById('gs-btn-cancel-pair').addEventListener('click', function () {
+    if (window._gsHashConnect) {
+      try { window._gsHashConnect.disconnect(); } catch (_) {}
+    }
+    showState('disconnected');
+  });
+
+  // ── Listen for wallet connected event (e.g. from quiz page) ──
+  window.addEventListener('gs:walletConnected', function (e) {
+    const { accountId } = e.detail;
+    document.getElementById('gs-connected-account').textContent = accountId;
+    showState('connected');
+  });
+})();
 </script>

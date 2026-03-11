@@ -1,8 +1,12 @@
-import Database from "better-sqlite3";
-
-export const db: Database.Database = new Database("identity-service.sqlite");
-
-db.exec(`
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.db = void 0;
+const better_sqlite3_1 = __importDefault(require("better-sqlite3"));
+exports.db = new better_sqlite3_1.default("identity-service.sqlite");
+exports.db.exec(`
   PRAGMA journal_mode=WAL;
 
   CREATE TABLE IF NOT EXISTS profiles (
@@ -64,40 +68,43 @@ db.exec(`
     created_at  TEXT NOT NULL
   );
 
+
+
+
   CREATE TABLE IF NOT EXISTS recruiter_applications (
     id              TEXT PRIMARY KEY,
     full_name       TEXT NOT NULL,
     email           TEXT NOT NULL UNIQUE,
     phone           TEXT,
     linkedin_url    TEXT,
-    steam_fields    TEXT,
-    experience      TEXT,
-    industries      TEXT,
-    why_join        TEXT,
+    steam_fields    TEXT,        -- comma-separated STEAM areas
+    experience      TEXT,        -- years recruiting experience
+    industries      TEXT,        -- industries they recruit in
+    why_join        TEXT,        -- why they want to join GeniusSeeker
     referral_source TEXT,
-    status          TEXT NOT NULL DEFAULT 'pending',
+    status          TEXT NOT NULL DEFAULT 'pending',  -- pending | approved | rejected
     admin_notes     TEXT,
     created_at      TEXT NOT NULL
   );
-
   CREATE TABLE IF NOT EXISTS offers (
     id               TEXT PRIMARY KEY,
-    employer_id      TEXT NOT NULL,
+    employer_id      TEXT NOT NULL,       -- employer_profiles.id
     employer_email   TEXT NOT NULL,
     employer_company TEXT NOT NULL,
-    candidate_hedera TEXT NOT NULL,
+    candidate_hedera TEXT NOT NULL,       -- profiles.hedera_account_id
     candidate_name   TEXT,
     role_title       TEXT NOT NULL,
-    contract_type    TEXT NOT NULL,
-    rate             TEXT NOT NULL,
+    contract_type    TEXT NOT NULL,       -- 'milestone' | 'hourly' | 'fixed'
+    rate             TEXT NOT NULL,       -- e.g. "5000" or "75/hr"
     currency         TEXT DEFAULT 'USD',
     start_date       TEXT,
     scope            TEXT,
-    milestones_json  TEXT,
+    milestones_json  TEXT,               -- JSON array [{title, amount, due_date}]
     status           TEXT NOT NULL DEFAULT 'pending',
-    counter_note     TEXT,
-    placement_fee    TEXT,
-    deel_contract_id TEXT,
+    -- pending | accepted | declined | countered | agreed | contracted | completed
+    counter_note     TEXT,               -- candidate's counter-offer note
+    placement_fee    TEXT,               -- GeniusSeeker fee amount
+    deel_contract_id TEXT,               -- set once Deel contract is created
     created_at       TEXT NOT NULL,
     updated_at       TEXT NOT NULL
   );
@@ -106,7 +113,7 @@ db.exec(`
     id               TEXT PRIMARY KEY,
     offer_id         TEXT NOT NULL,
     deel_contract_id TEXT NOT NULL UNIQUE,
-    deel_status      TEXT,
+    deel_status      TEXT,               -- active | terminated | etc
     signed_at        TEXT,
     terminated_at    TEXT,
     total_value      TEXT,
@@ -117,13 +124,12 @@ db.exec(`
 
   CREATE TABLE IF NOT EXISTS deel_sync_log (
     id          TEXT PRIMARY KEY,
-    event_type  TEXT NOT NULL,
-    entity_id   TEXT,
+    event_type  TEXT NOT NULL,    -- webhook event or API call type
+    entity_id   TEXT,             -- offer_id or contract_id
     payload_json TEXT,
-    status      TEXT,
+    status      TEXT,             -- ok | error
     created_at  TEXT NOT NULL
   );
-
   CREATE TABLE IF NOT EXISTS employer_profiles (
     id              TEXT PRIMARY KEY,
     company_name    TEXT NOT NULL,
@@ -173,7 +179,6 @@ db.exec(`
     comments        TEXT,
     created_at      TEXT NOT NULL
   );
-
   CREATE TABLE IF NOT EXISTS employer_sessions (
     id         TEXT PRIMARY KEY,
     email      TEXT NOT NULL,
@@ -182,23 +187,26 @@ db.exec(`
     expires_at TEXT NOT NULL
   );
 `);
-
-const profileColumns: [string, string][] = [
-  ["bio",            "TEXT"],
-  ["skills",         "TEXT"],
-  ["avatar_url",     "TEXT"],
-  ["portfolio_url",  "TEXT"],
-  ["linkedin_url",   "TEXT"],
-  ["github_url",     "TEXT"],
-  ["open_to_work",   "TEXT DEFAULT 'open'"],
-  ["resume_text",    "TEXT"],
-  ["resume_pdf_url", "TEXT"],
+// ── Profile column migrations (safe to run repeatedly) ──
+// SQLite doesn't support IF NOT EXISTS on ALTER TABLE,
+// so we wrap each in a try/catch at runtime.
+const profileColumns = [
+    ["bio", "TEXT"],
+    ["skills", "TEXT"], // JSON array stored as string
+    ["avatar_url", "TEXT"],
+    ["portfolio_url", "TEXT"],
+    ["linkedin_url", "TEXT"],
+    ["github_url", "TEXT"],
+    ["open_to_work", "TEXT DEFAULT 'open'"], // 'looking' | 'open' | 'not_looking'
+    ["resume_text", "TEXT"], // pasted resume / LinkedIn text
+    ["resume_pdf_url", "TEXT"], // URL to uploaded resume PDF
 ];
-
 for (const [col, type] of profileColumns) {
-  try {
-    db.exec(`ALTER TABLE profiles ADD COLUMN ${col} ${type}`);
-  } catch (_) {
-    // Column already exists
-  }
+    try {
+        exports.db.exec(`ALTER TABLE profiles ADD COLUMN ${col} ${type}`);
+    }
+    catch (_) {
+        // Column already exists — safe to ignore
+    }
 }
+//# sourceMappingURL=db.js.map

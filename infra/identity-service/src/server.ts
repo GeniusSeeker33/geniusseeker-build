@@ -58,7 +58,7 @@ app.post("/api/profile/upsert", (req, res) => {
   if (!hederaAccountId) return res.status(400).json({ error: "hederaAccountId required" });
 
   const id = `profile_${hederaAccountId}`;
-  const existing = db.prepare("SELECT * FROM profiles WHERE id=?").get(id);
+  const existing = db.prepare("SELECT * FROM profiles WHERE id=?").get(id) as Record<string, any> | undefined;
   const name = displayName?.trim() || null;
 
   if (existing) {
@@ -86,7 +86,7 @@ app.post("/api/profile/update", (req, res) => {
   if (!hederaAccountId) return res.status(400).json({ error: "hederaAccountId required" });
 
   const id = `profile_${hederaAccountId}`;
-  const existing = db.prepare("SELECT * FROM profiles WHERE id=?").get(id);
+  const existing = db.prepare("SELECT * FROM profiles WHERE id=?").get(id) as Record<string, any> | undefined;
 
   if (!existing) {
     db.prepare(
@@ -297,7 +297,7 @@ app.post("/api/badges/issue", async (req, res) => {
       LIMIT 1
     `
     )
-    .get(hederaAccountId, `%${versionNeedle}%`);
+    .get(hederaAccountId, `%${versionNeedle}%`) as Record<string, any> | undefined;
 
   if (existingCred) {
     return res.json({

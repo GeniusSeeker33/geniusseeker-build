@@ -1,27 +1,53 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { resolve } from "path";
+import fs from "fs";
+
+// Plugin to copy static folders into dist after build
+function copyStaticFolders() {
+  return {
+    name: "copy-static-folders",
+    closeBundle() {
+      const folders = ["css", "js", "partials"];
+      folders.forEach((folder) => {
+        const src = resolve(__dirname, folder);
+        const dest = resolve(__dirname, "dist", folder);
+        if (fs.existsSync(src)) {
+          fs.cpSync(src, dest, { recursive: true });
+          console.log(`✔ Copied ${folder}/ → dist/${folder}/`);
+        }
+      });
+    },
+  };
+}
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), copyStaticFolders()],
   build: {
     rollupOptions: {
       input: {
-        // keep your existing static pages
-        main: "index.html",
-        candidates: "candidates.html",
-        contact: "contact.html",
-        employers: "employers.html",
-        jobs: "jobs.html",
-        founder: "meet-the-founder.html",
-        recruiters: "recruiters.html",
-        submitJob: "submit-a-job.html",
-        testimonials: "testimonials.html",
-        privacy: "privacy-policy.html",
-
-        // NEW React quiz entry
-        quiz: "quiz.html"
-      }
-    }
-  }
+        main:             "index.html",
+        candidates:       "candidates.html",
+        candidatesDir:    "candidates-directory.html",
+        contact:          "contact.html",
+        employers:        "employers.html",
+        employerVerify:   "employer-verify.html",
+        employerReview:   "employer-review.html",
+        jobs:             "jobs.html",
+        founder:          "meet-the-founder.html",
+        recruiters:       "recruiters.html",
+        submitJob:        "submit-a-job.html",
+        testimonials:     "testimonials.html",
+        privacy:          "privacy-policy.html",
+        platform:         "platform.html",
+        profile:          "profile.html",
+        connectIdentity:  "connect-identity.html",
+        adminEmployers:   "admin-employers.html",
+        adminJobs:        "admin-jobs.html",
+        makeOffer:        "make-offer.html",
+        myOffers:         "my-offers.html",
+        quiz:             "quiz.html",
+      },
+    },
+  },
 });
-
