@@ -196,9 +196,7 @@ app.post("/api/credentials/verify", async (req, res) => {
     if (tokenId) {
         try {
             const payload = { credentialType, hederaAccountId, metadata, issuedAt: createdAt, issuer: "GeniusSeeker" };
-            const bytes = Buffer.from(id);
-    id, type: "STEAM_BADGE", category: badge.category, issuer: "GeniusSeeker"
-}));
+            const bytes = Buffer.from(id);    
             const minted = await (0, hedera_1.mintNftToTreasury)({ tokenId, metadataBytes: bytes });
             hederaTokenId = tokenId;
             hederaSerial = minted.serial;
