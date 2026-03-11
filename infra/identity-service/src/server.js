@@ -197,8 +197,8 @@ app.post("/api/credentials/verify", async (req, res) => {
     if (tokenId) {
         try {
             const payload = { credentialType, hederaAccountId, metadata, issuedAt: createdAt, issuer: "GeniusSeeker" };
-            const bytes = badge_metadata_1.getBadgeMetadataBytes(badge.category, badge.level);    
-            const minted = await (0, hedera_1.mintNftToTreasury)({ tokenId, metadataBytes: bytes });
+            const bytes = Buffer.from(id);
+            const minted = await (0, hedera_1.mintAndTransferNft)({ tokenId, metadataBytes: bytes, toAccountId: hederaAccountId });
             hederaTokenId = tokenId;
             hederaSerial = minted.serial;
             txId = minted.txId;
@@ -273,7 +273,7 @@ app.post("/api/badges/issue", async (req, res) => {
 	if (tokenId) {
         try {
             const bytes = badge_metadata_1.getBadgeMetadataBytes(badge.category, badge.level);
-            const minted = await (0, hedera_1.mintNftToTreasury)({ tokenId, metadataBytes: bytes });
+            const minted = await (0, hedera_1.mintAndTransferNft)({ tokenId, metadataBytes: bytes, toAccountId: hederaAccountId });
             hederaTokenId = tokenId;
             hederaSerial = minted.serial;
             txId = minted.txId;
