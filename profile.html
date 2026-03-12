@@ -15,7 +15,12 @@
       align-items: start;
       margin-top: 24px;
     }
-    @media (max-width: 768px) { .profile-layout { grid-template-columns: 1fr; } }
+    @media (max-width: 768px) {
+      .profile-layout { grid-template-columns: 1fr; }
+      .steam-badge-card { flex-direction: column; align-items: flex-start; }
+      .expand-tab { padding: 10px 8px; font-size: .75rem; }
+      .badge-artwork-wrap { width: 72px; height: 72px; }
+    }
 
     .profile-sidebar { display: flex; flex-direction: column; gap: 16px; }
 
@@ -168,7 +173,7 @@
     };
 
     // ── Badge image lookup ──
-    const BADGE_GATEWAY = "https://ipfs.filebase.io/ipfs";
+    const BADGE_GATEWAY = "https://damaged-rose-sloth.myfilebase.com/ipfs";
     const BADGE_PNG_CIDS = {
       "Arts_1":        "QmXsHqXskqhfzx37BYiGEbZdm9f4CCv9Q8tZcKSt5338Si",
       "Arts_2":        "QmSrK24JkWESNpDst7ypmBkwcNgPE9Pk5Dtd7wUz8aV8Tz",
@@ -196,7 +201,7 @@
       "Technology_4":  "QmTee1cj4xzeSx5Es8b7NdV4oNYfrN1wFAWLLeWTLpuigt",
       "Technology_5":  "Qmeyq3NxHbSSEJje2iQ4mf9FGTbLKdHZgPV1DQQhQWazJH",
     };
-    const CAT_MAP = { "Mathematics":"Math", "Math":"Math", "Arts":"Arts", "Engineering":"Engineering", "Science":"Science", "Technology":"Technology" };
+    const CAT_MAP = { "Mathematics":"Math", "Math":"Math", "Arts":"Arts", "Art":"Arts", "Engineering":"Engineering", "Science":"Science", "Technology":"Technology" };
 
     function getBadgeImageUrl(category, level) {
       const cat = CAT_MAP[category] || category;

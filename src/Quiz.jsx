@@ -253,6 +253,7 @@ export default function Quiz() {
         });
 
         setIssueStatus("ok");
+        try { localStorage.setItem("gs_quiz_just_completed", "1"); } catch {}
       } catch (err) {
         console.error("❌ Failed issuing badge:", err);
         setIssueStatus("error");

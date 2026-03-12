@@ -18,7 +18,10 @@
       gap: 12px;
       margin-top: 14px;
     }
-    @media (max-width: 640px) { .profile-editor-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 640px) {
+      .profile-editor-grid { grid-template-columns: 1fr; }
+      .profile-link-bar { flex-direction: column; align-items: flex-start; }
+    }
     .profile-editor-grid .full { grid-column: 1 / -1; }
 
     .profile-editor label {
@@ -710,6 +713,18 @@
         }
       });
     })();
+
+    // ── Auto-refresh profile when returning from quiz ──
+    window.addEventListener("pageshow", () => {
+      const flag = localStorage.getItem("gs_quiz_just_completed");
+      if (flag) {
+        localStorage.removeItem("gs_quiz_just_completed");
+        const acctId = (document.getElementById("gsAccountId")?.value || "").trim()
+                    || localStorage.getItem("gs_hedera_account_id")
+                    || localStorage.getItem("GS_HEDERA_ACCOUNT_ID") || "";
+        if (acctId) loadProfile(acctId);
+      }
+    });
 
     // ══════════════════════════════════════════════════════
     // AI PROFILE IMPORT

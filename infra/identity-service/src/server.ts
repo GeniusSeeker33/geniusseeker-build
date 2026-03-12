@@ -5,6 +5,36 @@ import { v4 as uuid } from "uuid";
 import { db } from "./db";
 import { IssueBadgeSchema, VerifyCredentialSchema } from "./validators";
 import { mintNftToTreasury } from "./hedera";
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+async function sendNewCandidateNotification(hederaAccountId: string, displayName: string | null) {
+  try {
+    await resend.emails.send({
+      from: "GeniusSeeker <noreply@geniusseeker.com>",
+      to: "desiree@geniusseeker.com",
+      subject: `New Candidate: ${displayName || hederaAccountId}`,
+      html: `
+        <h2>New Candidate Identity Saved</h2>
+        <p>A new candidate has saved their identity on GeniusSeeker.</p>
+        <table style="border-collapse:collapse;width:100%;max-width:480px">
+          <tr><td style="padding:8px;font-weight:600;color:#555">Name</td><td style="padding:8px">${displayName || "—"}</td></tr>
+          <tr><td style="padding:8px;font-weight:600;color:#555">Hedera ID</td><td style="padding:8px">${hederaAccountId}</td></tr>
+          <tr><td style="padding:8px;font-weight:600;color:#555">Time</td><td style="padding:8px">${new Date().toLocaleString()}</td></tr>
+        </table>
+        <p style="margin-top:20px">
+          <a href="https://geniusseeker.com/profile.html?id=${hederaAccountId}"
+             style="background:#c9a84c;color:#000;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">
+            View Profile →
+          </a>
+        </p>
+      `,
+    });
+  } catch (e) {
+    console.error("Resend notification failed (non-fatal):", e);
+  }
+}
 
 const app = express();
 
@@ -67,6 +97,8 @@ app.post("/api/profile/upsert", (req, res) => {
     db.prepare("INSERT INTO profiles (id, hedera_account_id, display_name, created_at) VALUES (?,?,?,?)").run(
       id, hederaAccountId, name, nowISO()
     );
+    // Fire-and-forget email notification
+    sendNewCandidateNotification(hederaAccountId, name);
   }
 
   const profile = db.prepare("SELECT * FROM profiles WHERE id=?").get(id);

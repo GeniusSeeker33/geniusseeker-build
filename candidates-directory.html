@@ -15,7 +15,12 @@
       align-items: start;
       margin-top: 24px;
     }
-    @media (max-width: 768px) { .dir-layout { grid-template-columns: 1fr; } }
+    @media (max-width: 768px) {
+      .dir-layout { grid-template-columns: 1fr; }
+      .candidate-card { padding: 14px 16px; gap: 12px; }
+      .cand-bio { display: none; }
+      .cand-action { display: none; }
+    }
 
     /* Filters */
     .filters-panel {
@@ -121,6 +126,17 @@
     }
     .login-error { color: #e07b7b; font-size: .82rem; }
 
+    .cand-badge-thumb {
+      width: 44px; height: 44px; flex-shrink: 0;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid rgba(201,168,76,.3);
+      background: rgba(201,168,76,.08);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem;
+    }
+    .cand-badge-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
     .no-results { text-align: center; padding: 48px 0; opacity: .4; }
     .loading    { text-align: center; padding: 60px 0; opacity: .4; }
     .session-bar {
@@ -155,9 +171,45 @@
 
     let ALL_CANDIDATES = [];
 
+    const BADGE_GATEWAY = "https://damaged-rose-sloth.myfilebase.com/ipfs";
+    const BADGE_PNG_CIDS = {
+      "Arts_1":"QmXsHqXskqhfzx37BYiGEbZdm9f4CCv9Q8tZcKSt5338Si",
+      "Arts_2":"QmSrK24JkWESNpDst7ypmBkwcNgPE9Pk5Dtd7wUz8aV8Tz",
+      "Arts_3":"QmYEwyFKafuEFChcJXXMATGLXtGQ6VnNC4v8zPW5D7yW5X",
+      "Arts_4":"QmdWL551YLrTKjA5KY4bWuPiMJd94xfhjFW1f2Aijr64CZ",
+      "Arts_5":"QmfGJATaW4AJtmSEM6b5o6oWVPrxHey27NoM6J8zYBo7NE",
+      "Engineering_1":"QmXdX75qVtdo7GKgpPqAxvhNEaGh372xPWbViJf1yX5XoR",
+      "Engineering_2":"QmYeZymJJNTpzdgDTTsFeTR4HKCeQfd7reJqnPMByPFAx7",
+      "Engineering_3":"QmUHSFBLvFCSfpmmFcW1oYusXSpvzRvWRHv3xaL7o7Qb8i",
+      "Engineering_4":"QmbEaSh4TtzvFz7obSYRLtJigyN8pht3gDSBFSPJR5kDQ5",
+      "Engineering_5":"QmRLtfiwcAYKwQNBZh6z9manT4FpUVjP37t2jBTtKqSQrT",
+      "Math_1":"QmPGBGyisrHYaiww7Y442opcPCykRuxgBS24QxBBUtnFZi",
+      "Math_2":"QmWySvJ8Wep6K6qP8nMvWALoHsgw443vUrbxfTgWAW2G6K",
+      "Math_3":"Qmcjya8EAeNfqxzX9tt4W26YFsC2Y4W5KZD7Hakkwy712A",
+      "Math_4":"QmXPgXRYUarcgxVs6RN9CF2pwrmX6fNv7i493suQSpsrBj",
+      "Math_5":"QmdtuBmp4Mfq3cpMbdwCjMUmx6gTaymwbM6aBsiUNvLdVo",
+      "Science_1":"Qmc1V1Py7sTNaW8b2Efax3G8WuRbXMuVF52kQ9788PzwmK",
+      "Science_2":"QmYoYK8FwecifVPGBKDp1mNPKp1GWo4HmbKsRwvyepDER2",
+      "Science_3":"QmTF72EzyBN7voKNzPtFMACFhEAkBTpiyDVkN7SVnKQLnE",
+      "Science_4":"QmcZVPPiMktHip3ddYqrqrz3LAbzCWcuNhy28TEheTsuAk",
+      "Science_5":"QmPqJWMm48zrXX2PEkbsF3yezKXLBKLBZX56oxxPHNdSnE",
+      "Technology_1":"QmSAS71YkEnBg69L1Mcit5J6CqmoyKGdKiQQ2NH92x4E3o",
+      "Technology_2":"QmbKiQoYjGL1NroKBS6fSKLq2PwoL45tsWWgctTjBcWmjk",
+      "Technology_3":"Qme1kF56aAWS4UxLHknw3ciyvZJpVDnhyyBcyWLAHG96Vj",
+      "Technology_4":"QmTee1cj4xzeSx5Es8b7NdV4oNYfrN1wFAWLLeWTLpuigt",
+      "Technology_5":"Qmeyq3NxHbSSEJje2iQ4mf9FGTbLKdHZgPV1DQQhQWazJH",
+    };
+    const CAT_MAP = { "Mathematics":"Math","Math":"Math","Arts":"Arts","Art":"Arts","Engineering":"Engineering","Science":"Science","Technology":"Technology" };
+
+    function getBadgeImageUrl(category, level) {
+      const cat = CAT_MAP[category] || category;
+      const cid = BADGE_PNG_CIDS[`${cat}_${level}`];
+      return cid ? `${BADGE_GATEWAY}/${cid}` : null;
+    }
+
     const STEAM_ICONS = {
       Science: "🔬", Technology: "💻", Engineering: "⚙️",
-      Art: "🎨", Mathematics: "📐", Other: "⭐"
+      Arts: "🎨", Art: "🎨", Math: "📐", Mathematics: "📐", Other: "⭐"
     };
     const STATUS_MAP = {
       looking:     { label: "Actively Looking", cls: "tag-status-looking" },
@@ -203,11 +255,17 @@
         const status  = STATUS_MAP[c.open_to_work] || STATUS_MAP.open;
         const icon    = STEAM_ICONS[c.steam_badge] || "";
         const skills  = Array.isArray(c.skills) ? c.skills.slice(0, 3) : [];
+        const badgeImgUrl = c.steam_badge && c.steam_level ? getBadgeImageUrl(c.steam_badge, c.steam_level) : null;
         return `
           <div class="candidate-card" onclick="location.href='/profile.html?id=${c.hedera_account_id}'">
             <div class="cand-avatar">
               ${c.avatar_url ? `<img src="${c.avatar_url}" alt="avatar" />` : initials(c.display_name)}
             </div>
+            ${badgeImgUrl ? `
+            <div class="cand-badge-thumb">
+              <img src="${badgeImgUrl}" alt="${c.steam_badge} badge"
+                onerror="this.parentElement.innerHTML='<span>${icon}</span>'" />
+            </div>` : c.steam_badge ? `<div class="cand-badge-thumb">${icon}</div>` : ""}
             <div class="cand-info">
               <div class="cand-name">${c.display_name || "Anonymous"}</div>
               <div class="cand-bio">${c.bio || "No bio provided."}</div>
@@ -245,8 +303,8 @@
                 <option value="Science">Science</option>
                 <option value="Technology">Technology</option>
                 <option value="Engineering">Engineering</option>
-                <option value="Art">Art</option>
-                <option value="Mathematics">Mathematics</option>
+                <option value="Arts">Arts</option>
+                <option value="Math">Math</option>
                 <option value="Other">Other</option>
               </select>
             </div>
