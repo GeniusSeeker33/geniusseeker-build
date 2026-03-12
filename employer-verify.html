@@ -87,7 +87,7 @@
         <div class="tier-card highlight">
           <div class="tier-icon">🥉</div>
           <div class="tier-name committed">Committed</div>
-          <div class="tier-desc">DEI policy, diverse panels, structured feedback, flexible work. <strong style="color:#c9a84c;font-size:.75rem">Unlocks candidate directory.</strong></div>
+          <div class="tier-desc">Equality policy, diverse panels, structured feedback, flexible work. <strong style="color:#c9a84c;font-size:.75rem">Unlocks candidate directory.</strong></div>
         </div>
         <div class="tier-card">
           <div class="tier-icon">🥈</div>
@@ -162,7 +162,7 @@
             </label>
             <label class="attest-item">
               <input type="checkbox" id="a-dei" onchange="updateTierPreview()" />
-              <span class="attest-label">Written DEI policy <span class="attest-esg-tag">ESG</span><span>A documented, accessible statement of your inclusion commitments.</span></span>
+              <span class="attest-label">Written Equality Policy <span class="attest-esg-tag">ESG</span><span>A documented, accessible statement of your merit / equality policy.</span></span>
             </label>
             <label class="attest-item">
               <input type="checkbox" id="a-panels" onchange="updateTierPreview()" />
@@ -191,14 +191,14 @@
           </div>
           <div class="tier-badge-preview" id="tierPreview">
             <span id="tierPreviewIcon">⚪</span>
-            <span style="opacity:.7">Based on your selections, you qualify for <strong id="tierPreviewLabel" style="color:#c9a84c">Listed</strong> tier. Desiree will review and confirm your final tier.</span>
+            <span style="opacity:.7">Based on your selections, you qualify for <strong id="tierPreviewLabel" style="color:#c9a84c">Listed</strong> tier. GeniusSeeker will review and confirm your final tier.</span>
           </div>
         </div>
 
         <div class="form-section">
           <h3>Supporting Links &amp; Notes</h3>
           <div class="form-grid">
-            <div class="field"><label>DEI Policy URL</label><input id="f-dei-url" type="url" placeholder="https://acme.com/diversity" /></div>
+            <div class="field"><label>Equality Policy URL</label><input id="f-dei-url" type="url" placeholder="https://acme.com/equality-policy" /></div>
             <div class="field"><label>Equity Report URL</label><input id="f-equity-url" type="url" placeholder="https://acme.com/equity-report" /></div>
           </div>
           <div class="form-grid full" style="margin-top:14px">
@@ -282,7 +282,7 @@
         const data = await res.json();
         if (res.ok && data.ok) {
           statusEl.className = "form-status success";
-          statusEl.textContent = "Application submitted! Desiree will review within 2 business days. Check your status below.";
+          statusEl.textContent = "Application submitted! GeniusSeeker will review within 2 business days. Check your status below.";
           statusEl.style.display = "block";
           document.getElementById("submitBtn").disabled = true;
           document.getElementById("submitBtn").textContent = "Application Submitted";
