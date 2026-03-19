@@ -1,0 +1,979 @@
+<!-- connect-identity.html — Multi-Wallet Identity Connect partial -->
+<!-- Drop-in replacement. Requires /js/identity-client.js to be loaded on the host page. -->
+<!-- HashConnect v1 loaded from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/hashconnect@1.2.0/dist/hashconnect.js"></script>
+
+<style>
+  /* ── Root ── */
+  .gs-wallet-card {
+    background: #0f1117;
+    border: 1px solid #1e2330;
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 14px;
+    position: relative;
+    overflow: hidden;
+    font-family: inherit;
+  }
+  .gs-wallet-card::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 180px; height: 180px;
+    background: radial-gradient(circle, rgba(100,220,180,0.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .gs-wallet-card h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #f0f4f8;
+    margin: 0 0 4px 0;
+    letter-spacing: -0.01em;
+  }
+  .gs-wallet-card .gs-subtitle {
+    font-size: 0.82rem;
+    color: #5a6478;
+    margin: 0 0 22px 0;
+  }
+
+  /* ── States ── */
+  #gs-state-disconnected,
+  #gs-state-pairing,
+  #gs-state-connected { display: none; }
+  #gs-state-disconnected { display: block; }
+
+  /* ── Wallet Picker Grid ── */
+  .gs-wallet-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .gs-wallet-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    background: #161b27;
+    border: 1px solid #1e2330;
+    border-radius: 12px;
+    padding: 16px 10px;
+    cursor: pointer;
+    transition: border-color 0.18s, background 0.18s, transform 0.12s;
+    position: relative;
+    overflow: hidden;
+  }
+  .gs-wallet-option::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    border-radius: 12px;
+    transition: opacity 0.18s;
+  }
+  .gs-wallet-option:hover { transform: translateY(-2px); }
+  .gs-wallet-option:active { transform: translateY(0); }
+
+  /* Per-wallet accent colours */
+  .gs-wallet-option[data-wallet="hashpack"] { --w-accent: #3ecf8e; }
+  .gs-wallet-option[data-wallet="digibyte"]  { --w-accent: #0066cc; }
+  .gs-wallet-option[data-wallet="redd"]      { --w-accent: #e8404a; }
+
+  .gs-wallet-option:hover,
+  .gs-wallet-option.selected {
+    border-color: var(--w-accent);
+    background: color-mix(in srgb, var(--w-accent) 6%, #161b27);
+  }
+  .gs-wallet-option.selected {
+    box-shadow: 0 0 0 1px var(--w-accent);
+  }
+
+  .gs-wallet-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .gs-wallet-option[data-wallet="hashpack"] .gs-wallet-icon { background: #fff; }
+  .gs-wallet-option[data-wallet="digibyte"]  .gs-wallet-icon { background: #0066cc; }
+  .gs-wallet-option[data-wallet="redd"]      .gs-wallet-icon { background: #1a0a0b; border: 1px solid #3a1418; }
+
+  .gs-wallet-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #c8d0e0;
+    text-align: center;
+    line-height: 1.2;
+  }
+  .gs-wallet-chain {
+    font-size: 0.68rem;
+    color: var(--w-accent, #5a6478);
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  /* ── No-wallet row ── */
+  .gs-no-wallet-row {
+    border-top: 1px solid #1e2330;
+    padding-top: 14px;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .gs-no-wallet-label {
+    font-size: 0.8rem;
+    color: #4a5468;
+  }
+  .gs-btn-no-wallet {
+    background: none;
+    border: 1px solid #2a3040;
+    color: #7a8496;
+    font-size: 0.78rem;
+    border-radius: 8px;
+    padding: 7px 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    flex-shrink: 0;
+  }
+  .gs-btn-no-wallet:hover {
+    border-color: #f5c542;
+    color: #f5c542;
+    background: rgba(245,197,66,0.05);
+  }
+
+  /* ── Proceed button ── */
+  .gs-btn-proceed {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 14px;
+    background: linear-gradient(135deg, #3ecf8e 0%, #2db67d 100%);
+    color: #0a1a12;
+    font-weight: 700;
+    font-size: 0.9rem;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    letter-spacing: 0.01em;
+  }
+  .gs-btn-proceed[data-wallet="digibyte"] {
+    background: linear-gradient(135deg, #1a7fe0 0%, #0055b3 100%);
+    color: #fff;
+  }
+  .gs-btn-proceed[data-wallet="redd"] {
+    background: linear-gradient(135deg, #e8404a 0%, #b82830 100%);
+    color: #fff;
+  }
+  .gs-btn-proceed:hover  { opacity: 0.9; transform: translateY(-1px); }
+  .gs-btn-proceed:active { transform: translateY(0); }
+  .gs-btn-proceed:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* ── Expandable panels ── */
+  .gs-expand-panel {
+    display: none;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #1e2330;
+    animation: gs-fade-in 0.2s ease;
+  }
+  .gs-expand-panel.visible { display: block; }
+  @keyframes gs-fade-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Manual entry (wallet address) ── */
+  .gs-manual-form label {
+    display: block;
+    font-size: 0.78rem;
+    color: #5a6478;
+    margin-bottom: 6px;
+  }
+  .gs-manual-form input {
+    width: 100%;
+    background: #161b27;
+    border: 1px solid #2a3040;
+    border-radius: 8px;
+    color: #d0d8e8;
+    font-size: 0.88rem;
+    padding: 9px 12px;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .gs-manual-form input:focus { border-color: #3ecf8e; }
+  .gs-manual-form input::placeholder { color: #3a4050; }
+  .gs-manual-form input[data-accent="digibyte"]:focus { border-color: #0066cc; }
+  .gs-manual-form input[data-accent="redd"]:focus     { border-color: #e8404a; }
+
+  /* ── Email / username form ── */
+  .gs-email-panel .gs-email-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .gs-email-panel .gs-email-icon {
+    width: 36px; height: 36px;
+    background: rgba(245,197,66,0.12);
+    border: 1px solid rgba(245,197,66,0.25);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .gs-email-panel .gs-email-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #e0e8f0;
+    margin: 0 0 2px 0;
+  }
+  .gs-email-panel .gs-email-desc {
+    font-size: 0.75rem;
+    color: #5a6478;
+    margin: 0;
+  }
+  .gs-email-panel label {
+    display: block;
+    font-size: 0.78rem;
+    color: #5a6478;
+    margin-bottom: 6px;
+  }
+  .gs-email-panel input {
+    width: 100%;
+    background: #161b27;
+    border: 1px solid #2a3040;
+    border-radius: 8px;
+    color: #d0d8e8;
+    font-size: 0.88rem;
+    padding: 9px 12px;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.15s;
+    margin-bottom: 10px;
+  }
+  .gs-email-panel input:focus { border-color: #f5c542; }
+  .gs-email-panel input::placeholder { color: #3a4050; }
+  .gs-email-panel .gs-notice {
+    font-size: 0.73rem;
+    color: #4a5468;
+    background: #0d1018;
+    border: 1px solid #1e2330;
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+  .gs-email-panel .gs-notice strong { color: #f5c542; }
+  .gs-btn-email-save {
+    width: 100%;
+    background: linear-gradient(135deg, #f5c542 0%, #d4a820 100%);
+    color: #1a1200;
+    font-weight: 700;
+    font-size: 0.88rem;
+    border: none;
+    border-radius: 10px;
+    padding: 11px 20px;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .gs-btn-email-save:hover  { opacity: 0.9; transform: translateY(-1px); }
+  .gs-btn-email-save:active { transform: translateY(0); }
+
+  .gs-btn-back-to-wallets {
+    background: none;
+    border: none;
+    color: #5a6478;
+    font-size: 0.78rem;
+    cursor: pointer;
+    padding: 0;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: color 0.15s;
+  }
+  .gs-btn-back-to-wallets:hover { color: #d0d8e8; }
+
+  /* ── Pairing ── */
+  .gs-pairing-box {
+    background: #161b27;
+    border: 1px solid #1e2330;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+  }
+  .gs-pairing-box p {
+    color: #7a8496;
+    font-size: 0.82rem;
+    margin: 0 0 14px 0;
+  }
+  #gs-qr-container canvas,
+  #gs-qr-container img { border-radius: 8px; max-width: 200px; }
+  .gs-pairing-string {
+    font-family: monospace;
+    font-size: 0.72rem;
+    color: #3ecf8e;
+    word-break: break-all;
+    background: #0a0e14;
+    padding: 8px 10px;
+    border-radius: 6px;
+    margin-top: 12px;
+    display: block;
+  }
+  .gs-loader {
+    display: inline-block;
+    width: 18px; height: 18px;
+    border: 2px solid #2a3040;
+    border-top-color: #3ecf8e;
+    border-radius: 50%;
+    animation: gs-spin 0.7s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  @keyframes gs-spin { to { transform: rotate(360deg); } }
+
+  /* ── Connected state ── */
+  .gs-connected-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .gs-identity-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #161b27;
+    border: 1px solid #1e2330;
+    border-radius: 10px;
+    padding: 10px 14px;
+    flex: 1;
+    min-width: 0;
+  }
+  .gs-dot {
+    width: 8px; height: 8px;
+    background: #3ecf8e;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 6px #3ecf8e88;
+  }
+  .gs-dot[data-network="digibyte"] { background: #0066cc; box-shadow: 0 0 6px #0066cc88; }
+  .gs-dot[data-network="redd"]     { background: #e8404a; box-shadow: 0 0 6px #e8404a88; }
+  .gs-dot[data-network="email"]    { background: #f5c542; box-shadow: 0 0 6px #f5c54288; }
+
+  .gs-account-id {
+    font-family: monospace;
+    font-size: 0.88rem;
+    color: #d0d8e8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .gs-verified-badge {
+    font-size: 0.7rem;
+    background: rgba(62,207,142,0.12);
+    color: #3ecf8e;
+    border: 1px solid rgba(62,207,142,0.25);
+    border-radius: 20px;
+    padding: 2px 8px;
+    flex-shrink: 0;
+  }
+  .gs-verified-badge[data-network="digibyte"] {
+    background: rgba(0,102,204,0.12);
+    color: #4da6ff;
+    border-color: rgba(0,102,204,0.3);
+  }
+  .gs-verified-badge[data-network="redd"] {
+    background: rgba(232,64,74,0.12);
+    color: #f07078;
+    border-color: rgba(232,64,74,0.3);
+  }
+  .gs-verified-badge[data-network="email"] {
+    background: rgba(245,197,66,0.12);
+    color: #f5c542;
+    border-color: rgba(245,197,66,0.3);
+  }
+  .gs-btn-disconnect {
+    background: none;
+    border: 1px solid #2a3040;
+    color: #5a6478;
+    font-size: 0.78rem;
+    border-radius: 8px;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+    white-space: nowrap;
+  }
+  .gs-btn-disconnect:hover { border-color: #e05a5a; color: #e05a5a; }
+
+  /* ── Shared save button ── */
+  .gs-btn-save {
+    margin-top: 10px;
+    background: #1e2330;
+    border: 1px solid #2a3040;
+    color: #d0d8e8;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 9px 18px;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .gs-btn-save:hover { background: #252d3d; border-color: #3ecf8e; }
+
+  /* ── Status messages ── */
+  .gs-status-msg {
+    font-size: 0.78rem;
+    margin-top: 10px;
+    color: #5a6478;
+    min-height: 18px;
+  }
+  .gs-status-msg.ok  { color: #3ecf8e; }
+  .gs-status-msg.err { color: #e05a5a; }
+
+  /* ── Divider ── */
+  .gs-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 14px 0 0 0;
+    color: #2a3040;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .gs-divider::before,
+  .gs-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #1e2330;
+  }
+
+  /* ── Wallet network badge on pill ── */
+  .gs-network-tag {
+    font-size: 0.65rem;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: #0d1018;
+    color: #5a6478;
+    border: 1px solid #1e2330;
+    flex-shrink: 0;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+</style>
+
+<div class="gs-wallet-card">
+  <h3>Connect Your Talent Identity</h3>
+  <p class="gs-subtitle">Link your wallet to unlock on-chain credentials &amp; badges.</p>
+
+  <!-- ═══════════════════════════════════════════════════
+       STATE: DISCONNECTED
+  ════════════════════════════════════════════════════ -->
+  <div id="gs-state-disconnected">
+
+    <!-- Wallet picker grid -->
+    <div class="gs-wallet-grid" id="gs-wallet-grid">
+
+      <!-- HashPack / Hedera -->
+      <div class="gs-wallet-option" data-wallet="hashpack" tabindex="0" role="button" aria-pressed="false">
+        <div class="gs-wallet-icon">
+          <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
+            <path d="M8 24V8h4v6h8V8h4v16h-4v-6H12v6H8z" fill="#0a0a0a"/>
+          </svg>
+        </div>
+        <span class="gs-wallet-label">HashPack</span>
+        <span class="gs-wallet-chain">Hedera</span>
+      </div>
+
+      <!-- DigiByte -->
+      <div class="gs-wallet-option" data-wallet="digibyte" tabindex="0" role="button" aria-pressed="false">
+        <div class="gs-wallet-icon">
+          <!-- DigiByte "D" shield mark -->
+          <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
+            <path d="M16 3L5 8v8c0 6.075 4.693 11.742 11 13 6.307-1.258 11-6.925 11-13V8L16 3z" fill="#0055b3"/>
+            <path d="M11 11h5c2.5 0 5 1.5 5 5s-2.5 5-5 5h-5V11zm3 2v6h2c1.5 0 3-1 3-3s-1.5-3-3-3h-2z" fill="#fff"/>
+          </svg>
+        </div>
+        <span class="gs-wallet-label">DigiByte</span>
+        <span class="gs-wallet-chain">DGB</span>
+      </div>
+
+      <!-- Redd Wallet / ReddCoin -->
+      <div class="gs-wallet-option" data-wallet="redd" tabindex="0" role="button" aria-pressed="false">
+        <div class="gs-wallet-icon">
+          <!-- ReddCoin stylised R -->
+          <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
+            <circle cx="16" cy="16" r="13" fill="#c0282f"/>
+            <path d="M11 9h7c2.2 0 4 1.8 4 4 0 1.8-1.1 3.3-2.7 3.8L22 23h-3.5l-2.3-5.5H14V23h-3V9zm3 2.5v3.5h3.5c1 0 1.5-.7 1.5-1.75S18.5 11.5 17.5 11.5H14z" fill="#fff"/>
+          </svg>
+        </div>
+        <span class="gs-wallet-label">Redd Wallet</span>
+        <span class="gs-wallet-chain">RDD</span>
+      </div>
+
+      <!-- Placeholder slot — keeps grid even -->
+      <div style="visibility:hidden;" aria-hidden="true"></div>
+    </div>
+
+    <!-- Proceed button (dynamically labelled) -->
+    <button class="gs-btn-proceed" id="gs-btn-proceed" disabled>
+      Select a wallet above
+    </button>
+
+    <!-- Manual address entry (shown after wallet selected) -->
+    <div class="gs-expand-panel gs-manual-form" id="gs-panel-manual">
+      <div class="gs-manual-form">
+        <label id="gs-manual-label" for="gs-acct-input">Wallet Address / Account ID</label>
+        <input id="gs-acct-input" type="text" placeholder="0.0.12345" autocomplete="off" />
+        <label for="gs-name-input" style="margin-top:10px">Display Name (optional)</label>
+        <input id="gs-name-input" type="text" placeholder="Your name" />
+        <button class="gs-btn-save" id="gs-btn-save-manual">Save Identity</button>
+      </div>
+    </div>
+
+    <!-- Divider + No-wallet path -->
+    <div class="gs-divider">or</div>
+    <div class="gs-no-wallet-row">
+      <span class="gs-no-wallet-label">Don't have a crypto wallet?</span>
+      <button class="gs-btn-no-wallet" id="gs-btn-show-email">Use Email Instead →</button>
+    </div>
+
+    <!-- Email / username panel -->
+    <div class="gs-expand-panel gs-email-panel" id="gs-panel-email">
+      <button class="gs-btn-back-to-wallets" id="gs-btn-back-wallets">
+        ← Back to wallet options
+      </button>
+      <div class="gs-email-header">
+        <div class="gs-email-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <rect x="2" y="4" width="20" height="16" rx="3" stroke="#f5c542" stroke-width="1.8"/>
+            <path d="M2 7l10 7 10-7" stroke="#f5c542" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <p class="gs-email-title">Email Identity</p>
+          <p class="gs-email-desc">No wallet needed — earn badges linked to your email.</p>
+        </div>
+      </div>
+      <div class="gs-notice">
+        <strong>Note:</strong> Email-based identities can always be upgraded to an on-chain wallet later. You won't lose any earned credentials.
+      </div>
+      <label for="gs-email-input">Email Address</label>
+      <input id="gs-email-input" type="email" placeholder="you@example.com" autocomplete="email" />
+      <label for="gs-username-input">Username</label>
+      <input id="gs-username-input" type="text" placeholder="Choose a username" autocomplete="username" />
+      <button class="gs-btn-email-save" id="gs-btn-save-email">Continue with Email</button>
+    </div>
+
+    <div class="gs-status-msg" id="gs-status-disconnected"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       STATE: PAIRING (HashPack)
+  ════════════════════════════════════════════════════ -->
+  <div id="gs-state-pairing">
+    <div class="gs-pairing-box">
+      <p><span class="gs-loader"></span>Waiting for HashPack approval…</p>
+      <div id="gs-qr-container"></div>
+      <span class="gs-pairing-string" id="gs-pairing-str"></span>
+      <p style="margin-top:12px;font-size:0.75rem;color:#3a4050">
+        Open HashPack → Connect dApp → paste the pairing string above,<br>or scan the QR code.
+      </p>
+      <button class="gs-btn-no-wallet" id="gs-btn-cancel-pair" style="margin-top:12px">Cancel</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       STATE: CONNECTED
+  ════════════════════════════════════════════════════ -->
+  <div id="gs-state-connected">
+    <div class="gs-connected-row">
+      <div class="gs-identity-pill">
+        <span class="gs-dot" id="gs-connected-dot"></span>
+        <span class="gs-account-id" id="gs-connected-account">—</span>
+        <span class="gs-network-tag" id="gs-connected-network-tag"></span>
+        <span class="gs-verified-badge" id="gs-connected-badge">✓ Linked</span>
+      </div>
+      <button class="gs-btn-disconnect" id="gs-btn-disconnect">Disconnect</button>
+    </div>
+    <div class="gs-status-msg ok" id="gs-status-connected">Identity linked. You're ready to earn badges.</div>
+  </div>
+</div>
+
+<script src="/js/identity-client.js"></script>
+<script>
+(function () {
+
+  /* ─────────────────────────────────────────
+     Wallet config
+  ───────────────────────────────────────── */
+  var WALLETS = {
+    hashpack: {
+      label:       'HashPack',
+      network:     'Hedera',
+      placeholder: '0.0.12345',
+      regex:       /^\d+\.\d+\.\d+$/,
+      errMsg:      'Please enter a valid Hedera Account ID (e.g. 0.0.12345).',
+      proceedLabel:'Connect HashPack Wallet',
+    },
+    digibyte: {
+      label:       'DigiByte',
+      network:     'DGB',
+      placeholder: 'D7FpqpWz3YDW5…',
+      regex:       /^D[a-zA-Z0-9]{25,34}$/,
+      errMsg:      'Please enter a valid DigiByte address (starts with D, 26–35 chars).',
+      proceedLabel:'Connect DigiByte Wallet',
+    },
+    redd: {
+      label:       'Redd Wallet',
+      network:     'RDD',
+      placeholder: 'RsBDHR9K3cMk…',
+      regex:       /^R[a-zA-Z0-9]{25,34}$/,
+      errMsg:      'Please enter a valid ReddCoin address (starts with R, 26–35 chars).',
+      proceedLabel:'Connect Redd Wallet',
+    },
+  };
+
+  /* ─────────────────────────────────────────
+     State helpers
+  ───────────────────────────────────────── */
+  var selectedWallet = null;
+
+  function showState(name) {
+    ['disconnected', 'pairing', 'connected'].forEach(function (s) {
+      document.getElementById('gs-state-' + s).style.display = (s === name) ? 'block' : 'none';
+    });
+  }
+
+  function setStatus(msg, cls) {
+    var el = document.getElementById('gs-status-disconnected');
+    el.textContent = msg;
+    el.className = 'gs-status-msg' + (cls ? ' ' + cls : '');
+  }
+
+  function showPanel(id) {
+    ['gs-panel-manual', 'gs-panel-email'].forEach(function (p) {
+      document.getElementById(p).classList.toggle('visible', p === id);
+    });
+  }
+
+  function hideAllPanels() {
+    ['gs-panel-manual', 'gs-panel-email'].forEach(function (p) {
+      document.getElementById(p).classList.remove('visible');
+    });
+  }
+
+  /* ─────────────────────────────────────────
+     Restore connected state on load
+  ───────────────────────────────────────── */
+  var savedId      = GSIdentity.getAccountId();
+  var savedNetwork = localStorage.getItem('gs_identity_network') || 'hedera';
+  var savedType    = localStorage.getItem('gs_identity_type')    || 'wallet'; // 'wallet' | 'email'
+
+  if (savedId) {
+    renderConnected(savedId, savedNetwork, savedType);
+    showState('connected');
+  }
+
+  function renderConnected(id, network, type) {
+    var dot     = document.getElementById('gs-connected-dot');
+    var acct    = document.getElementById('gs-connected-account');
+    var badge   = document.getElementById('gs-connected-badge');
+    var netTag  = document.getElementById('gs-connected-network-tag');
+    var statusEl= document.getElementById('gs-status-connected');
+
+    var n = (network || 'hedera').toLowerCase();
+    dot.dataset.network   = (type === 'email') ? 'email' : n;
+    badge.dataset.network = (type === 'email') ? 'email' : n;
+
+    acct.textContent    = id;
+    netTag.textContent  = (type === 'email') ? 'EMAIL' : network.toUpperCase();
+    badge.textContent   = (type === 'email') ? '✓ Email' : '✓ Linked';
+    statusEl.textContent = (type === 'email')
+      ? 'Email identity linked. You\'re ready to earn badges.'
+      : 'Identity linked via ' + network + '. You\'re ready to earn badges.';
+  }
+
+  /* ─────────────────────────────────────────
+     Wallet option selection
+  ───────────────────────────────────────── */
+  document.querySelectorAll('.gs-wallet-option').forEach(function (el) {
+    el.addEventListener('click', function () {
+      var wKey = this.dataset.wallet;
+      if (!wKey) return;
+
+      // Deselect all
+      document.querySelectorAll('.gs-wallet-option').forEach(function (o) {
+        o.classList.remove('selected');
+        o.setAttribute('aria-pressed', 'false');
+      });
+
+      // Select this one
+      this.classList.add('selected');
+      this.setAttribute('aria-pressed', 'true');
+      selectedWallet = wKey;
+
+      // Hide email panel if open
+      document.getElementById('gs-panel-email').classList.remove('visible');
+
+      var cfg = WALLETS[wKey];
+
+      // Update proceed button
+      var btn = document.getElementById('gs-btn-proceed');
+      btn.textContent = cfg.proceedLabel;
+      btn.dataset.wallet = wKey;
+      btn.disabled = false;
+
+      // Hashpack -> no manual form needed (handled by pairing flow)
+      // Others -> show address entry
+      if (wKey === 'hashpack') {
+        hideAllPanels();
+      } else {
+        var inp = document.getElementById('gs-acct-input');
+        inp.placeholder = cfg.placeholder;
+        inp.dataset.accent = wKey;
+        document.getElementById('gs-manual-label').textContent = cfg.label + ' Address';
+        showPanel('gs-panel-manual');
+      }
+      setStatus('');
+    });
+
+    // Keyboard accessibility
+    el.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.click(); }
+    });
+  });
+
+  /* ─────────────────────────────────────────
+     Proceed button
+  ───────────────────────────────────────── */
+  document.getElementById('gs-btn-proceed').addEventListener('click', async function () {
+    if (!selectedWallet) return;
+
+    if (selectedWallet === 'hashpack') {
+      await initiateHashConnect();
+    }
+    // For digibyte / redd — form is already visible; save is handled by gs-btn-save-manual
+  });
+
+  /* ─────────────────────────────────────────
+     Manual save (DigiByte / Redd / Hedera)
+  ───────────────────────────────────────── */
+  document.getElementById('gs-btn-save-manual').addEventListener('click', async function () {
+    var wKey = selectedWallet;
+    if (!wKey) { setStatus('Please select a wallet type first.', 'err'); return; }
+
+    var cfg      = WALLETS[wKey];
+    var address  = document.getElementById('gs-acct-input').value.trim();
+    var dispName = document.getElementById('gs-name-input').value.trim();
+
+    if (!address || !cfg.regex.test(address)) {
+      setStatus(cfg.errMsg, 'err');
+      return;
+    }
+
+    setStatus('Saving…');
+    try {
+      await GSIdentity.upsertProfile({
+        hederaAccountId: wKey === 'hashpack' ? address : undefined,
+        walletAddress:   wKey !== 'hashpack' ? address : undefined,
+        walletNetwork:   cfg.network,
+        displayName:     dispName || undefined,
+      });
+      GSIdentity.setAccountId(address);
+      localStorage.setItem('gs_identity_network', cfg.network);
+      localStorage.setItem('gs_identity_type', 'wallet');
+      if (dispName) GSIdentity.setDisplayName(dispName);
+
+      renderConnected(address, cfg.network, 'wallet');
+      showState('connected');
+      window.dispatchEvent(new CustomEvent('gs:walletConnected', {
+        detail: { accountId: address, network: cfg.network }
+      }));
+    } catch (e) {
+      setStatus('Error: ' + e.message, 'err');
+    }
+  });
+
+  /* ─────────────────────────────────────────
+     Email / username path
+  ───────────────────────────────────────── */
+  document.getElementById('gs-btn-show-email').addEventListener('click', function () {
+    // Deselect any wallet
+    document.querySelectorAll('.gs-wallet-option').forEach(function (o) {
+      o.classList.remove('selected');
+      o.setAttribute('aria-pressed', 'false');
+    });
+    selectedWallet = null;
+    var btn = document.getElementById('gs-btn-proceed');
+    btn.textContent = 'Select a wallet above';
+    btn.dataset.wallet = '';
+    btn.disabled = true;
+
+    showPanel('gs-panel-email');
+    setStatus('');
+    document.getElementById('gs-email-input').focus();
+  });
+
+  document.getElementById('gs-btn-back-wallets').addEventListener('click', function () {
+    hideAllPanels();
+    setStatus('');
+  });
+
+  document.getElementById('gs-btn-save-email').addEventListener('click', async function () {
+    var email    = document.getElementById('gs-email-input').value.trim();
+    var username = document.getElementById('gs-username-input').value.trim();
+    var msg      = document.getElementById('gs-status-disconnected');
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setStatus('Please enter a valid email address.', 'err');
+      return;
+    }
+    if (!username) {
+      setStatus('Please choose a username.', 'err');
+      return;
+    }
+
+    setStatus('Saving…');
+    try {
+      await GSIdentity.upsertProfile({
+        email:       email,
+        displayName: username,
+        identityType:'email',
+      });
+      GSIdentity.setAccountId(email);
+      GSIdentity.setDisplayName(username);
+      localStorage.setItem('gs_identity_network', 'email');
+      localStorage.setItem('gs_identity_type', 'email');
+
+      renderConnected(email, 'email', 'email');
+      showState('connected');
+      window.dispatchEvent(new CustomEvent('gs:identityLinked', {
+        detail: { email, username, type: 'email' }
+      }));
+    } catch (e) {
+      setStatus('Error: ' + e.message, 'err');
+    }
+  });
+
+  /* ─────────────────────────────────────────
+     Disconnect
+  ───────────────────────────────────────── */
+  document.getElementById('gs-btn-disconnect').addEventListener('click', function () {
+    GSIdentity.setAccountId('');
+    GSIdentity.setDisplayName('');
+    localStorage.removeItem('gs_identity_network');
+    localStorage.removeItem('gs_identity_type');
+    if (window._gsHashConnect) {
+      try { window._gsHashConnect.disconnect(window._gsHashSession); } catch (_) {}
+    }
+    selectedWallet = null;
+    hideAllPanels();
+    var btn = document.getElementById('gs-btn-proceed');
+    btn.textContent = 'Select a wallet above';
+    btn.dataset.wallet = '';
+    btn.disabled = true;
+    document.querySelectorAll('.gs-wallet-option').forEach(function (o) {
+      o.classList.remove('selected');
+      o.setAttribute('aria-pressed', 'false');
+    });
+    setStatus('');
+    showState('disconnected');
+  });
+
+  /* ─────────────────────────────────────────
+     HashConnect flow
+  ───────────────────────────────────────── */
+  async function initiateHashConnect() {
+    if (typeof HashConnect === 'undefined') {
+      setStatus('HashConnect SDK not loaded. Try the manual address option or email instead.', 'err');
+      return;
+    }
+
+    showState('pairing');
+
+    try {
+      var hashconnect = new HashConnect();
+      window._gsHashConnect = hashconnect;
+
+      var appMetadata = {
+        name:        'GeniusSeeker',
+        description: 'STEAM talent platform — on-chain credentials & badges',
+        icon:        'https://geniusseeker.com/favicon.ico',
+      };
+
+      var initData      = await hashconnect.init(appMetadata, 'testnet', false);
+      var pairingString = initData.pairingString;
+
+      document.getElementById('gs-pairing-str').textContent = pairingString;
+
+      if (window.QRCode) {
+        var qrEl = document.getElementById('gs-qr-container');
+        qrEl.innerHTML = '';
+        new QRCode(qrEl, { text: pairingString, width: 180, height: 180 });
+      }
+
+      hashconnect.pairingEvent.on(async function (pairingData) {
+        var accountId = pairingData.accountIds && pairingData.accountIds[0];
+        if (!accountId) return;
+
+        window._gsHashSession = pairingData.topic;
+        GSIdentity.setAccountId(accountId);
+        localStorage.setItem('gs_identity_network', 'Hedera');
+        localStorage.setItem('gs_identity_type', 'wallet');
+
+        try {
+          await GSIdentity.upsertProfile({ hederaAccountId: accountId });
+        } catch (e) {
+          console.warn('Profile upsert failed:', e);
+        }
+
+        renderConnected(accountId, 'Hedera', 'wallet');
+        showState('connected');
+        window.dispatchEvent(new CustomEvent('gs:walletConnected', {
+          detail: { accountId: accountId, network: 'Hedera' }
+        }));
+      });
+
+    } catch (err) {
+      console.error('HashConnect error:', err);
+      setStatus('Connection failed: ' + err.message + '. Try entering your address manually.', 'err');
+      showState('disconnected');
+    }
+  }
+
+  /* Cancel pairing */
+  document.getElementById('gs-btn-cancel-pair').addEventListener('click', function () {
+    if (window._gsHashConnect) {
+      try { window._gsHashConnect.disconnect(); } catch (_) {}
+    }
+    showState('disconnected');
+  });
+
+  /* ─────────────────────────────────────────
+     External event listener
+  ───────────────────────────────────────── */
+  window.addEventListener('gs:walletConnected', function (e) {
+    var accountId = e.detail.accountId;
+    var network   = e.detail.network || 'Hedera';
+    renderConnected(accountId, network, 'wallet');
+    showState('connected');
+  });
+
+})();
+</script>
