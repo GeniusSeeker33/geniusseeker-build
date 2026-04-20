@@ -3,14 +3,42 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-require("dotenv").config({ path: "/var/www/geniusseeker-build/infra/identity-service/.env" });
+require("dotenv/config");
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const uuid_1 = require("uuid");
 const db_1 = require("./db");
 const validators_1 = require("./validators");
 const hedera_1 = require("./hedera");
-const badge_metadata_1 = require("./badge-metadata");
+const resend_1 = require("resend");
+const resend = new resend_1.Resend(process.env.RESEND_API_KEY);
+async function sendNewCandidateNotification(hederaAccountId, displayName) {
+    try {
+        await resend.emails.send({
+            from: "GeniusSeeker <noreply@geniusseeker.com>",
+            to: "desiree@geniusseeker.com",
+            subject: `New Candidate: ${displayName || hederaAccountId}`,
+            html: `
+        <h2>New Candidate Identity Saved</h2>
+        <p>A new candidate has saved their identity on GeniusSeeker.</p>
+        <table style="border-collapse:collapse;width:100%;max-width:480px">
+          <tr><td style="padding:8px;font-weight:600;color:#555">Name</td><td style="padding:8px">${displayName || "—"}</td></tr>
+          <tr><td style="padding:8px;font-weight:600;color:#555">Hedera ID</td><td style="padding:8px">${hederaAccountId}</td></tr>
+          <tr><td style="padding:8px;font-weight:600;color:#555">Time</td><td style="padding:8px">${new Date().toLocaleString()}</td></tr>
+        </table>
+        <p style="margin-top:20px">
+          <a href="https://geniusseeker.com/profile.html?id=${hederaAccountId}"
+             style="background:#c9a84c;color:#000;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">
+            View Profile →
+          </a>
+        </p>
+      `,
+        });
+    }
+    catch (e) {
+        console.error("Resend notification failed (non-fatal):", e);
+    }
+}
 const app = (0, express_1.default)();
 // CORS — dev friendly. Lock down via CORS_ORIGIN in prod.
 app.use((0, cors_1.default)({ origin: process.env.CORS_ORIGIN || "*" }));
@@ -60,6 +88,8 @@ app.post("/api/profile/upsert", (req, res) => {
     }
     else {
         db_1.db.prepare("INSERT INTO profiles (id, hedera_account_id, display_name, created_at) VALUES (?,?,?,?)").run(id, hederaAccountId, name, nowISO());
+        // Fire-and-forget email notification
+        sendNewCandidateNotification(hederaAccountId, name);
     }
     const profile = db_1.db.prepare("SELECT * FROM profiles WHERE id=?").get(id);
     res.json({ profile });
@@ -197,8 +227,8 @@ app.post("/api/credentials/verify", async (req, res) => {
     if (tokenId) {
         try {
             const payload = { credentialType, hederaAccountId, metadata, issuedAt: createdAt, issuer: "GeniusSeeker" };
-            const bytes = Buffer.from(id);
-            const minted = await (0, hedera_1.mintAndTransferNft)({ tokenId, metadataBytes: bytes, toAccountId: hederaAccountId });
+            const bytes = new TextEncoder().encode(JSON.stringify(payload));
+            const minted = await (0, hedera_1.mintNftToTreasury)({ tokenId, metadataBytes: bytes });
             hederaTokenId = tokenId;
             hederaSerial = minted.serial;
             txId = minted.txId;
@@ -232,10 +262,8 @@ app.post("/api/badges/issue", async (req, res) => {
     if (!existingProfile) {
         db_1.db.prepare("INSERT INTO profiles (id, hedera_account_id, display_name, created_at) VALUES (?,?,?,?)").run(profileId, hederaAccountId, displayName?.trim() || null, createdAt);
     }
-    // dedupe: match on quizVersion + category + level
+    // dedupe (v1): text search in metadata_json for quizVersion
     const versionNeedle = `"quizVersion":"${quizVersion}"`;
-    const categoryNeedle = `"category":"${badge?.category}"`;
-    const levelNeedle = `"level":${badge?.level}`;
     const existingCred = db_1.db
         .prepare(`
       SELECT *
@@ -243,12 +271,10 @@ app.post("/api/badges/issue", async (req, res) => {
       WHERE hedera_account_id = ?
         AND credential_type = 'STEAM_BADGE'
         AND metadata_json LIKE ?
-        AND metadata_json LIKE ?
-        AND metadata_json LIKE ?
       ORDER BY created_at DESC
       LIMIT 1
     `)
-        .get(hederaAccountId, `%${versionNeedle}%`, `%${categoryNeedle}%`, `%${levelNeedle}%`);
+        .get(hederaAccountId, `%${versionNeedle}%`);
     if (existingCred) {
         return res.json({
             ok: true,
@@ -273,18 +299,17 @@ app.post("/api/badges/issue", async (req, res) => {
         issuer: "GeniusSeeker",
     };
     const tokenId = process.env.HEDERA_BADGE_TOKEN_ID;
-    console.log("🔑 tokenId:", tokenId, "env:", process.env.HEDERA_BADGE_TOKEN_ID);
-	if (tokenId) {
+    if (tokenId) {
         try {
-            const bytes = badge_metadata_1.getBadgeMetadataBytes(badge.category, badge.level);
-            const minted = await (0, hedera_1.mintAndTransferNft)({ tokenId, metadataBytes: bytes, toAccountId: hederaAccountId });
+            const bytes = new TextEncoder().encode(JSON.stringify(payload));
+            const minted = await (0, hedera_1.mintNftToTreasury)({ tokenId, metadataBytes: bytes });
             hederaTokenId = tokenId;
             hederaSerial = minted.serial;
             txId = minted.txId;
         }
         catch (e) {
-    console.error("Badge mint failed CODE:", e?.status?._code, "MSG:", e?.message);
-}
+            console.error("Badge mint failed:", e);
+        }
     }
     db_1.db.prepare(`
     INSERT INTO credentials
@@ -765,45 +790,36 @@ ${text}`;
 app.post("/api/results/email", async (req, res) => {
     try {
         const { email, hederaAccountId, displayName, results } = req.body || {};
-        if (!email) return res.status(400).json({ error: "email required" });
-        const apiKey = process.env.RESEND_API_KEY;
-        if (!apiKey) return res.status(500).json({ error: "RESEND_API_KEY not set" });
-        const { Resend } = require("resend");
-        const resend = new Resend(apiKey);
-        const name = displayName || hederaAccountId || "Candidate";
-        const { badge, level, payRange, compStructure, wageRange, workStyle, workLocation } = results || {};
-        const html = `
-          <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;">
-            <h1 style="color:#b8960c;">Your STEAM Badge Results</h1>
-            <p>Hi ${name},</p>
-            <p>Here are your GeniusSeeker STEAM Assessment results:</p>
-            <table style="width:100%;border-collapse:collapse;margin:16px 0;">
-              <tr><td style="padding:8px;font-weight:bold;color:#888;">Primary Badge</td><td style="padding:8px;font-size:18px;font-weight:bold;">${badge || "—"}</td></tr>
-              <tr style="background:#f9f9f9;"><td style="padding:8px;font-weight:bold;color:#888;">Skill Level</td><td style="padding:8px;">Level ${level || "—"}</td></tr>
-              <tr><td style="padding:8px;font-weight:bold;color:#888;">Earning Potential</td><td style="padding:8px;">${payRange || "—"}</td></tr>
-              <tr style="background:#f9f9f9;"><td style="padding:8px;font-weight:bold;color:#888;">Compensation</td><td style="padding:8px;">${compStructure || "—"}</td></tr>
-              <tr><td style="padding:8px;font-weight:bold;color:#888;">Target Wage</td><td style="padding:8px;">${wageRange || "—"}</td></tr>
-              <tr style="background:#f9f9f9;"><td style="padding:8px;font-weight:bold;color:#888;">Work Style</td><td style="padding:8px;">${workStyle || "—"}</td></tr>
-              <tr><td style="padding:8px;font-weight:bold;color:#888;">Location</td><td style="padding:8px;">${workLocation || "—"}</td></tr>
-            </table>
-            <p style="margin-top:24px;">
-              <a href="https://geniusseeker.com/candidates.html" style="background:#b8960c;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;">View Your Profile</a>
-            </p>
-            <p style="color:#888;font-size:12px;margin-top:32px;">GeniusSeeker · Connecting STEAM talent with opportunity</p>
-          </div>
-        `;
-        await resend.emails.send({
-            from: "GeniusSeeker <noreply@geniusseeker.com>",
-            to: email,
-            subject: `Your STEAM Badge: ${badge || "Results"} — Level ${level || ""}`,
-            html,
+        if (!email || !hederaAccountId || !results) {
+            return res.status(400).json({ error: "Missing required fields: email, hederaAccountId, results" });
+        }
+        const formspreeEndpoint = process.env.FORMSPREE_ENDPOINT || "https://formspree.io/f/xdalgvva";
+        const payload = {
+            email,
+            hederaAccountId,
+            displayName: displayName || "—",
+            results: typeof results === "string" ? results : JSON.stringify(results, null, 2),
+            timestamp: nowISO(),
+            source: "GeniusSeeker Quiz",
+        };
+        const resp = await fetch(formspreeEndpoint, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+            },
+            body: JSON.stringify(payload),
         });
-        console.log("📧 Results email sent to:", email);
+        if (!resp.ok) {
+            const text = await resp.text().catch(() => "");
+            console.error("Formspree error:", resp.status, text);
+            return res.status(502).json({ error: "Email relay failed", status: resp.status });
+        }
         return res.json({ ok: true });
     }
     catch (e) {
         console.error("Email endpoint error:", e);
-        return res.status(500).json({ error: e.message });
+        return res.status(500).json({ error: "Internal error" });
     }
 });
 /* =====================================================
@@ -999,9 +1015,3 @@ app.listen(port, "0.0.0.0", () => {
     console.log(`identity-service running on 0.0.0.0:${port}`);
 });
 //# sourceMappingURL=server.js.map
-
-
-// POST /api/quiz/submit — analytics stub
-app.post("/api/quiz/submit", (req, res) => {
-  res.json({ ok: true });
-});
