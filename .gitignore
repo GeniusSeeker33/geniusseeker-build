@@ -27,3 +27,5 @@ Thumbs.db
 *.sqlite-wal
 create-tokens.js
 associate-tokens.js
+*.sqlite-shm
+*.sqlite-wal
