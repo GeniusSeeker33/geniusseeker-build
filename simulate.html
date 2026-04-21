@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="gs-api" content="https://geniusseeker.com" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sales Simulator | GeniusSeeker</title>
+  <meta name="description" content="Scenario-based sales coaching on real dealer context. Ramp reps in weeks, not quarters — with objection handling, growth missions, and live coaching tips." />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    .loop-tag{
+      display:inline-block;
+      font-size:.72rem; font-weight:700;
+      letter-spacing:.14em; text-transform:uppercase;
+      color:var(--accent2);
+      margin-bottom:10px;
+    }
+    .scenario-grid{
+      display:grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap:14px;
+    }
+    @media(max-width:820px){ .scenario-grid{ grid-template-columns:1fr; } }
+    .scenario{
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      background:rgba(255,255,255,.03);
+      padding:18px;
+    }
+    .scenario-type{
+      font-size:.72rem; font-weight:700;
+      letter-spacing:.14em; text-transform:uppercase;
+      color:var(--accent);
+      margin-bottom:8px;
+    }
+    .dealer-line{
+      font-size:1.05rem;
+      color:var(--text);
+      margin:0 0 10px;
+      font-weight:600;
+    }
+    .coach-note{
+      margin-top:10px;
+      padding:10px 12px;
+      border-left:2px solid var(--accent);
+      background:rgba(245,196,90,.06);
+      border-radius:4px;
+      font-size:.92rem;
+      color:var(--muted);
+    }
+    .level-row{
+      display:grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap:10px;
+      margin-top:14px;
+    }
+    @media(max-width:820px){ .level-row{ grid-template-columns: 1fr 1fr; } }
+    @media(max-width:520px){ .level-row{ grid-template-columns: 1fr; } }
+    .level{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      border-radius:12px;
+      padding:12px;
+    }
+    .level-num{
+      font-size:.72rem;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .level-title{
+      font-weight:700;
+      margin-top:4px;
+    }
+    .level-bar{
+      font-size:.85rem;
+      color:var(--muted);
+      margin-top:6px;
+    }
+  </style>
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main class="page">
+    <section class="container hero">
+      <div class="hero-inner">
+        <div>
+          <span class="loop-tag">Loop stage 2 — Simulate</span>
+          <h1>Ramp sales reps in weeks, not quarters.</h1>
+          <p class="muted">
+            The Sales Simulator trains reps on the conversations they actually
+            have — price objections, competitor pushback, email brush-offs,
+            growth-mission resistance — using live dealer context from your
+            accounts. Every session produces a readiness score and a coaching
+            trail that managers can see.
+          </p>
+          <div class="actions">
+            <a class="btn" href="https://app.geniusseeker.com" target="_blank" rel="noopener">See the live demo →</a>
+            <a class="btn btn-ghost" href="/operate.html">How it connects to the dashboard</a>
+          </div>
+        </div>
+
+        <aside class="hero-card">
+          <h3>Built for</h3>
+          <p class="muted">
+            Revenue organizations with B2B dealer, distributor, or channel sales
+            teams. Especially useful when onboarding takes too long, rep
+            performance is uneven, and training doesn't translate into pipeline.
+          </p>
+          <div class="hr"></div>
+          <p class="muted" style="margin:0">
+            Currently demoed as <strong>Orion Sales Performance OS</strong> at
+            <a href="https://app.geniusseeker.com" target="_blank" rel="noopener">app.geniusseeker.com</a>.
+          </p>
+        </aside>
+      </div>
+    </section>
+
+    <section class="container section">
+      <h2>Four live scenarios, straight from the product</h2>
+      <p class="muted">
+        These are real scenarios running in the Orion demo today. Each one
+        pairs a dealer objection with a goal, a top-performer answer, and a
+        coaching tip.
+      </p>
+
+      <div class="scenario-grid" style="margin-top:14px">
+        <div class="scenario">
+          <div class="scenario-type">Price Objection</div>
+          <p class="dealer-line">"Your prices are too high."</p>
+          <p class="muted" style="margin:0">
+            <strong>Goal:</strong> Agree first, reframe around profit, then
+            regain control with a direct question.
+          </p>
+          <div class="coach-note">
+            Strong answers usually contain agreement, a reframe around value or
+            profit, and a direct question.
+          </div>
+        </div>
+
+        <div class="scenario">
+          <div class="scenario-type">Competition</div>
+          <p class="dealer-line">"We already work with other distributors."</p>
+          <p class="muted" style="margin:0">
+            <strong>Goal:</strong> Validate their process, position as
+            complementary, and move into discovery.
+          </p>
+          <div class="coach-note">
+            Do not fight the objection. Agree, normalize, and shift into a
+            discovery question.
+          </div>
+        </div>
+
+        <div class="scenario">
+          <div class="scenario-type">Email Brush-Off</div>
+          <p class="dealer-line">"Just send me an email."</p>
+          <p class="muted" style="margin:0">
+            <strong>Goal:</strong> Avoid a generic brush-off by earning 20 more
+            seconds with a relevant question.
+          </p>
+          <div class="coach-note">
+            The best response agrees quickly, then asks a focused question
+            before the conversation dies.
+          </div>
+        </div>
+
+        <div class="scenario">
+          <div class="scenario-type">Growth Mission</div>
+          <p class="dealer-line">"I'm not sure this category is moving fast enough for me."</p>
+          <p class="muted" style="margin:0">
+            <strong>Goal:</strong> Reduce perceived risk, use social proof, and
+            ask for a trial commitment.
+          </p>
+          <div class="coach-note">
+            This is about confidence. Use low-risk framing, proof, and a direct
+            next step.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="container section">
+      <h2>Rep progression — not just training, a career map</h2>
+      <p class="muted">
+        Every completed session contributes to a readiness score. Reps move
+        through five levels based on session count and average performance.
+        Managers can see exactly where each rep stands at any moment.
+      </p>
+
+      <div class="level-row">
+        <div class="level">
+          <div class="level-num">Level 1</div>
+          <div class="level-title">Associate AE</div>
+          <div class="level-bar">Onboarding & guided missions</div>
+        </div>
+        <div class="level">
+          <div class="level-num">Level 2</div>
+          <div class="level-title">Account Executive I</div>
+          <div class="level-bar">3+ sessions, 60+ avg score</div>
+        </div>
+        <div class="level">
+          <div class="level-num">Level 3</div>
+          <div class="level-title">Account Executive II</div>
+          <div class="level-bar">6+ sessions, 70+ avg score</div>
+        </div>
+        <div class="level">
+          <div class="level-num">Level 4</div>
+          <div class="level-title">Senior AE</div>
+          <div class="level-bar">10+ sessions, 80+ avg score</div>
+        </div>
+        <div class="level">
+          <div class="level-num">Level 5</div>
+          <div class="level-title">Strategic Growth Leader</div>
+          <div class="level-bar">15+ sessions, 90+ avg score</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="container section">
+      <h2>Why this isn't just roleplay</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Dealer context, not generic</h3>
+          <p class="muted">
+            Scenarios pull from real account data in your Dealer Accounts
+            module — product mix, competitor set, recent order cadence — so
+            reps practice on their actual book.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Readiness, not completion</h3>
+          <p class="muted">
+            A "Complete" button doesn't move the needle. An average score
+            does. That's what shows up on the leaderboard and on the manager's
+            comp visibility view.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Coaching trail, not a black box</h3>
+          <p class="muted">
+            Every session leaves a visible activity entry. Managers see what
+            reps practiced, how they did, and where they're stuck — without
+            asking for a 1:1 recap.
+          </p>
+        </div>
+      </div>
+
+      <div class="actions" style="margin-top:18px;">
+        <a class="btn" href="https://app.geniusseeker.com" target="_blank" rel="noopener">Try the demo →</a>
+        <a class="btn btn-ghost" href="/measure.html">How this ties to comp</a>
+      </div>
+    </section>
+  </main>
+
+  <div id="site-footer"></div>
+  <script src="/js/main.js"></script>
+</body>
+</html>

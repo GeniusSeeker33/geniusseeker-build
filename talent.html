@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="gs-api" content="https://geniusseeker.com" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Find your talent | GeniusSeeker</title>
+  <meta name="description" content="Hire from a network of candidates who've already been credentialed for the skills your role needs. Readiness scores instead of resumes. Pay for results, not listings." />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    .loop-tag{
+      display:inline-block;
+      font-size:.72rem; font-weight:700;
+      letter-spacing:.14em; text-transform:uppercase;
+      color:var(--accent2);
+      margin-bottom:10px;
+    }
+    .why-row{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:12px;
+      margin-top:12px;
+    }
+    @media(max-width:820px){ .why-row{ grid-template-columns: 1fr; } }
+    .why-card{
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.2);
+      border-radius:14px;
+      padding:16px;
+    }
+    .why-card .tag{
+      font-size:.68rem; letter-spacing:.14em; text-transform:uppercase;
+      color:#ff8a8a;
+    }
+    .why-card h3{ margin:6px 0 6px; }
+
+    .pricing-row{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 0;
+      border-bottom:1px solid var(--line);
+      gap:10px; flex-wrap:wrap;
+    }
+    .pricing-row:last-child{ border-bottom:none; }
+    .pricing-row .label{ color:var(--muted); }
+    .pricing-row .value{ font-weight:700; color:var(--text); }
+
+    .compare-card{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      border-radius:14px;
+      padding:16px;
+    }
+    .compare-card h3{ margin:0 0 6px; }
+    .compare-list{ margin:0; padding:0 0 0 18px; }
+    .compare-list li{ margin:4px 0; color:var(--muted); }
+
+    .how-row{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:12px;
+      margin-top:14px;
+    }
+    @media(max-width:900px){ .how-row{ grid-template-columns: 1fr 1fr; } }
+    @media(max-width:520px){ .how-row{ grid-template-columns: 1fr; } }
+    .how-card{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      border-radius:14px;
+      padding:14px;
+    }
+    .how-card .num{
+      font-size:.7rem; letter-spacing:.14em; text-transform:uppercase;
+      color:var(--accent);
+    }
+    .how-card h3{ margin:6px 0 6px; }
+  </style>
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main class="page">
+    <section class="container hero">
+      <div class="hero-inner">
+        <div>
+          <span class="loop-tag">For companies hiring · talent.geniusseeker.com</span>
+          <h1>Credentialed talent. Proven readiness. Faster hires.</h1>
+          <p class="muted">
+            Hiring based on resumes is guesswork. GeniusSeeker's talent side
+            connects you with candidates who've already been credentialed on
+            the specific skills your role needs — and shows you how ready
+            they are, before you schedule the first interview.
+          </p>
+
+          <div class="actions">
+            <a class="btn" href="/submit-a-job.html">Post a role</a>
+            <a class="btn btn-ghost" href="/contact.html">Talk to us first</a>
+          </div>
+
+          <div class="badges" aria-label="Quick facts">
+            <span class="badge">Readiness scores, not keywords</span>
+            <span class="badge">Pay when you hire, not when you post</span>
+            <span class="badge">Optional onboarding into the same platform</span>
+          </div>
+        </div>
+
+        <aside class="hero-card">
+          <h3>Why hiring is broken</h3>
+          <p class="muted">
+            Applicant tracking systems filter on keywords. Job boards sell
+            you more listings. Agencies take 15–25% and still send candidates
+            who aren't ready on day one. We built the platform we wished
+            existed when we were hiring.
+          </p>
+        </aside>
+      </div>
+    </section>
+
+    <section class="container section">
+      <h2>What's different about this network</h2>
+      <div class="why-row">
+        <div class="why-card">
+          <div class="tag">Proof, not pedigree</div>
+          <h3>Candidates arrive credentialed</h3>
+          <p class="muted">
+            Every candidate in the network has completed skill quizzes and,
+            for many roles, real-world scenarios. You see the results
+            up front.
+          </p>
+        </div>
+        <div class="why-card">
+          <div class="tag">Readiness score</div>
+          <h3>One number that actually means something</h3>
+          <p class="muted">
+            Combines credentials, scenario performance, and recency. If
+            someone shows an 80 for your role, they really are in the top
+            slice — not just the top-written resume.
+          </p>
+        </div>
+        <div class="why-card">
+          <div class="tag">Same platform after hire</div>
+          <h3>Onboarding is already set up</h3>
+          <p class="muted">
+            If you use GeniusSeeker internally, your new hire's profile
+            carries over. Training continues. Manager visibility is day-one,
+            not month-three.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="container section">
+      <h2>How hiring works</h2>
+      <div class="how-row">
+        <div class="how-card">
+          <div class="num">01</div>
+          <h3>Post a role</h3>
+          <p class="muted">
+            Describe the role, the skills you actually need, and the
+            readiness bar. Takes about 10 minutes.
+          </p>
+        </div>
+        <div class="how-card">
+          <div class="num">02</div>
+          <h3>Get matched, not flooded</h3>
+          <p class="muted">
+            We surface candidates who already meet the credential bar — not
+            every person who clicked "apply".
+          </p>
+        </div>
+        <div class="how-card">
+          <div class="num">03</div>
+          <h3>Interview with context</h3>
+          <p class="muted">
+            You know their scenario scores going in. The interview skips
+            trivia and goes straight to fit and judgment.
+          </p>
+        </div>
+        <div class="how-card">
+          <div class="num">04</div>
+          <h3>Pay when it works</h3>
+          <p class="muted">
+            A flat success fee per hire, plus optional ongoing platform
+            access if you want to keep the person growing on it.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="container section">
+      <h2>Pricing, simply</h2>
+      <p class="muted">
+        Posting is free. Matching is free. You pay when you actually hire —
+        and optionally when you want the person to keep using the platform.
+      </p>
+
+      <div class="card" style="margin-top:14px;">
+        <div class="pricing-row">
+          <span class="label">Posting a role</span>
+          <span class="value">Free</span>
+        </div>
+        <div class="pricing-row">
+          <span class="label">Success fee per hire</span>
+          <span class="value">% of first-year base (tiered)</span>
+        </div>
+        <div class="pricing-row">
+          <span class="label">Platform for the new hire (optional)</span>
+          <span class="value">$10 / user / month</span>
+        </div>
+        <div class="pricing-row">
+          <span class="label">Referrer payout (comes out of the success fee)</span>
+          <span class="value">Flat bonus + monthly residual</span>
+        </div>
+      </div>
+      <p class="muted" style="margin-top:10px;">
+        Tiered rates are confirmed during your first conversation with us —
+        we're intentionally not racing to the bottom here. The candidates
+        are credentialed; the model is priced like that.
+      </p>
+    </section>
+
+    <section class="container section">
+      <h2>How this compares</h2>
+      <div class="grid">
+        <div class="compare-card">
+          <h3>GeniusSeeker Talent</h3>
+          <ul class="compare-list">
+            <li>Candidates arrive skill-credentialed</li>
+            <li>Readiness score included</li>
+            <li>Pay only on successful hire</li>
+            <li>Onboarding flows into same platform</li>
+            <li>Referrer network grows your pipeline</li>
+          </ul>
+        </div>
+        <div class="compare-card">
+          <h3>Traditional job board</h3>
+          <ul class="compare-list">
+            <li>You pay to post</li>
+            <li>Flooded with unfiltered applicants</li>
+            <li>No skill signal before interview</li>
+            <li>No handoff into training</li>
+          </ul>
+        </div>
+        <div class="compare-card">
+          <h3>Staffing agency</h3>
+          <ul class="compare-list">
+            <li>15–25% of first-year salary</li>
+            <li>Candidate quality varies by recruiter</li>
+            <li>Proof comes from claims, not scores</li>
+            <li>Relationship ends at hire date</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="actions" style="margin-top:18px;">
+        <a class="btn" href="/submit-a-job.html">Post a role</a>
+        <a class="btn btn-ghost" href="/contact.html">Talk to us first</a>
+      </div>
+    </section>
+  </main>
+
+  <div id="site-footer"></div>
+  <script src="/js/main.js"></script>
+</body>
+</html>

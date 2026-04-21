@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="gs-api" content="https://geniusseeker.com" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Measure — Comp & Earnings | GeniusSeeker</title>
+  <meta name="description" content="Compensation visibility for sales reps, managers, and referrers. Every KPI tied to real comp impact. Referral earnings tracked live — no guessing." />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    .loop-tag{
+      display:inline-block;
+      font-size:.72rem; font-weight:700;
+      letter-spacing:.14em; text-transform:uppercase;
+      color:var(--accent2);
+      margin-bottom:10px;
+    }
+    .mini-stat-grid{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:12px;
+      margin-top:12px;
+    }
+    @media(max-width:900px){ .mini-stat-grid{ grid-template-columns: 1fr 1fr; } }
+    @media(max-width:520px){ .mini-stat-grid{ grid-template-columns: 1fr; } }
+    .mini-stat{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      border-radius:14px;
+      padding:14px;
+    }
+    .mini-stat .lbl{
+      font-size:.72rem; letter-spacing:.12em; text-transform:uppercase;
+      color:var(--muted);
+    }
+    .mini-stat .val{
+      font-size:1.4rem; font-weight:800;
+      color:var(--accent);
+      margin-top:4px;
+    }
+    .ref-row{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 14px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      border-radius:12px;
+      margin-top:8px;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .ref-row .name{ font-weight:600; }
+    .ref-row .status{
+      font-size:.72rem; letter-spacing:.12em; text-transform:uppercase;
+      color:var(--muted);
+    }
+    .ref-row .amount{
+      font-weight:700;
+      color:var(--accent);
+    }
+    .tier-row{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:14px;
+      margin-top:14px;
+    }
+    @media(max-width:820px){ .tier-row{ grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main class="page">
+    <section class="container hero">
+      <div class="hero-inner">
+        <div>
+          <span class="loop-tag">Loop stage 4 — Measure</span>
+          <h1>Every KPI tied to real comp impact.</h1>
+          <p class="muted">
+            Reps always ask "what does this cost me?" Managers always ask "why
+            isn't this rep earning more?" The Measure view connects both —
+            combining monthly comp inputs, readiness qualification, and
+            referral earnings in one transparent source of truth.
+          </p>
+          <div class="actions">
+            <a class="btn" href="/refer.html">Earn as a referrer →</a>
+            <a class="btn btn-ghost" href="https://app.geniusseeker.com" target="_blank" rel="noopener">See rep comp view</a>
+          </div>
+        </div>
+
+        <aside class="hero-card">
+          <h3>Transparent by design</h3>
+          <p class="muted">
+            Every dollar has a trail. Readiness score ties to qualification.
+            Qualification ties to comp tier. Comp tier ties to monthly payout.
+            Nothing happens in a spreadsheet no one can see.
+          </p>
+        </aside>
+      </div>
+    </section>
+
+    <section class="container section">
+      <h2>Your referral earnings (demo)</h2>
+      <p class="muted">
+        Live from this browser's <code>localStorage</code>. Seeded with two
+        example referrals so you can see the shape of the dashboard. On a real
+        deployment this data comes from the platform backend.
+      </p>
+
+      <div class="mini-stat-grid" id="earnings-stats">
+        <div class="mini-stat">
+          <div class="lbl">Active referrals</div>
+          <div class="val" id="stat-active">—</div>
+        </div>
+        <div class="mini-stat">
+          <div class="lbl">Total referrals</div>
+          <div class="val" id="stat-count">—</div>
+        </div>
+        <div class="mini-stat">
+          <div class="lbl">Monthly earnings</div>
+          <div class="val" id="stat-monthly">—</div>
+        </div>
+        <div class="mini-stat">
+          <div class="lbl">Total earned</div>
+          <div class="val" id="stat-total">—</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <h3>Your network</h3>
+        <div id="ref-list"></div>
+        <p class="muted" id="ref-empty" style="display:none; margin-top:10px;">
+          No referrals yet. Head to the <a href="/refer.html">Refer page</a> to
+          grab your invite link.
+        </p>
+      </div>
+    </section>
+
+    <section class="container section">
+      <h2>How comp works for reps</h2>
+      <p class="muted">
+        The rep-side view is built around a simple pipeline: monthly inputs →
+        KPI qualification → comp tier → payout.
+      </p>
+      <div class="tier-row">
+        <div class="card">
+          <h3>1. Inputs</h3>
+          <p class="muted">
+            Reps enter their monthly activity — accounts opened, scenarios
+            completed, growth missions closed. Inputs are auditable and tied
+            to the Activity Feed.
+          </p>
+        </div>
+        <div class="card">
+          <h3>2. Qualification</h3>
+          <p class="muted">
+            The comp engine checks each KPI against its readiness threshold.
+            Reps either qualify, are trending toward qualification, or are
+            below — and they can see which.
+          </p>
+        </div>
+        <div class="card">
+          <h3>3. Payout</h3>
+          <p class="muted">
+            Estimated comp renders live on the rep's dashboard. No surprise
+            adjustments at quarter-end. Managers see the same number.
+          </p>
+        </div>
+      </div>
+
+      <div class="actions" style="margin-top:18px;">
+        <a class="btn" href="https://app.geniusseeker.com" target="_blank" rel="noopener">Tour the rep comp view →</a>
+        <a class="btn btn-ghost" href="/pricing.html">See platform pricing</a>
+      </div>
+    </section>
+  </main>
+
+  <div id="site-footer"></div>
+  <script src="/js/main.js"></script>
+  <script src="/js/referralStore.js"></script>
+  <script>
+    (function(){
+      function money(n){ return "$" + Number(n || 0).toLocaleString(); }
+      function render(){
+        var store = window.GS && window.GS.referralStore;
+        if (!store) return;
+        var list = store.list();
+        var totals = store.totals();
+        document.getElementById("stat-active").textContent = totals.activeCount;
+        document.getElementById("stat-count").textContent = totals.count;
+        document.getElementById("stat-monthly").textContent = money(totals.monthlyEarnings);
+        document.getElementById("stat-total").textContent = money(totals.totalEarned);
+        var container = document.getElementById("ref-list");
+        var empty = document.getElementById("ref-empty");
+        container.innerHTML = "";
+        if (list.length === 0) {
+          empty.style.display = "block";
+          return;
+        }
+        empty.style.display = "none";
+        list.forEach(function(r){
+          var row = document.createElement("div");
+          row.className = "ref-row";
+          row.innerHTML =
+            '<div><div class="name">' + escapeHtml(r.name) + '</div>' +
+            '<div class="status">' + escapeHtml(r.status) + ' • ' + r.hoursWorked + ' hrs this month</div></div>' +
+            '<div class="amount">' + money(r.monthlyEarnings) + '/mo</div>';
+          container.appendChild(row);
+        });
+      }
+      function escapeHtml(s){
+        return String(s).replace(/[&<>"']/g, function(c){
+          return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+        });
+      }
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", render);
+      } else { render(); }
+    })();
+  </script>
+</body>
+</html>

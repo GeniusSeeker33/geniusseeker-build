@@ -14,14 +14,20 @@
     </button>
 
     <nav id="site-nav" class="site-nav" aria-label="Primary">
-      <a href="/candidates.html">Candidates</a>
-      <a href="/recruiters.html">Recruiters</a>
-      <a href="/employers.html">Employers</a>
-      <a href="/jobs.html">Jobs</a>
+      <a href="/path.html">Path</a>
+      <a href="/talent.html">Talent</a>
+      <a href="/sales.html">Platform</a>
+      <a href="/refer.html">Refer</a>
       <a href="/meet-the-founder.html">About</a>
-      <a href="/platform.html">How It Works</a>
       <a class="btn btn-sm" href="/contact.html">Contact</a>
-      <a class="btn btn-sm btn-portal" href="https://app.geniusseeker.com" target="_blank" rel="noopener">Employee Portal</a>
+      <a class="btn btn-sm btn-portal" href="https://app.geniusseeker.com" target="_blank" rel="noopener">See the Demo</a>
     </nav>
   </div>
 </header>
+
+<!--
+  Sitewide scripts that should run on every page.
+  referrer.js captures ?ref=CODE from the URL on first visit and persists it
+  to localStorage so signups can be attributed later.
+-->
+<script src="/js/referrer.js"></script>

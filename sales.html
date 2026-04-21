@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="gs-api" content="https://geniusseeker.com" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Sales Platform | GeniusSeeker</title>
+  <meta name="description" content="GeniusSeeker's Sales Performance OS for companies with dealer, distributor, or channel sales teams. Scenario coaching, readiness dashboards, and compensation visibility on one branded tenant." />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    .loop-tag{
+      display:inline-block;
+      font-size:.72rem; font-weight:700;
+      letter-spacing:.14em; text-transform:uppercase;
+      color:var(--accent2);
+      margin-bottom:10px;
+    }
+    .pillar-row{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:12px;
+      margin-top:14px;
+    }
+    @media(max-width:1000px){ .pillar-row{ grid-template-columns: 1fr 1fr; } }
+    @media(max-width:560px){ .pillar-row{ grid-template-columns: 1fr; } }
+    .pillar-card{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      border-radius:14px;
+      padding:16px;
+    }
+    .pillar-card .step-num{
+      font-size:.7rem; letter-spacing:.14em; text-transform:uppercase;
+      color:var(--accent);
+    }
+    .pillar-card h3{ margin:6px 0 6px; }
+    .pillar-card .go{
+      display:inline-block; margin-top:8px; font-size:.9rem;
+      color:var(--accent2);
+    }
+
+    .problem-row{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:12px;
+      margin-top:12px;
+    }
+    @media(max-width:820px){ .problem-row{ grid-template-columns: 1fr; } }
+    .problem-card{
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.25);
+      border-radius:14px;
+      padding:16px;
+    }
+    .problem-card .tag{
+      font-size:.68rem;
+      letter-spacing:.14em; text-transform:uppercase;
+      color:#ff8a8a;
+    }
+    .problem-card h3{ margin:6px 0 6px; }
+
+    .tenant-band{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      border-radius:var(--radius2);
+      padding:22px;
+      margin-top:18px;
+      text-align:center;
+    }
+    .tenant-domain{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size:1.2rem;
+      color:var(--accent);
+      margin:6px 0 12px;
+    }
+    .demo-band{
+      border:1px solid rgba(61,220,151,.3);
+      background:linear-gradient(180deg, rgba(61,220,151,.06), rgba(255,255,255,.02));
+      border-radius:var(--radius2);
+      padding:22px;
+      display:flex; align-items:center; justify-content:space-between;
+      gap:20px; flex-wrap:wrap;
+      margin-top:18px;
+    }
+    .demo-band .dom{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color:#3ddc97;
+      font-size:1.05rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main class="page">
+    <section class="container hero">
+      <div class="hero-inner">
+        <div>
+          <span class="loop-tag">For sales organizations · app.geniusseeker.com</span>
+          <h1>Ramp sales reps in weeks, not quarters.</h1>
+          <p class="muted">
+            A Sales Performance OS for revenue teams with dealer, distributor,
+            or channel sellers. Scenario coaching on real accounts, a live
+            readiness dashboard, and compensation tied to what reps can
+            actually do — on your own branded tenant.
+          </p>
+
+          <div class="actions">
+            <a class="btn" href="https://app.geniusseeker.com" target="_blank" rel="noopener">See the live demo →</a>
+            <a class="btn btn-ghost" href="/contact.html">Request your subdomain</a>
+          </div>
+
+          <div class="badges" aria-label="Core pillars">
+            <span class="badge">Scenario coaching on real dealer context</span>
+            <span class="badge">Readiness → comp transparency</span>
+            <span class="badge">Multi-tenant by design</span>
+          </div>
+        </div>
+
+        <aside class="hero-card">
+          <h3>Currently live</h3>
+          <p class="muted">
+            The Orion tenant is the demo environment, running at
+            <a href="https://app.geniusseeker.com" target="_blank" rel="noopener">app.geniusseeker.com</a>.
+            Explore the full dashboard, simulator, and comp views with
+            seeded data.
+          </p>
+        </aside>
+      </div>
+    </section>
+
+    <section class="container section">
+      <h2>The problems we hear from VP Sales and CROs</h2>
+      <div class="problem-row">
+        <div class="problem-card">
+          <div class="tag">Ramp time</div>
+          <h3>"Reps take 6+ months to produce."</h3>
+          <p class="muted">
+            Onboarding binders and slide decks don't replicate real dealer
+            conversations. New reps fumble the first hard objection and
+            momentum dies.
+          </p>
+        </div>
+        <div class="problem-card">
+          <div class="tag">Readiness ↔ Comp</div>
+          <h3>"I can't tell which reps are ready."</h3>
+          <p class="muted">
+            Completion checkboxes don't equal readiness. Managers end up
+            gut-checking comp decisions instead of pointing at a signal.
+          </p>
+        </div>
+        <div class="problem-card">
+          <div class="tag">Coaching</div>
+          <h3>"Coaching is anecdotal."</h3>
+          <p class="muted">
+            Without a visible trail of what reps practiced and how they did,
+            1:1s reduce to "how's it going?" and enablement investment flies
+            blind.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="container section">
+      <h2>What's on the platform</h2>
+      <p class="muted">
+        Four pillars, one workflow. Each one links out to a deeper view
+        with real screens and examples.
+      </p>
+      <div class="pillar-row">
+        <div class="pillar-card">
+          <div class="step-num">Simulate</div>
+          <h3>Scenario coaching on real accounts</h3>
+          <p class="muted">
+            Objection handling, growth missions, dealer-specific setups.
+            Reps practice the conversations they'll actually have this week.
+          </p>
+          <a class="go" href="/simulate.html">See the simulator →</a>
+        </div>
+        <div class="pillar-card">
+          <div class="step-num">Operate</div>
+          <h3>Performance in one view</h3>
+          <p class="muted">
+            Readiness score, KPI grid, active accounts, activity feed, and
+            manager view — without bolting dashboards together from three
+            different tools.
+          </p>
+          <a class="go" href="/operate.html">See the dashboard →</a>
+        </div>
+        <div class="pillar-card">
+          <div class="step-num">Measure</div>
+          <h3>Comp tied to readiness</h3>
+          <p class="muted">
+            Every KPI connected to real comp impact. Reps always know where
+            they stand, and why.
+          </p>
+          <a class="go" href="/measure.html">See comp visibility →</a>
+        </div>
+        <div class="pillar-card">
+          <div class="step-num">Scale</div>
+          <h3>Your team. Your domain.</h3>
+          <p class="muted">
+            Branded subdomain per company, configurable playbook, your own
+            comp rules, your data.
+          </p>
+          <a class="go" href="/scale.html">How tenants work →</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="container section">
+      <div class="demo-band">
+        <div>
+          <p class="kicker">✦ Live demo</p>
+          <h2 style="margin:0;">See it in action</h2>
+          <p class="muted" style="margin-top:8px;">
+            The Orion tenant is live right now — explore the dashboard,
+            simulator, and comp views with seeded data.
+          </p>
+          <div class="dom" style="margin-top:8px;">app.geniusseeker.com</div>
+        </div>
+        <a class="btn" href="https://app.geniusseeker.com" target="_blank" rel="noopener">Open the demo →</a>
+      </div>
+    </section>
+
+    <section class="container section">
+      <h2>Why this fits revenue orgs specifically</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Built for channel and dealer sales</h3>
+          <p class="muted">
+            Most sales tools assume direct inside sales. This one knows
+            your reps are selling through dealers, distributors, and
+            partners — and that the scenarios are different.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Manager-first, not rep-first</h3>
+          <p class="muted">
+            Great for reps, but designed around what a VP or manager
+            actually needs: a way to tell who's ready, who's stuck, and
+            where coaching will move the number.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Hiring pipeline included</h3>
+          <p class="muted">
+            Because GeniusSeeker also runs the talent side of the network,
+            you can refill bench from credentialed candidates without
+            leaving the platform.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="container section">
+      <div class="tenant-band">
+        <p class="kicker" style="margin-bottom:4px">Multi-tenant by design</p>
+        <h2 style="margin:0">Your team. Your domain.</h2>
+        <div class="tenant-domain">yourcompany.geniusseeker.com</div>
+        <p class="muted" style="max-width:620px; margin:0 auto 14px;">
+          Every client gets a branded subdomain with configurable KPIs,
+          scenarios, and comp rules. Reps log in to your URL, your brand,
+          your playbook.
+        </p>
+        <div class="actions" style="justify-content:center;">
+          <a class="btn" href="/contact.html">Request your subdomain</a>
+          <a class="btn btn-ghost" href="/pricing.html">See pricing</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="site-footer"></div>
+  <script src="/js/main.js"></script>
+</body>
+</html>

@@ -27,6 +27,18 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main:             "index.html",
+        // Top-level product doors (new primary nav)
+        path:             "path.html",
+        talent:           "talent.html",
+        sales:            "sales.html",
+        // Sales platform deep-dive pages
+        refer:            "refer.html",
+        simulate:         "simulate.html",
+        operate:          "operate.html",
+        measure:          "measure.html",
+        scale:            "scale.html",
+        pricing:          "pricing.html",
+        // Legacy funnel pages — kept intact, hidden from main nav
         candidates:       "candidates.html",
         candidatesDir:    "candidates-directory.html",
         contact:          "contact.html",

@@ -9,6 +9,9 @@ dist/
 build/
 *.log
 
+# Nested sister repos that users may clone here during development
+sales_simulator_orion2/
+
 # OS junk
 .DS_Store
 Thumbs.db

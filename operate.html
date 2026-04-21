@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="gs-api" content="https://geniusseeker.com" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Performance Dashboard | GeniusSeeker</title>
+  <meta name="description" content="A live view of rep readiness, dealer execution, KPI attainment, and compensation impact. Connect rep behavior to dealer growth outcomes in one place." />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    .loop-tag{
+      display:inline-block;
+      font-size:.72rem; font-weight:700;
+      letter-spacing:.14em; text-transform:uppercase;
+      color:var(--accent2);
+      margin-bottom:10px;
+    }
+    .kpi-grid{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:12px;
+    }
+    @media(max-width:900px){ .kpi-grid{ grid-template-columns: 1fr 1fr; } }
+    @media(max-width:520px){ .kpi-grid{ grid-template-columns: 1fr; } }
+    .kpi{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      border-radius:14px;
+      padding:16px;
+    }
+    .kpi-label{
+      font-size:.72rem;
+      letter-spacing:.12em; text-transform:uppercase;
+      color:var(--muted);
+    }
+    .kpi-value{
+      font-size:1.5rem; font-weight:800;
+      color:var(--accent);
+      margin-top:6px;
+    }
+    .kpi-note{
+      font-size:.85rem;
+      color:var(--muted);
+      margin-top:4px;
+    }
+    .pillar-grid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:14px;
+    }
+    @media(max-width:900px){ .pillar-grid{ grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main class="page">
+    <section class="container hero">
+      <div class="hero-inner">
+        <div>
+          <span class="loop-tag">Loop stage 3 — Operate</span>
+          <h1>Sales execution, visible in one place.</h1>
+          <p class="muted">
+            The Performance Dashboard connects rep behavior to dealer outcomes
+            — readiness, KPI attainment, and comp impact all render live, so
+            managers stop guessing and reps stop hiding in the activity noise.
+          </p>
+          <div class="actions">
+            <a class="btn" href="https://app.geniusseeker.com" target="_blank" rel="noopener">See the live dashboard →</a>
+            <a class="btn btn-ghost" href="/measure.html">How comp ties in</a>
+          </div>
+        </div>
+
+        <aside class="hero-card">
+          <h3>One screen, three roles</h3>
+          <p class="muted">
+            Reps see their own progress. Managers see side-by-side comparisons.
+            Leadership sees the roll-up across the whole team. Same data source,
+            different permissions — no duplicate reports.
+          </p>
+        </aside>
+      </div>
+    </section>
+
+    <section class="container section">
+      <h2>What a dashboard actually shows</h2>
+      <p class="muted">
+        Example KPI row — the actual numbers come from the rep's real comp
+        inputs and account activity.
+      </p>
+      <div class="kpi-grid" style="margin-top:14px;">
+        <div class="kpi">
+          <div class="kpi-label">Readiness Score</div>
+          <div class="kpi-value">82</div>
+          <div class="kpi-note">Moved +7 vs last month</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">KPIs at target</div>
+          <div class="kpi-value">4 / 6</div>
+          <div class="kpi-note">Two below threshold</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Active Accounts</div>
+          <div class="kpi-value">28</div>
+          <div class="kpi-note">6 with growth missions open</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Comp on track</div>
+          <div class="kpi-value">$6,240</div>
+          <div class="kpi-note">Based on current inputs</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="container section">
+      <h2>The three pillars of Operate</h2>
+      <div class="pillar-grid">
+        <div class="card">
+          <h3>Dealer Accounts</h3>
+          <p class="muted">
+            Track growth opportunities per account. Launch training missions
+            directly from account context so reps practice the exact
+            conversation they're about to have.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Activity Feed</h3>
+          <p class="muted">
+            A visible trail of what every rep planned, practiced, and
+            updated. Replaces the "tell me what you did this week" manager
+            check-in.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Manager View</h3>
+          <p class="muted">
+            Side-by-side comparison of Sales Executives using the same KPI,
+            training, and comp logic. Makes coaching decisions obvious instead
+            of anecdotal.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="container section">
+      <h2>What changes on the team</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Ramp time drops</h3>
+          <p class="muted">
+            New reps hit readiness milestones based on completed scenario
+            sessions — not a supervisor's gut read. The dashboard makes it
+            obvious when they're ready for quota.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Coaching gets specific</h3>
+          <p class="muted">
+            Managers can point at a rep's readiness score, completed scenarios,
+            and dealer activity in one view. No more "let's sync next week" —
+            coaching happens from live data.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Leadership gets a signal</h3>
+          <p class="muted">
+            Roll-up metrics show where the team is under-indexing (coaching,
+            account coverage, readiness distribution) — so enablement
+            investment actually targets the gap.
+          </p>
+        </div>
+      </div>
+
+      <div class="actions" style="margin-top:18px;">
+        <a class="btn" href="https://app.geniusseeker.com" target="_blank" rel="noopener">See the demo →</a>
+        <a class="btn btn-ghost" href="/scale.html">Ready to roll out to your team?</a>
+      </div>
+    </section>
+  </main>
+
+  <div id="site-footer"></div>
+  <script src="/js/main.js"></script>
+</body>
+</html>
