@@ -36,6 +36,51 @@ async function sendNewCandidateNotification(hederaAccountId: string, displayName
   }
 }
 
+async function sendAdminQuizNotification({
+  hederaAccountId,
+  displayName,
+  email,
+  badge,
+  level,
+  quizVersion,
+}: {
+  hederaAccountId: string;
+  displayName: string | null;
+  email: string | null;
+  badge: string;
+  level: number | string;
+  quizVersion: string;
+}) {
+  try {
+    await resend.emails.send({
+      from: "GeniusSeeker <noreply@geniusseeker.com>",
+      to: "desiree@geniusseeker.com",
+      subject: `Quiz Completed: ${displayName || email || hederaAccountId} — ${badge} Level ${level}`,
+      html: `
+        <h2>STEAM Quiz Completed</h2>
+        <p>A candidate just finished the GeniusSeeker STEAM assessment.</p>
+        <table style="border-collapse:collapse;width:100%;max-width:520px">
+          <tr><td style="padding:8px;font-weight:600;color:#555;white-space:nowrap">Name</td><td style="padding:8px">${displayName || "—"}</td></tr>
+          <tr><td style="padding:8px;font-weight:600;color:#555;white-space:nowrap">Email</td><td style="padding:8px">${email || "—"}</td></tr>
+          <tr><td style="padding:8px;font-weight:600;color:#555;white-space:nowrap">Badge</td><td style="padding:8px"><strong>${badge}</strong></td></tr>
+          <tr><td style="padding:8px;font-weight:600;color:#555;white-space:nowrap">Level</td><td style="padding:8px">${level}</td></tr>
+          <tr><td style="padding:8px;font-weight:600;color:#555;white-space:nowrap">Quiz Version</td><td style="padding:8px">${quizVersion}</td></tr>
+          <tr><td style="padding:8px;font-weight:600;color:#555;white-space:nowrap">User ID</td><td style="padding:8px">${hederaAccountId}</td></tr>
+          <tr><td style="padding:8px;font-weight:600;color:#555;white-space:nowrap">Time</td><td style="padding:8px">${new Date().toLocaleString()}</td></tr>
+        </table>
+        <p style="margin-top:20px">
+          <a href="https://geniusseeker.com/profile.html?id=${encodeURIComponent(hederaAccountId)}"
+             style="background:#c9a84c;color:#000;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">
+            View Profile →
+          </a>
+        </p>
+      `,
+    });
+  } catch (e) {
+    console.error("Admin quiz notification failed (non-fatal):", e);
+  }
+}
+
 const app = express();
 
 // CORS — dev friendly. Lock down via CORS_ORIGIN in prod.
@@ -84,25 +129,41 @@ function requireEmployer(req: any, res: any, next: any) {
    PROFILE UPSERT (basic — from candidates.html)
 ===================================================== */
 app.post("/api/profile/upsert", (req, res) => {
-  const { hederaAccountId, displayName } = req.body || {};
-  if (!hederaAccountId) return res.status(400).json({ error: "hederaAccountId required" });
+  const { hederaAccountId: rawHederaId, displayName, email: rawEmail } = req.body || {};
+
+  let hederaAccountId = rawHederaId?.trim() || null;
+  const email = rawEmail?.trim().toLowerCase() || null;
+
+  // Email-only signup: find existing profile by email or generate a new stable ID
+  if (!hederaAccountId && email) {
+    const byEmail = db.prepare("SELECT * FROM profiles WHERE email=?").get(email) as Record<string, any> | undefined;
+    if (byEmail) {
+      const name = displayName?.trim() || null;
+      if (name) db.prepare("UPDATE profiles SET display_name=COALESCE(?,display_name) WHERE email=?").run(name, email);
+      const updated = db.prepare("SELECT * FROM profiles WHERE email=?").get(email) as any;
+      return res.json({ profile: updated, userId: updated?.hedera_account_id });
+    }
+    hederaAccountId = `gs_${uuid()}`;
+  }
+
+  if (!hederaAccountId) return res.status(400).json({ error: "hederaAccountId or email required" });
 
   const id = `profile_${hederaAccountId}`;
   const existing = db.prepare("SELECT * FROM profiles WHERE id=?").get(id) as Record<string, any> | undefined;
   const name = displayName?.trim() || null;
 
   if (existing) {
-    db.prepare("UPDATE profiles SET display_name=? WHERE id=?").run(name ?? existing.display_name, id);
+    db.prepare("UPDATE profiles SET display_name=?, email=COALESCE(?,email) WHERE id=?")
+      .run(name ?? existing.display_name, email, id);
   } else {
-    db.prepare("INSERT INTO profiles (id, hedera_account_id, display_name, created_at) VALUES (?,?,?,?)").run(
-      id, hederaAccountId, name, nowISO()
+    db.prepare("INSERT INTO profiles (id, hedera_account_id, display_name, email, created_at) VALUES (?,?,?,?,?)").run(
+      id, hederaAccountId, name, email, nowISO()
     );
-    // Fire-and-forget email notification
     sendNewCandidateNotification(hederaAccountId, name);
   }
 
   const profile = db.prepare("SELECT * FROM profiles WHERE id=?").get(id);
-  res.json({ profile });
+  res.json({ profile, userId: hederaAccountId });
 });
 
 /* =====================================================
@@ -388,6 +449,17 @@ app.post("/api/badges/issue", async (req, res) => {
     txId ?? null,
     createdAt
   );
+
+  // Notify admin for every new badge issuance
+  const profileForNotify = db.prepare("SELECT display_name, email FROM profiles WHERE hedera_account_id=?").get(hederaAccountId) as any;
+  sendAdminQuizNotification({
+    hederaAccountId,
+    displayName: displayName?.trim() || profileForNotify?.display_name || null,
+    email: profileForNotify?.email || null,
+    badge: badge?.category || String(badge),
+    level: badge?.level ?? 1,
+    quizVersion,
+  });
 
   res.json({ ok: true, deduped: false, id, hederaTokenId, hederaSerial, txId, payload });
 });
@@ -994,8 +1066,8 @@ app.post("/api/results/email", async (req, res) => {
   try {
     const { email, hederaAccountId, displayName, results } = req.body || {};
 
-    if (!email || !hederaAccountId || !results) {
-      return res.status(400).json({ error: "Missing required fields: email, hederaAccountId, results" });
+    if (!email || !results) {
+      return res.status(400).json({ error: "Missing required fields: email, results" });
     }
 
     const formspreeEndpoint = process.env.FORMSPREE_ENDPOINT || "https://formspree.io/f/xdalgvva";
@@ -1029,6 +1101,28 @@ app.post("/api/results/email", async (req, res) => {
     console.error("Email endpoint error:", e);
     return res.status(500).json({ error: "Internal error" });
   }
+});
+
+/* =====================================================
+   QUIZ COMPLETE — admin notification for every quiz
+   Called by the front-end on every completion, with or
+   without a Hedera account.
+===================================================== */
+app.post("/api/quiz/complete", async (req, res) => {
+  const { hederaAccountId, displayName, email, badge, level, quizVersion } = req.body || {};
+
+  const identifier = hederaAccountId || email || "anonymous";
+
+  await sendAdminQuizNotification({
+    hederaAccountId: identifier,
+    displayName: displayName || null,
+    email: email || null,
+    badge: badge || "Unknown",
+    level: level ?? 1,
+    quizVersion: quizVersion || "STEAM_V2",
+  });
+
+  res.json({ ok: true });
 });
 
 /* =====================================================

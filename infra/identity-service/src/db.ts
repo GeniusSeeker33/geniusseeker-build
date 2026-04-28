@@ -193,6 +193,7 @@ const profileColumns: [string, string][] = [
   ["open_to_work",   "TEXT DEFAULT 'open'"],
   ["resume_text",    "TEXT"],
   ["resume_pdf_url", "TEXT"],
+  ["email",         "TEXT"],
 ];
 
 for (const [col, type] of profileColumns) {

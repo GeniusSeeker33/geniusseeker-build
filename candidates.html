@@ -256,21 +256,31 @@
 
           <!-- Connect Identity UI -->
           <div class="card" style="margin-top:12px">
-            <h3 style="margin-bottom:6px">Connect your Talent Identity</h3>
-            <p class="muted" style="margin-top:0">Enter your Hedera Account ID (wallet connect comes next).</p>
+            <h3 style="margin-bottom:6px">Create Your Talent Profile</h3>
+            <p class="muted" style="margin-top:0">Your name and email are all you need. No wallet required.</p>
 
             <div class="form" style="display:grid;gap:10px;margin-top:10px">
               <label>
-                Hedera Account ID
-                <input id="gsAccountId" type="text" placeholder="0.0.12345" />
+                Your Name
+                <input id="gsDisplayName" type="text" placeholder="Jane Smith" />
               </label>
 
               <label>
-                Display Name (optional)
-                <input id="gsDisplayName" type="text" placeholder="Your name" />
+                Email Address
+                <input id="gsEmail" type="email" placeholder="you@example.com" />
               </label>
 
-              <button class="btn" id="gsSaveIdentity" type="button">Save Identity</button>
+              <details id="hederaDetails" style="margin-top:2px">
+                <summary style="font-size:.82rem;color:var(--muted);cursor:pointer;padding:4px 0;list-style:none;display:flex;align-items:center;gap:6px">
+                  <span style="opacity:.5">▶</span> Have a Hedera wallet? <span style="opacity:.45;font-size:.78rem">(optional — adds on-chain credentials)</span>
+                </summary>
+                <label style="display:block;margin-top:8px">
+                  Hedera Account ID
+                  <input id="gsAccountId" type="text" placeholder="0.0.12345" />
+                </label>
+              </details>
+
+              <button class="btn" id="gsSaveIdentity" type="button">Save My Profile</button>
               <div id="gsIdentityStatus" class="muted" style="margin-top:6px"></div>
             </div>
           </div>
@@ -600,7 +610,7 @@
 
       if (!accountId) {
         statusEl.className = "editor-status error";
-        statusEl.textContent = "⚠️ Save your Hedera Account ID first (above).";
+        statusEl.textContent = "⚠️ Save your profile identity first (name + email above).";
         return;
       }
 
@@ -645,12 +655,13 @@
       }
     });
 
-    // ---------- Identity save / load (original logic — unchanged) ----------
+    // ---------- Identity save / load ----------
     (function () {
-      const acct = document.getElementById("gsAccountId");
-      const name = document.getElementById("gsDisplayName");
-      const btn  = document.getElementById("gsSaveIdentity");
-      const msg  = document.getElementById("gsIdentityStatus");
+      const acct    = document.getElementById("gsAccountId");
+      const nameEl  = document.getElementById("gsDisplayName");
+      const emailEl = document.getElementById("gsEmail");
+      const btn     = document.getElementById("gsSaveIdentity");
+      const msg     = document.getElementById("gsIdentityStatus");
 
       function setMsg(text) { msg.textContent = text || ""; }
 
@@ -664,52 +675,64 @@
         console.warn("Could not store gs_api_base:", e);
       }
 
+      // Pre-fill from localStorage
       const savedAcct =
         (GSIdentity.getAccountId ? GSIdentity.getAccountId() : "") ||
         localStorage.getItem("GS_HEDERA_ACCOUNT_ID") ||
         localStorage.getItem("gs_hedera_account_id") || "";
+      const savedName  = (GSIdentity.getDisplayName ? GSIdentity.getDisplayName() : "") ||
+                         localStorage.getItem("gs_display_name") || "";
+      const savedEmail = localStorage.getItem("gs_email") || "";
 
-      const savedName =
-        (GSIdentity.getDisplayName ? GSIdentity.getDisplayName() : "") ||
-        localStorage.getItem("gs_display_name") || "";
+      if (savedAcct && acct)  acct.value     = savedAcct;
+      if (savedName)          nameEl.value   = savedName;
+      if (savedEmail)         emailEl.value  = savedEmail;
 
-      if (savedAcct) acct.value = savedAcct;
-      if (savedName) name.value = savedName;
-
+      // Auto-load profile if returning visitor
       if (savedAcct) loadProfile(savedAcct);
 
       document.getElementById("btnLoadProfile")?.addEventListener("click", () => {
-        loadProfile((acct.value || "").trim());
+        const id = (acct?.value || "").trim() || localStorage.getItem("gs_hedera_account_id") || "";
+        loadProfile(id);
       });
 
       btn.addEventListener("click", async () => {
-        const hederaAccountId = (acct.value || "").trim();
-        const displayName     = (name.value || "").trim();
+        const hederaAccountId = (acct?.value  || "").trim();
+        const displayName     = (nameEl.value  || "").trim();
+        const email           = (emailEl.value || "").trim();
 
-        if (!hederaAccountId) {
-          setMsg("Please enter a Hedera Account ID (e.g., 0.0.12345).");
+        if (!hederaAccountId && !email) {
+          setMsg("Please enter your email address (or a Hedera Account ID).");
           return;
         }
 
-        GSIdentity.setAccountId(hederaAccountId);
-        if (GSIdentity.setDisplayName) GSIdentity.setDisplayName(displayName);
-
         btn.disabled    = true;
-        const old       = btn.textContent;
+        const oldText   = btn.textContent;
         btn.textContent = "Saving…";
-        setMsg("Saving identity…");
+        setMsg("Saving…");
 
         try {
-          const r = await GSIdentity.upsertProfile({ hederaAccountId, displayName });
-          setMsg("Saved ✅ " + (r?.profile?.hedera_account_id || hederaAccountId));
-          try { localStorage.setItem("GS_HEDERA_ACCOUNT_ID", hederaAccountId); } catch {}
-          loadProfile(hederaAccountId);
+          const r = await GSIdentity.upsertProfile({ hederaAccountId: hederaAccountId || undefined, displayName: displayName || undefined, email: email || undefined });
+
+          // For email-only users the API returns a generated userId
+          const userId = r?.userId || hederaAccountId;
+
+          if (userId) {
+            localStorage.setItem("gs_hedera_account_id", userId);
+            if (GSIdentity.setAccountId) GSIdentity.setAccountId(userId);
+          }
+          if (displayName && GSIdentity.setDisplayName) GSIdentity.setDisplayName(displayName);
+          if (email) localStorage.setItem("gs_email", email);
+          if (hederaAccountId) localStorage.setItem("GS_HEDERA_ACCOUNT_ID", hederaAccountId);
+
+          setMsg("Profile saved ✅");
+          loadProfile(userId || hederaAccountId);
         } catch (e) {
           console.error("Error saving identity:", e);
-          setMsg("Error saving identity: " + (e && e.message ? e.message : "Unknown error"));
+          setMsg("Could not save — " + (e?.message || "Unknown error"));
         } finally {
           btn.disabled    = false;
-          btn.textContent = old;
+          btn.textContent = oldText;
         }
       });
     })();

@@ -12,8 +12,6 @@ const gsApiBase = () => {
   return v ? v.replace(/\/$/, "") : "http://localhost:8787";
 };
 
-console.log("GS API base (Quiz):", gsApiBase());
-
 const gsGetAccountId = () =>
   (localStorage.getItem("GS_HEDERA_ACCOUNT_ID") ||
     localStorage.getItem("gs_hedera_account_id") ||
@@ -21,6 +19,9 @@ const gsGetAccountId = () =>
 
 const gsGetDisplayName = () =>
   (localStorage.getItem("gs_display_name") || "").trim();
+
+const gsGetEmail = () =>
+  (localStorage.getItem("gs_email") || "").trim();
 
 async function gsPost(path, payload) {
   const url = gsApiBase() + path;
@@ -176,6 +177,10 @@ const calculateResults = (answers) => {
 };
 
 export default function Quiz() {
+  const [quizStarted,  setQuizStarted]  = useState(false);
+  const [preEmail,     setPreEmail]     = useState(() => gsGetEmail());
+  const [preName,      setPreName]      = useState(() => gsGetDisplayName());
+
   const [step, setStep]         = useState(0);
   const [answers, setAnswers]   = useState([]);
   const [submitted, setSubmitted] = useState(false);
@@ -183,7 +188,7 @@ export default function Quiz() {
   const [incomeAnswer,   setIncomeAnswer]   = useState(null);
   const [mentorAnswer,   setMentorAnswer]   = useState(null);
   const [showEmailForm,  setShowEmailForm]  = useState(false);
-  const [email,          setEmail]          = useState("");
+  const [email,          setEmail]          = useState(() => gsGetEmail());
   const [showAllAnswers, setShowAllAnswers] = useState(false);
 
   const [issueStatus, setIssueStatus] = useState("");
@@ -208,58 +213,92 @@ export default function Quiz() {
   useEffect(() => {
     if (!isFinished || !results) return;
     if (issuedRef.current) return;
-
-    const hederaAccountId = gsGetAccountId();
-    if (!hederaAccountId) { setIssueStatus("skipped"); issuedRef.current = true; return; }
-
     issuedRef.current = true;
-    setIssueStatus("pending");
+
+    const capturedEmail = preEmail || gsGetEmail();
+    const capturedName  = preName  || gsGetDisplayName();
 
     (async () => {
-      try {
-        const displayName = gsGetDisplayName();
-        const { badge, level, payRange, compStructure, wageRange, workStyle, workLocation } = results;
+      let hederaAccountId = gsGetAccountId();
 
-        await gsPost("/api/badges/issue", {
-          hederaAccountId,
-          displayName,
-          badge: {
-            category:      badge,
-            level,
-            payRange,
-            compStructure,
-            wageRange,
-            workStyle,
-            workLocation,
-            issuedFor:     "STEAM Identity Quiz",
-          },
-          quizVersion: "STEAM_V2",
-        });
-
-        await gsPost("/api/value/log", {
-          actor:     hederaAccountId,
-          eventType: "QUIZ_COMPLETED",
-          amount:    "25",
-          currency:  "GLCD",
-          reference: "steam-quiz",
-          metadata:  { category: badge, level },
-        });
-
-        // Auto-update profile with work preferences
-        await gsPost("/api/profile/update", {
-          hederaAccountId,
-          displayName,
-          openToWork: "looking",
-        });
-
-        setIssueStatus("ok");
-        try { localStorage.setItem("gs_quiz_just_completed", "1"); } catch {}
-      } catch (err) {
-        console.error("❌ Failed issuing badge:", err);
-        setIssueStatus("error");
+      // Email-only users: create/retrieve a profile to get a stable user ID
+      if (!hederaAccountId && capturedEmail) {
+        try {
+          setIssueStatus("pending");
+          const profileRes = await gsPost("/api/profile/upsert", {
+            email:       capturedEmail,
+            displayName: capturedName || undefined,
+          });
+          if (profileRes?.userId) {
+            hederaAccountId = profileRes.userId;
+            try {
+              localStorage.setItem("gs_hedera_account_id", hederaAccountId);
+              localStorage.setItem("gs_user_id", hederaAccountId);
+            } catch {}
+          }
+        } catch (e) {
+          console.warn("Could not create email-based profile:", e);
+        }
       }
+
+      // Issue badge (works for both Hedera and email-based IDs)
+      if (hederaAccountId) {
+        setIssueStatus("pending");
+        try {
+          const { badge, level, payRange, compStructure, wageRange, workStyle, workLocation } = results;
+
+          await gsPost("/api/badges/issue", {
+            hederaAccountId,
+            displayName: capturedName,
+            badge: {
+              category:     badge,
+              level,
+              payRange,
+              compStructure,
+              wageRange,
+              workStyle,
+              workLocation,
+              issuedFor:    "STEAM Identity Quiz",
+            },
+            quizVersion: "STEAM_V2",
+          });
+
+          await gsPost("/api/value/log", {
+            actor:     hederaAccountId,
+            eventType: "QUIZ_COMPLETED",
+            amount:    "25",
+            currency:  "GLCD",
+            reference: "steam-quiz",
+            metadata:  { category: results.badge, level: results.level },
+          });
+
+          await gsPost("/api/profile/update", {
+            hederaAccountId,
+            displayName: capturedName,
+            openToWork:  "looking",
+          });
+
+          setIssueStatus("ok");
+          try { localStorage.setItem("gs_quiz_just_completed", "1"); } catch {}
+        } catch (err) {
+          console.error("❌ Failed issuing badge:", err);
+          setIssueStatus("error");
+        }
+      } else {
+        setIssueStatus("skipped");
+      }
+
+      // Always notify admin — fire-and-forget
+      gsPost("/api/quiz/complete", {
+        hederaAccountId: hederaAccountId || capturedEmail || "anonymous",
+        displayName:     capturedName   || undefined,
+        email:           capturedEmail  || undefined,
+        badge:           results.badge,
+        level:           results.level,
+        quizVersion:     "STEAM_V2",
+      }).catch(e => console.warn("Admin notify failed (non-fatal):", e));
     })();
-  }, [isFinished, results]);
+  }, [isFinished, results, preEmail, preName]);
 
   // ---------------------------
   // Netlify storage backup
@@ -305,11 +344,7 @@ export default function Quiz() {
     setSendError("");
     if (!email) { alert("Please enter your email address."); return; }
 
-    const hederaAccountId = gsGetAccountId();
-    if (!hederaAccountId) {
-      alert("Please go back to Candidates and click Save Identity first, then return to the quiz.");
-      return;
-    }
+    const hederaAccountId = gsGetAccountId() || localStorage.getItem("gs_user_id") || `email_${Date.now()}`;
 
     const { badge, level, payRange, compStructure, wageRange, workStyle, workLocation } = results;
 
@@ -358,15 +393,82 @@ export default function Quiz() {
   const resetQuiz = () => {
     setStep(0); setAnswers([]); setSubmitted(false);
     setIncomeAnswer(null); setMentorAnswer(null);
-    setShowEmailForm(false); setEmail(""); setShowAllAnswers(false);
+    setShowEmailForm(false); setShowAllAnswers(false);
     issuedRef.current = false; setIssueStatus("");
     setSendStatus(""); setSendError("");
+    setQuizStarted(false);
+  };
+
+  const startQuiz = () => {
+    if (preName)  { try { localStorage.setItem("gs_display_name", preName);  } catch {} }
+    if (preEmail) { try { localStorage.setItem("gs_email",        preEmail); } catch {} setEmail(preEmail); }
+    setQuizStarted(true);
   };
 
   const shell     = "min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white";
   const container = "mx-auto w-full max-w-3xl px-4 py-10";
   const card      = "rounded-3xl border border-white/10 bg-white/5 shadow-[0_10px_30px_rgba(0,0,0,.35)] backdrop-blur-xl";
   const pad       = "p-6 sm:p-8";
+
+  // ── WELCOME SCREEN ───────────────────────────────────────────────────
+  if (!quizStarted) {
+    return (
+      <div className={shell}>
+        <div className={container}>
+          <div className={`${card} ${pad}`}>
+            <p className="text-sm text-white/70">GeniusSeeker</p>
+            <h2 className="mt-2 text-2xl sm:text-3xl font-semibold">STEAM Identity Quiz</h2>
+            <p className="mt-3 text-white/65 text-sm leading-relaxed">
+              Answer {total} questions to discover your STEAM badge, skill level (1–5), and earning potential.
+              Takes about 5 minutes.
+            </p>
+
+            <div className="mt-6 space-y-4">
+              <div>
+                <label className="block text-xs text-white/50 mb-1.5">Your Name <span className="text-white/30">(optional)</span></label>
+                <input
+                  type="text"
+                  value={preName}
+                  onChange={(e) => setPreName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && startQuiz()}
+                  placeholder="Jane Smith"
+                  className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-violet-300/50"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-white/50 mb-1.5">
+                  Email — to receive your results <span className="text-white/30">(optional)</span>
+                </label>
+                <input
+                  type="email"
+                  value={preEmail}
+                  onChange={(e) => setPreEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && startQuiz()}
+                  placeholder="you@example.com"
+                  className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-violet-300/50"
+                />
+                <p className="mt-1.5 text-xs text-white/35">We'll email your badge, level, and earning potential. No spam.</p>
+              </div>
+            </div>
+
+            <button
+              onClick={startQuiz}
+              className="mt-6 w-full rounded-2xl bg-violet-600/90 px-5 py-4 text-lg font-semibold hover:bg-violet-600 focus:outline-none focus:ring-2 focus:ring-violet-300/60 transition-colors"
+            >
+              Start Quiz →
+            </button>
+            <button
+              onClick={() => setQuizStarted(true)}
+              className="mt-2 w-full rounded-2xl bg-transparent px-5 py-2.5 text-sm text-white/40 hover:text-white/60 focus:outline-none transition-colors"
+            >
+              Skip — start without saving
+            </button>
+          </div>
+          <p className="mt-6 text-center text-xs text-white/40">GeniusSeeker • STEAM Badge Assessment v2 • {total} questions</p>
+        </div>
+      </div>
+    );
+  }
 
   // ── RESULTS ──────────────────────────────────────────────────────────
   if (isFinished && results) {
@@ -388,10 +490,10 @@ export default function Quiz() {
                 <p className="text-sm text-white/70">GeniusSeeker STEAM Assessment</p>
                 <h2 className="mt-1 text-2xl sm:text-3xl font-semibold">Your Results</h2>
                 <div className="mt-2 text-xs text-white/60">
-                  {!hederaAccountId && <span>Connect your Hedera Account ID on the Candidates page to save your badge on-chain.</span>}
-                  {hederaAccountId && issueStatus === "pending" && <span>Saving your badge…</span>}
-                  {hederaAccountId && issueStatus === "ok"      && <span>Badge saved ✅</span>}
-                  {hederaAccountId && issueStatus === "error"   && <span>Couldn't save badge right now (refresh and try again).</span>}
+                  {issueStatus === "pending" && <span>Saving your badge…</span>}
+                  {issueStatus === "ok"      && <span>Badge saved to your profile ✅</span>}
+                  {issueStatus === "error"   && <span>Couldn't save badge right now — try refreshing.</span>}
+                  {issueStatus === "skipped" && <span>Enter your email below to save your results.</span>}
                 </div>
               </div>
               <div className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3">

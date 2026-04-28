@@ -104,12 +104,12 @@
     setDisplayName,
 
     // Profiles
-    upsertProfile: async ({ hederaAccountId, displayName }) => {
-      // persist locally as well (so Quiz.jsx can read it)
+    upsertProfile: async ({ hederaAccountId, displayName, email }) => {
       if (hederaAccountId) setAccountId(hederaAccountId);
       if (displayName) setDisplayName(displayName);
+      if (email) localStorage.setItem("gs_email", email);
 
-      return post("/api/profile/upsert", { hederaAccountId, displayName });
+      return post("/api/profile/upsert", { hederaAccountId, displayName, email });
     },
 
     fetchProfile: async (hederaAccountId) =>
