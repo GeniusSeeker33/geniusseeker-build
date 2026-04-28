@@ -173,7 +173,7 @@ app.post("/api/profile/update", (req, res) => {
   const {
     hederaAccountId, displayName, bio, skills,
     avatarUrl, portfolioUrl, linkedinUrl, githubUrl, openToWork,
-    resumeText, resumePdfUrl
+    resumeText, resumePdfUrl, currentTitle, location, yearsExperience, preferredRole
   } = req.body || {};
 
   if (!hederaAccountId) return res.status(400).json({ error: "hederaAccountId required" });
@@ -189,28 +189,36 @@ app.post("/api/profile/update", (req, res) => {
 
   db.prepare(`
     UPDATE profiles SET
-      display_name   = COALESCE(?, display_name),
-      bio            = COALESCE(?, bio),
-      skills         = COALESCE(?, skills),
-      avatar_url     = COALESCE(?, avatar_url),
-      portfolio_url  = COALESCE(?, portfolio_url),
-      linkedin_url   = COALESCE(?, linkedin_url),
-      github_url     = COALESCE(?, github_url),
-      open_to_work   = COALESCE(?, open_to_work),
-      resume_text    = COALESCE(?, resume_text),
-      resume_pdf_url = COALESCE(?, resume_pdf_url)
+      display_name     = COALESCE(?, display_name),
+      bio              = COALESCE(?, bio),
+      skills           = COALESCE(?, skills),
+      avatar_url       = COALESCE(?, avatar_url),
+      portfolio_url    = COALESCE(?, portfolio_url),
+      linkedin_url     = COALESCE(?, linkedin_url),
+      github_url       = COALESCE(?, github_url),
+      open_to_work     = COALESCE(?, open_to_work),
+      resume_text      = COALESCE(?, resume_text),
+      resume_pdf_url   = COALESCE(?, resume_pdf_url),
+      current_title    = COALESCE(?, current_title),
+      location         = COALESCE(?, location),
+      years_experience = COALESCE(?, years_experience),
+      preferred_role   = COALESCE(?, preferred_role)
     WHERE id = ?
   `).run(
-    displayName?.trim()   || null,
-    bio?.trim()           || null,
+    displayName?.trim()      || null,
+    bio?.trim()              || null,
     skills ? JSON.stringify(skills) : null,
-    avatarUrl?.trim()     || null,
-    portfolioUrl?.trim()  || null,
-    linkedinUrl?.trim()   || null,
-    githubUrl?.trim()     || null,
-    openToWork            || null,
-    resumeText?.trim()    || null,
-    resumePdfUrl?.trim()  || null,
+    avatarUrl?.trim()        || null,
+    portfolioUrl?.trim()     || null,
+    linkedinUrl?.trim()      || null,
+    githubUrl?.trim()        || null,
+    openToWork               || null,
+    resumeText?.trim()       || null,
+    resumePdfUrl?.trim()     || null,
+    currentTitle?.trim()     || null,
+    location?.trim()         || null,
+    yearsExperience?.trim()  || null,
+    preferredRole            || null,
     id
   );
 

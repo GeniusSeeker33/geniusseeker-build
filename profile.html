@@ -47,8 +47,13 @@
     }
     .avatar-initials { position: relative; z-index: 1; pointer-events: none; }
 
-    .profile-name   { font-size: 1.15rem; font-weight: 600; margin-bottom: 4px; }
+    .profile-name   { font-size: 1.15rem; font-weight: 600; margin-bottom: 2px; }
+    .profile-title  { font-size: .85rem; opacity: .55; margin-bottom: 12px; }
     .profile-hedera { font-size: .75rem; opacity: .4; margin-bottom: 14px; word-break: break-all; }
+
+    .work-pref-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+    .work-pref-item { font-size: .82rem; }
+    .work-pref-label { opacity: .45; font-size: .72rem; display: block; margin-bottom: 2px; }
 
     .status-badge { display: inline-block; font-size: .72rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 4px 12px; border-radius: 999px; }
     .status-looking     { background: rgba(76,175,144,.15);  color: #4caf90; border: 1px solid rgba(76,175,144,.3); }
@@ -241,6 +246,10 @@
       if (badge) { try { badgeMeta = JSON.parse(badge.metadata_json); } catch {} }
 
       const status     = STATUS_LABELS[profile.open_to_work] || STATUS_LABELS.open;
+      const currentTitle = profile.current_title || "";
+      const location     = profile.location || "";
+      const yearsExp     = profile.years_experience || "";
+      const prefRole     = profile.preferred_role || "";
       const steamCat   = badgeMeta?.badge?.category || badgeMeta?.badge?.name || "—";
       const steamLevel = badgeMeta?.badge?.level || "—";
       const steamIcon  = STEAM_ICONS[steamCat] || "⭐";
@@ -296,6 +305,7 @@
             <div class="avatar-block">
               <div class="avatar">${avatarHtml(profile.avatar_url, profile.display_name)}</div>
               <div class="profile-name">${profile.display_name || "Anonymous"}</div>
+              ${currentTitle ? `<div class="profile-title">${currentTitle}</div>` : ""}
               ${profile.hedera_account_id ? `<div class="profile-hedera">${profile.hedera_account_id}</div>` : ""}
               <span class="status-badge ${status.cls}">${status.label}</span>
             </div>
@@ -338,6 +348,17 @@
             <div class="section-card">
               <h3>Skills</h3>
               <div class="skills-list">${skills.map(s => `<span class="skill-tag">${s}</span>`).join("")}</div>
+            </div>` : ""}
+
+            ${(location || yearsExp || prefRole) ? `
+            <div class="section-card">
+              <h3>Work Preferences</h3>
+              <div class="work-pref-grid">
+                ${location ? `<div class="work-pref-item"><span class="work-pref-label">Location</span>${location}</div>` : ""}
+                ${yearsExp ? `<div class="work-pref-item"><span class="work-pref-label">Experience</span>${yearsExp} years</div>` : ""}
+                ${prefRole ? `<div class="work-pref-item"><span class="work-pref-label">Role Type</span>${prefRole.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase())}</div>` : ""}
+                <div class="work-pref-item"><span class="work-pref-label">Availability</span>${status.label}</div>
+              </div>
             </div>` : ""}
 
             ${showExpand ? `
@@ -441,6 +462,11 @@
         const data = await res.json();
 
         if (!data.profile) {
+          // Before showing not-found, check localStorage for owner's own profile
+          if (isOwner) {
+            const local = tryLocalProfile(accountId);
+            if (local) { renderProfile(local, [], true); return; }
+          }
           document.getElementById("profileRoot").innerHTML =
             `<div class="not-found"><h2>Profile not found.</h2><p>This candidate hasn't set up their profile yet.</p></div>`;
           return;
@@ -449,10 +475,27 @@
         if (isOwner && !data.profile.hedera_account_id) data.profile.hedera_account_id = accountId;
         renderProfile(data.profile, data.credentials || [], isOwner);
       } catch {
+        // API unreachable — if owner, show their locally-saved profile
+        if (isOwner) {
+          const local = tryLocalProfile(accountId);
+          if (local) { renderProfile(local, [], true); return; }
+        }
         if (!isAuthorized) renderLoginGate();
         else document.getElementById("profileRoot").innerHTML =
           `<div class="not-found"><h2>Could not load profile.</h2><p>Is the backend running?</p></div>`;
       }
+    }
+
+    function tryLocalProfile(id) {
+      try {
+        const raw  = localStorage.getItem("gs_local_profile");
+        if (!raw) return null;
+        const p = JSON.parse(raw);
+        if (!p || (!p.display_name && !p.email)) return null;
+        p.hedera_account_id = id;
+        p.open_to_work = p.open_to_work || "open";
+        return p;
+      } catch { return null; }
     }
 
     loadProfile();

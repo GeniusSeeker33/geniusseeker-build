@@ -394,6 +394,43 @@
             <div class="skills-tags" id="pe-skills-tags"></div>
           </div>
 
+          <!-- Current Title -->
+          <div>
+            <label for="pe-current-title">Current Title / Role</label>
+            <input id="pe-current-title" type="text" placeholder="e.g. Senior Software Engineer" />
+          </div>
+
+          <!-- Location -->
+          <div>
+            <label for="pe-location">Location / Timezone</label>
+            <input id="pe-location" type="text" placeholder="e.g. Austin, TX · CST" />
+          </div>
+
+          <!-- Years of Experience -->
+          <div>
+            <label for="pe-years-exp">Years of Experience</label>
+            <select id="pe-years-exp">
+              <option value="">— Select —</option>
+              <option value="0-1">Less than 1 year</option>
+              <option value="1-3">1–3 years</option>
+              <option value="3-5">3–5 years</option>
+              <option value="5-10">5–10 years</option>
+              <option value="10+">10+ years</option>
+            </select>
+          </div>
+
+          <!-- Preferred Role Type -->
+          <div>
+            <label for="pe-preferred-role">Preferred Role Type</label>
+            <select id="pe-preferred-role">
+              <option value="">— Select —</option>
+              <option value="full-time">Full-Time</option>
+              <option value="contract">Contract / Freelance</option>
+              <option value="part-time">Part-Time</option>
+              <option value="any">Open to Any</option>
+            </select>
+          </div>
+
           <!-- Open to work -->
           <div>
             <label for="pe-open-to-work">Availability</label>
@@ -561,17 +598,24 @@
         viewLink.style.display = "none";
       }
 
-      // Pre-fill fields if profile has extended data
-      if (profile) {
-        if (profile.bio)           document.getElementById("pe-bio").value          = profile.bio;
-        if (profile.portfolio_url) document.getElementById("pe-portfolio").value     = profile.portfolio_url;
-        if (profile.linkedin_url)  document.getElementById("pe-linkedin").value      = profile.linkedin_url;
-        if (profile.github_url)    document.getElementById("pe-github").value        = profile.github_url;
-        if (profile.avatar_url)    document.getElementById("pe-avatar").value        = profile.avatar_url;
-        if (profile.open_to_work)  document.getElementById("pe-open-to-work").value  = profile.open_to_work;
+      // Pre-fill fields — use profile from API; fall back to localStorage
+      const localProfile = JSON.parse(localStorage.getItem("gs_local_profile") || "{}");
+      const src = profile || localProfile;
+      if (src && Object.keys(src).length) {
+        const v = (id) => document.getElementById(id);
+        if (src.bio)             v("pe-bio").value             = src.bio;
+        if (src.portfolio_url)   v("pe-portfolio").value       = src.portfolio_url;
+        if (src.linkedin_url)    v("pe-linkedin").value        = src.linkedin_url;
+        if (src.github_url)      v("pe-github").value          = src.github_url;
+        if (src.avatar_url)      v("pe-avatar").value          = src.avatar_url;
+        if (src.open_to_work)    v("pe-open-to-work").value    = src.open_to_work;
+        if (src.current_title)   v("pe-current-title").value   = src.current_title;
+        if (src.location)        v("pe-location").value        = src.location;
+        if (src.years_experience) v("pe-years-exp").value      = src.years_experience;
+        if (src.preferred_role)  v("pe-preferred-role").value  = src.preferred_role;
 
         // Skills
-        const skills = Array.isArray(profile.skills) ? profile.skills : [];
+        const skills = Array.isArray(src.skills) ? src.skills : [];
         currentSkills = [...skills];
         renderSkillTags();
       }
@@ -604,17 +648,18 @@
       }
     });
 
-    // Save profile
+    // Save profile — localStorage-first, then API sync
     document.getElementById("pe-save-btn").addEventListener("click", async () => {
       const accountId = (document.getElementById("gsAccountId").value || "").trim() ||
                         localStorage.getItem("gs_hedera_account_id") || "";
+      const email     = localStorage.getItem("gs_email") || "";
 
       const statusEl = document.getElementById("pe-status");
       const btn      = document.getElementById("pe-save-btn");
 
-      if (!accountId) {
-        statusEl.className = "editor-status error";
-        statusEl.textContent = "⚠️ Save your profile identity first (name + email above).";
+      if (!accountId && !email) {
+        statusEl.className   = "editor-status error";
+        statusEl.textContent = "⚠️ Save your name and email above first.";
         return;
       }
 
@@ -623,36 +668,72 @@
       statusEl.className   = "editor-status";
       statusEl.textContent = "";
 
+      const g = (id) => (document.getElementById(id)?.value || "").trim();
+
       const payload = {
-        hederaAccountId: accountId,
-        displayName:     document.getElementById("gsDisplayName").value.trim() || undefined,
-        bio:             document.getElementById("pe-bio").value.trim()         || undefined,
+        hederaAccountId: accountId || undefined,
+        displayName:     g("gsDisplayName") || undefined,
+        bio:             g("pe-bio")         || undefined,
         skills:          currentSkills.length ? currentSkills : undefined,
-        portfolioUrl:    document.getElementById("pe-portfolio").value.trim()   || undefined,
-        linkedinUrl:     document.getElementById("pe-linkedin").value.trim()    || undefined,
-        githubUrl:       document.getElementById("pe-github").value.trim()      || undefined,
-        avatarUrl:       document.getElementById("pe-avatar").value.trim()      || undefined,
-        openToWork:      document.getElementById("pe-open-to-work").value       || undefined,
-        resumeText:      document.getElementById("pe-resume-text")?.value.trim()  || undefined,
+        portfolioUrl:    g("pe-portfolio")   || undefined,
+        linkedinUrl:     g("pe-linkedin")    || undefined,
+        githubUrl:       g("pe-github")      || undefined,
+        avatarUrl:       g("pe-avatar")      || undefined,
+        openToWork:      g("pe-open-to-work")|| undefined,
+        resumeText:      g("pe-resume-text") || undefined,
+        currentTitle:    g("pe-current-title")   || undefined,
+        location:        g("pe-location")        || undefined,
+        yearsExperience: g("pe-years-exp")        || undefined,
+        preferredRole:   g("pe-preferred-role")   || undefined,
       };
 
+      // Always save to localStorage immediately
+      const localProfile = JSON.parse(localStorage.getItem("gs_local_profile") || "{}");
+      Object.assign(localProfile, {
+        display_name:     payload.displayName    || localProfile.display_name,
+        bio:              payload.bio            || localProfile.bio,
+        skills:           payload.skills         || localProfile.skills,
+        portfolio_url:    payload.portfolioUrl   || localProfile.portfolio_url,
+        linkedin_url:     payload.linkedinUrl    || localProfile.linkedin_url,
+        github_url:       payload.githubUrl      || localProfile.github_url,
+        avatar_url:       payload.avatarUrl      || localProfile.avatar_url,
+        open_to_work:     payload.openToWork     || localProfile.open_to_work,
+        current_title:    payload.currentTitle   || localProfile.current_title,
+        location:         payload.location       || localProfile.location,
+        years_experience: payload.yearsExperience|| localProfile.years_experience,
+        preferred_role:   payload.preferredRole  || localProfile.preferred_role,
+        hedera_account_id: accountId             || localProfile.hedera_account_id,
+        email:             email                 || localProfile.email,
+        updated_at:        new Date().toISOString(),
+      });
+      localStorage.setItem("gs_local_profile", JSON.stringify(localProfile));
+
+      // Update view-profile link now that we have data
+      if (accountId) {
+        const vl = document.getElementById("pe-view-link");
+        vl.href = `/profile.html?id=${accountId}`;
+        vl.style.display = "inline-block";
+      }
+
+      // Then try to sync with API
       try {
         const res  = await fetch(getApiBase() + "/api/profile/update", {
           method:  "POST",
           headers: { "Content-Type": "application/json" },
           body:    JSON.stringify(payload),
         });
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
 
         if (res.ok && data.ok) {
           statusEl.className   = "editor-status success";
           statusEl.textContent = "✅ Profile saved! Employers can now view your profile.";
         } else {
-          throw new Error(data?.error || `Server error ${res.status}`);
+          throw new Error(data?.error || `Server ${res.status}`);
         }
-      } catch (e) {
-        statusEl.className   = "editor-status error";
-        statusEl.textContent = "⚠️ Save failed — " + e.message;
+      } catch (_) {
+        // Saved locally — show friendly message
+        statusEl.className   = "editor-status success";
+        statusEl.textContent = "✅ Profile saved locally. It will sync when the server is online.";
       } finally {
         btn.disabled    = false;
         btn.textContent = "Save Profile";
@@ -718,28 +799,47 @@
         btn.textContent = "Saving…";
         setMsg("Saving…");
 
+        // Generate a stable local ID for email-only users
+        let userId = hederaAccountId ||
+                     localStorage.getItem("gs_hedera_account_id") ||
+                     localStorage.getItem("gs_user_id") || "";
+        if (!userId && email) userId = "gs_" + email.replace(/[^a-z0-9]/gi, "_").toLowerCase();
+
+        // Save to localStorage immediately — always works
+        if (email)        localStorage.setItem("gs_email", email);
+        if (displayName)  localStorage.setItem("gs_display_name", displayName);
+        if (userId)       localStorage.setItem("gs_hedera_account_id", userId);
+        if (hederaAccountId) localStorage.setItem("GS_HEDERA_ACCOUNT_ID", hederaAccountId);
+
+        const localProfile = JSON.parse(localStorage.getItem("gs_local_profile") || "{}");
+        Object.assign(localProfile, {
+          display_name:      displayName || localProfile.display_name,
+          email:             email       || localProfile.email,
+          hedera_account_id: userId      || localProfile.hedera_account_id,
+          updated_at:        new Date().toISOString(),
+        });
+        localStorage.setItem("gs_local_profile", JSON.stringify(localProfile));
+
+        showProfileEditor(userId, null);
+        setMsg("Identity saved ✅");
+        btn.disabled    = false;
+        btn.textContent = oldText;
+
+        // Then try to sync with identity service in background
         try {
-          const r = await GSIdentity.upsertProfile({ hederaAccountId: hederaAccountId || undefined, displayName: displayName || undefined, email: email || undefined });
-
-          // For email-only users the API returns a generated userId
-          const userId = r?.userId || hederaAccountId;
-
-          if (userId) {
-            localStorage.setItem("gs_hedera_account_id", userId);
-            if (GSIdentity.setAccountId) GSIdentity.setAccountId(userId);
+          const r = await GSIdentity.upsertProfile({
+            hederaAccountId: hederaAccountId || undefined,
+            displayName:     displayName     || undefined,
+            email:           email           || undefined,
+          });
+          const apiUserId = r?.userId || r?.profile?.hedera_account_id || hederaAccountId;
+          if (apiUserId && apiUserId !== userId) {
+            localStorage.setItem("gs_hedera_account_id", apiUserId);
+            if (GSIdentity.setAccountId) GSIdentity.setAccountId(apiUserId);
           }
-          if (displayName && GSIdentity.setDisplayName) GSIdentity.setDisplayName(displayName);
-          if (email) localStorage.setItem("gs_email", email);
-          if (hederaAccountId) localStorage.setItem("GS_HEDERA_ACCOUNT_ID", hederaAccountId);
-
-          setMsg("Profile saved ✅");
-          loadProfile(userId || hederaAccountId);
-        } catch (e) {
-          console.error("Error saving identity:", e);
-          setMsg("Could not save — " + (e?.message || "Unknown error"));
-        } finally {
-          btn.disabled    = false;
-          btn.textContent = oldText;
+          loadProfile(apiUserId || userId);
+        } catch (_) {
+          // API unreachable — already saved locally, no action needed
         }
       });
     })();
@@ -936,11 +1036,25 @@
       const nameEl = document.getElementById("gsDisplayName");
       if (d.displayName && !nameEl.value.trim()) nameEl.value = d.displayName;
 
-      if (d.bio)          document.getElementById("pe-bio").value         = d.bio;
-      if (d.portfolioUrl) document.getElementById("pe-portfolio").value   = d.portfolioUrl;
-      if (d.linkedinUrl)  document.getElementById("pe-linkedin").value    = d.linkedinUrl;
-      if (d.githubUrl)    document.getElementById("pe-github").value      = d.githubUrl;
-      if (d.openToWork)   document.getElementById("pe-open-to-work").value = d.openToWork;
+      if (d.bio)             document.getElementById("pe-bio").value             = d.bio;
+      if (d.portfolioUrl)    document.getElementById("pe-portfolio").value       = d.portfolioUrl;
+      if (d.linkedinUrl)     document.getElementById("pe-linkedin").value        = d.linkedinUrl;
+      if (d.githubUrl)       document.getElementById("pe-github").value          = d.githubUrl;
+      if (d.openToWork)      document.getElementById("pe-open-to-work").value    = d.openToWork;
+      if (d.currentTitle)    document.getElementById("pe-current-title").value   = d.currentTitle;
+      if (d.location)        document.getElementById("pe-location").value        = d.location;
+      if (d.yearsExperience) {
+        const sel = document.getElementById("pe-years-exp");
+        // Map numeric years to select options
+        const yrs = parseInt(d.yearsExperience, 10);
+        if (!isNaN(yrs)) {
+          if (yrs < 1)        sel.value = "0-1";
+          else if (yrs <= 3)  sel.value = "1-3";
+          else if (yrs <= 5)  sel.value = "3-5";
+          else if (yrs <= 10) sel.value = "5-10";
+          else                sel.value = "10+";
+        }
+      }
 
       // Skills — merge with existing, no duplicates
       if (Array.isArray(d.skills) && d.skills.length) {

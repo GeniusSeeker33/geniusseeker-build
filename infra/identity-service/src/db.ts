@@ -192,8 +192,12 @@ const profileColumns: [string, string][] = [
   ["github_url",     "TEXT"],
   ["open_to_work",   "TEXT DEFAULT 'open'"],
   ["resume_text",    "TEXT"],
-  ["resume_pdf_url", "TEXT"],
-  ["email",         "TEXT"],
+  ["resume_pdf_url",    "TEXT"],
+  ["email",             "TEXT"],
+  ["current_title",     "TEXT"],
+  ["location",          "TEXT"],
+  ["years_experience",  "TEXT"],
+  ["preferred_role",    "TEXT"],
 ];
 
 for (const [col, type] of profileColumns) {
