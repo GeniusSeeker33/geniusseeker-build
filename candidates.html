@@ -552,10 +552,14 @@
       // Also reveal the import widget
       document.getElementById("importWidget").style.display = "block";
 
-      // Set view profile link
+      // Set view profile link (only when we have a real ID)
       const viewLink = document.getElementById("pe-view-link");
-      viewLink.href = `/profile.html?id=${accountId}`;
-      viewLink.style.display = "inline-block";
+      if (accountId) {
+        viewLink.href = `/profile.html?id=${accountId}`;
+        viewLink.style.display = "inline-block";
+      } else {
+        viewLink.style.display = "none";
+      }
 
       // Pre-fill fields if profile has extended data
       if (profile) {
@@ -688,7 +692,10 @@
       if (savedName)          nameEl.value   = savedName;
       if (savedEmail)         emailEl.value  = savedEmail;
 
-      // Auto-load profile if returning visitor
+      // Show editor immediately from localStorage — don't wait for API
+      if (savedAcct || savedEmail) showProfileEditor(savedAcct || "", null);
+
+      // Then load from API in background to fill in badge + extended fields
       if (savedAcct) loadProfile(savedAcct);
 
       document.getElementById("btnLoadProfile")?.addEventListener("click", () => {
@@ -740,12 +747,36 @@
     // ── Auto-refresh profile when returning from quiz ──
     window.addEventListener("pageshow", () => {
       const flag = localStorage.getItem("gs_quiz_just_completed");
-      if (flag) {
-        localStorage.removeItem("gs_quiz_just_completed");
-        const acctId = (document.getElementById("gsAccountId")?.value || "").trim()
-                    || localStorage.getItem("gs_hedera_account_id")
-                    || localStorage.getItem("GS_HEDERA_ACCOUNT_ID") || "";
-        if (acctId) loadProfile(acctId);
+      if (!flag) return;
+      localStorage.removeItem("gs_quiz_just_completed");
+
+      const acctId = (document.getElementById("gsAccountId")?.value || "").trim()
+                  || localStorage.getItem("gs_hedera_account_id")
+                  || localStorage.getItem("GS_HEDERA_ACCOUNT_ID") || "";
+
+      if (acctId) {
+        // Known user — refresh profile to pick up the new badge
+        loadProfile(acctId);
+      } else {
+        // Quiz completed but no identity saved yet — show editor and prompt
+        const badge = localStorage.getItem("gs_last_quiz_badge");
+        const level = localStorage.getItem("gs_last_quiz_level");
+        showProfileEditor("", null);
+
+        if (badge) {
+          const msg = document.getElementById("gsIdentityStatus");
+          if (msg) {
+            msg.innerHTML = `Quiz done! You earned a <strong>${badge} Level ${level}</strong> badge.<br>Save your name and email above to keep it.`;
+            msg.style.color = "var(--accent)";
+          }
+        }
+
+        // Pre-fill email if the quiz captured one
+        const quizEmail = localStorage.getItem("gs_email");
+        if (quizEmail) {
+          const emailEl = document.getElementById("gsEmail");
+          if (emailEl && !emailEl.value) emailEl.value = quizEmail;
+        }
       }
     });
 

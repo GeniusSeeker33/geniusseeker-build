@@ -279,7 +279,6 @@ export default function Quiz() {
           });
 
           setIssueStatus("ok");
-          try { localStorage.setItem("gs_quiz_just_completed", "1"); } catch {}
         } catch (err) {
           console.error("❌ Failed issuing badge:", err);
           setIssueStatus("error");
@@ -287,6 +286,14 @@ export default function Quiz() {
       } else {
         setIssueStatus("skipped");
       }
+
+      // Always mark quiz done and cache results so candidates page can read them
+      // even if the API was unreachable
+      try {
+        localStorage.setItem("gs_quiz_just_completed", "1");
+        localStorage.setItem("gs_last_quiz_badge", results.badge);
+        localStorage.setItem("gs_last_quiz_level", String(results.level));
+      } catch {}
 
       // Always notify admin — fire-and-forget
       gsPost("/api/quiz/complete", {
