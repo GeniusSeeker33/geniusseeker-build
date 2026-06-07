@@ -1,4 +1,8 @@
 {
+  "redirects": [
+    { "source": "/membership.html", "destination": "/employers.html", "permanent": true },
+    { "source": "/membership", "destination": "/employers.html", "permanent": true }
+  ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/" }
   ]

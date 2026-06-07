@@ -3,10 +3,59 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Employers | GeniusSeeker</title>
-  <meta name="description" content="GeniusSeeker is the S in your ESG. Verified hiring with salary transparency, diverse panels, structured feedback, and third-party candidate reviews — built in." />
+  <title>Employers | Corporate Rewards | GeniusSeeker</title>
+  <meta name="description" content="Fund your team's growth in Genius Dollars — $1 = $1 USD, redeemable for real experiences at Earthtone Analog. Plus GeniusSeeker verified hiring: salary transparency, diverse panels, and third-party candidate reviews — the S in your ESG, built in." />
+  <link rel="canonical" href="https://geniusseeker.com/employers.html" />
   <link rel="stylesheet" href="/css/styles.css" />
   <style>
+    /* Genius Dollars / Corporate Rewards */
+    .gd-pill {
+      display:inline-flex; align-items:center; gap:8px;
+      border:1px solid rgba(61,220,151,.4);
+      background:rgba(61,220,151,.08);
+      color:#3ddc97;
+      padding:8px 14px; border-radius:999px;
+      font-size:.9rem; font-weight:700;
+    }
+    .tier-grid {
+      display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:14px;
+    }
+    @media(max-width:860px){ .tier-grid{ grid-template-columns:1fr; } }
+    .tier-card { display:flex; flex-direction:column; }
+    .tier-card.featured {
+      border-color:rgba(245,196,90,.55);
+      background:linear-gradient(135deg, rgba(245,196,90,.08), transparent 60%);
+      box-shadow:0 18px 60px rgba(245,196,90,.12);
+    }
+    .tier-head {
+      display:flex; justify-content:space-between; align-items:center; gap:10px;
+      margin-bottom:4px;
+    }
+    .tier-tag {
+      font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.1em;
+      color:var(--accent);
+    }
+    .tier-flag {
+      font-size:.62rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em;
+      color:#3ddc97; border:1px solid rgba(61,220,151,.4);
+      padding:3px 8px; border-radius:999px;
+    }
+    .tier-price { font-size:1.5rem; font-weight:700; margin:6px 0 2px; }
+    .tier-dollars { color:var(--accent); font-weight:700; font-size:.92rem; margin:0 0 14px; }
+    .feature-list { list-style:none; margin:0; padding:0; display:grid; gap:9px; }
+    .feature-list li {
+      position:relative; padding-left:22px; font-size:.88rem; color:var(--muted); line-height:1.5;
+    }
+    .feature-list li::before { content:"✦"; position:absolute; left:0; color:#a8e6ff; }
+    .step-num {
+      display:inline-flex; align-items:center; justify-content:center;
+      width:30px; height:30px; border-radius:50%;
+      background:rgba(245,196,90,.12); color:var(--accent);
+      font-weight:700; font-size:.85rem; margin-bottom:10px;
+    }
+    .econ-card h3 { color:var(--accent); font-size:1.05rem; margin:0 0 6px; }
+
+    /* ESG band */
     .esg-band {
       background: linear-gradient(135deg, rgba(201,168,76,.07) 0%, rgba(0,0,0,0) 60%);
       border-top: 1px solid rgba(201,168,76,.18);
@@ -53,42 +102,29 @@
     .esg-quote cite { font-size: .78rem; opacity: .38; font-style: normal; }
   </style>
 </head>
-<body>
+<body id="top">
   <div id="site-header"></div>
 
   <main class="page">
+
+    <!-- HERO — rewards-led -->
     <section class="container hero">
       <div class="hero-inner">
         <div>
-          <p class="kicker">Employers</p>
-          <h1>The S in your ESG starts with who you hire.</h1>
-          <p class="muted">GeniusSeeker verification means salary transparency, diverse panels, structured feedback, and third-party candidate reviews — documented, attestable, and built into every hire.</p>
-
-          <div class="grid" style="margin-top:14px">
-            <div class="card">
-              <h3>Get verified</h3>
-              <p>Signal trust and alignment. Verified employers are prioritized with candidates, recruiters, and ESG-conscious investors.</p>
-            </div>
-            <div class="card">
-              <h3>Submit roles</h3>
-              <p>Share your open position. We review and publish to the job board — with salary ranges, always.</p>
-            </div>
-            <div class="card">
-              <h3>Aligned matching</h3>
-              <p>AI + on-chain identity reduces noise and increases signal. The right hire, not just a fast one.</p>
-            </div>
-          </div>
+          <p class="kicker">Corporate Rewards powered by Genius Dollars</p>
+          <h1>Fund your team's growth in Genius Dollars.</h1>
+          <p class="muted">$1 = $1 USD, redeemable for real experiences. Reward employees, leaders, sales teams, and referrals with a currency that converts directly into livestreams, retreats, leadership circles, and studio experiences at Earthtone Analog.</p>
 
           <div class="actions">
-            <a class="btn" href="/employer-verify.html">Get Verified</a>
+            <a class="btn" href="mailto:partners@geniusseeker.com">Become a Partner</a>
             <a class="btn btn-ghost" href="/submit-a-job.html">Submit a Job</a>
-            <a class="btn btn-ghost" href="/contact.html">Talk Partnership</a>
+            <span class="gd-pill">1 Genius Dollar = $1 USD</span>
           </div>
         </div>
 
         <aside class="hero-card">
-          <h3>Connect with us</h3>
-          <p class="muted">Quick intake so we understand your team, hiring needs, and culture.</p>
+          <h3>Talk partnership</h3>
+          <p class="muted">Quick intake so we understand your team, hiring needs, and how you want to reward them.</p>
 
           <form class="form" method="post" action="https://formspree.io/f/xlgpgpnl">
             <div class="field">
@@ -114,6 +150,137 @@
             Prefer email? <a href="/contact.html">Use the contact page</a>.
           </p>
         </aside>
+      </div>
+    </section>
+
+    <!-- CORPORATE MEMBERSHIP TIERS -->
+    <section class="section">
+      <div class="container">
+        <div class="card">
+          <h2>Corporate Membership Tiers</h2>
+          <p class="muted">
+            Annual partnership levels. Each tier includes a funded Genius Dollars
+            balance your team can earn and redeem.
+          </p>
+
+          <div class="tier-grid">
+            <div class="card tier-card">
+              <div class="tier-head"><span class="tier-tag">Builder</span></div>
+              <div class="tier-price">$5,000 / year</div>
+              <p class="tier-dollars">Includes 2,500 Genius Dollars</p>
+              <ul class="feature-list">
+                <li>GeniusSeeker employer access</li>
+                <li>Starter employee rewards bank</li>
+                <li>Livestream event access</li>
+                <li>Employee recognition campaigns</li>
+                <li>Basic corporate partner listing</li>
+              </ul>
+            </div>
+
+            <div class="card tier-card featured">
+              <div class="tier-head">
+                <span class="tier-tag">Innovator</span>
+                <span class="tier-flag">Most Popular</span>
+              </div>
+              <div class="tier-price">$15,000 / year</div>
+              <p class="tier-dollars">Includes 10,000 Genius Dollars</p>
+              <ul class="feature-list">
+                <li>Everything in Builder</li>
+                <li>Expanded employee rewards bank</li>
+                <li>Quarterly leadership circle access</li>
+                <li>Corporate livestream sponsorship</li>
+                <li>Custom employee milestone campaigns</li>
+              </ul>
+            </div>
+
+            <div class="card tier-card">
+              <div class="tier-head"><span class="tier-tag">Legacy</span></div>
+              <div class="tier-price">$50,000 / year</div>
+              <p class="tier-dollars">Includes 35,000 Genius Dollars</p>
+              <ul class="feature-list">
+                <li>Everything in Innovator</li>
+                <li>Premium rewards bank</li>
+                <li>Annual Earthtone retreat credit</li>
+                <li>Executive leadership circle access</li>
+                <li>Strategic talent ecosystem partnership</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="section">
+      <div class="container">
+        <div class="card">
+          <h2>How It Works</h2>
+          <p class="muted">Corporate Rewards powered by Genius Dollars.</p>
+
+          <div class="grid" style="margin-top:14px">
+            <div class="card">
+              <span class="step-num">1</span>
+              <h3>Companies Fund Genius Dollars</h3>
+              <p class="muted">
+                Corporate partners purchase Genius Dollars through GeniusSeeker to reward
+                employees, leaders, sales teams, referrals, and milestone achievements.
+              </p>
+            </div>
+            <div class="card">
+              <span class="step-num">2</span>
+              <h3>Employees Earn Rewards</h3>
+              <p class="muted">
+                Employees earn Genius Dollars through hiring referrals, training completion,
+                sales growth, innovation projects, leadership development, and service milestones.
+              </p>
+            </div>
+            <div class="card">
+              <span class="step-num">3</span>
+              <h3>Earthtone Delivers Experiences</h3>
+              <p class="muted">
+                Genius Dollars are redeemed for livestreams, studio experiences, retreats,
+                leadership circles, music events, and creative gatherings at Earthtone Analog.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GENIUS DOLLAR ECONOMY -->
+    <section class="section">
+      <div class="container">
+        <div class="card">
+          <p class="kicker">Genius Dollar Economy</p>
+          <h2>Simple, Transparent, Redeemable</h2>
+          <p class="muted">
+            Genius Dollars are the reward currency of the GeniusSeeker ecosystem.
+            Companies fund them. Employees earn them. Earthtone Analog redeems them
+            for real-world experiences.
+          </p>
+
+          <div class="grid" style="margin-top:14px">
+            <div class="card econ-card">
+              <h3>1 Genius Dollar</h3>
+              <p class="muted">Equals $1 in redeemable Earthtone experience value.</p>
+            </div>
+            <div class="card econ-card">
+              <h3>No Free Redemptions</h3>
+              <p class="muted">Every reward is funded by the corporate partner before it is redeemed.</p>
+            </div>
+            <div class="card econ-card">
+              <h3>Earthtone Gets Paid</h3>
+              <p class="muted">Earthtone earns revenue when Genius Dollars are used for events, retreats, livestreams, and studio experiences.</p>
+            </div>
+          </div>
+
+          <p style="margin-top:20px;margin-bottom:0">
+            <strong>Built so Earthtone never loses money.</strong>
+            Corporate partners fund Genius Dollars in advance. Employees redeem those
+            Genius Dollars for approved experiences. Earthtone Analog earns revenue from
+            every livestream, event, retreat, leadership circle, and studio experience delivered.
+          </p>
+        </div>
       </div>
     </section>
 
@@ -179,6 +346,19 @@
 
       <div class="actions" style="margin-top:28px;justify-content:center">
         <a class="btn" href="/employer-verify.html">Apply for Verification →</a>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="section">
+      <div class="container">
+        <div class="card" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:18px">
+          <div>
+            <p class="kicker">Corporate Rewards powered by Genius Dollars</p>
+            <h2 style="margin:0">Ready to fund your team's next milestone?</h2>
+          </div>
+          <a class="btn" href="mailto:partners@geniusseeker.com">Become a Partner</a>
+        </div>
       </div>
     </section>
   </main>
