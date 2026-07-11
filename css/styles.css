@@ -95,6 +95,18 @@ small,.fine{font-size:.92rem}
   grid-template-columns: 1.25fr .75fr;
   gap:18px;
   padding:26px;
+  position:relative;
+  z-index:1;
+}
+
+.hero.hero-genius-bg{
+  position:relative;
+  background-image:
+    linear-gradient(180deg, rgba(7,7,10,.6) 0%, rgba(7,7,10,.88) 100%),
+    url('/images/genius-hero.png');
+  background-size: cover;
+  background-position: center 30%;
+  background-repeat: no-repeat;
 }
 .kicker{
   display:inline-flex;
