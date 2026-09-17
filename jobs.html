@@ -258,32 +258,50 @@
 
   let JOBS = [];
 
+  function normalizeJob(j) {
+    return {
+      id:          j.id,
+      title:       j.title,
+      company:     j.company,
+      steam:       j.steam    || "Other",
+      remote:      j.remote   || "—",
+      type:        j.type     || "—",
+      pay:         j.pay      || "—",
+      location:    j.location || "—",
+      created_at:  j.created_at,
+      description: j.description || "",
+      apply_url:   j.apply_url || "",
+      source:      j.source || "geniusseeker",
+    };
+  }
+
+  function normalizeOrionJob(j) {
+    return normalizeJob({
+      ...j,
+      id: `orion:${j.id}`,
+      company: "Orion Wholesale",
+      steam: j.department || "Other",
+      remote: /remote/i.test(j.location || "") ? "Remote" : "On-site",
+      type: j.employment_type,
+      source: "join-orion",
+      apply_url: `https://join-orion.com/careers?job=${encodeURIComponent(j.id)}&source=geniusseeker`,
+    });
+  }
+
   async function loadJobs() {
     document.getElementById("resultsMeta").textContent = "Loading…";
-    try {
-      const res = await fetch(apiBase + "/api/jobs");
-      if (res.ok) {
-        const data = await res.json();
-        JOBS = (data.jobs || []).map(j => ({
-          id:          j.id,
-          title:       j.title,
-          company:     j.company,
-          steam:       j.steam    || "Other",
-          remote:      j.remote   || "—",
-          type:        j.type     || "—",
-          pay:         j.pay      || "—",
-          location:    j.location || "—",
-          created_at:  j.created_at,
-          description: j.description || "",
-          apply_url:   j.apply_url || "",
-          source:      j.source || "geniusseeker",
-        }));
-      } else {
-        JOBS = [];
-      }
-    } catch (_) {
-      JOBS = [];
-    }
+    const [nativeResult, orionResult] = await Promise.allSettled([
+      fetch(apiBase + "/api/jobs").then(res => res.ok ? res.json() : Promise.reject(new Error(`GeniusSeeker jobs returned ${res.status}`))),
+      fetch("https://join-orion.com/api/jobs").then(res => res.ok ? res.json() : Promise.reject(new Error(`Orion jobs returned ${res.status}`))),
+    ]);
+    const nativeJobs = nativeResult.status === "fulfilled"
+      ? (nativeResult.value.jobs || []).map(normalizeJob)
+      : [];
+    const orionJobs = orionResult.status === "fulfilled"
+      ? (orionResult.value.jobs || []).map(normalizeOrionJob)
+      : [];
+    JOBS = [...new Map([...nativeJobs, ...orionJobs].map(job => [String(job.id), job])).values()]
+      .sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")));
     render();
   }
 
