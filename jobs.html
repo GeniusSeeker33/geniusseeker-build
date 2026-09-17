@@ -275,13 +275,14 @@
           location:    j.location || "—",
           created_at:  j.created_at,
           description: j.description || "",
+          apply_url:   j.apply_url || "",
+          source:      j.source || "geniusseeker",
         }));
-        if (JOBS.length === 0) JOBS = SAMPLE_JOBS;
       } else {
-        JOBS = SAMPLE_JOBS;
+        JOBS = [];
       }
     } catch (_) {
-      JOBS = SAMPLE_JOBS;
+      JOBS = [];
     }
     render();
   }
@@ -291,6 +292,9 @@
   }
 
   function buildCard(job) {
+    const applyAction = job.apply_url
+      ? `<a class="btn-apply-card" href="${job.apply_url}">View &amp; Apply</a>`
+      : `<button class="btn-apply-card" onclick="toggleApply('${job.id}', this)">Apply Now</button>`;
     return `
       <div class="job-card" id="card-${job.id}">
 
@@ -309,7 +313,7 @@
           </div>
           <div class="job-summary-actions">
             <button class="btn-details" onclick="toggleDetails('${job.id}', this)">View Details</button>
-            <button class="btn-apply-card" onclick="toggleApply('${job.id}', this)">Apply Now</button>
+            ${applyAction}
           </div>
         </div>
 
@@ -317,7 +321,7 @@
           <div class="job-details-body">${job.description || "No description provided."}</div>
         </div>
 
-        <div class="apply-panel" id="apply-${job.id}">
+        ${job.apply_url ? "" : `<div class="apply-panel" id="apply-${job.id}">
           <h4>Apply for: ${job.title} <span style="opacity:.5;font-weight:400">at ${job.company}</span></h4>
           <div class="apply-grid">
             <div>
@@ -350,7 +354,7 @@
             <button class="btn btn-ghost" onclick="toggleApply('${job.id}', document.querySelector('#card-${job.id} .btn-apply-card'))">Cancel</button>
             <span class="apply-status" id="apply-status-${job.id}"></span>
           </div>
-        </div>
+        </div>`}
 
       </div>`;
   }
