@@ -1353,16 +1353,62 @@ app.post("/api/job-submissions/:id/reject", (req, res) => {
    PUBLIC JOBS FEED (approved only)
    Used by jobs.html to load live listings
 ===================================================== */
-app.get("/api/jobs", (_req, res) => {
+const ORION_JOBS_FEED_URL = process.env.ORION_JOBS_FEED_URL || "https://join-orion.com/api/jobs";
+
+async function loadOrionJobs() {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 5000);
   try {
-    const jobs = db.prepare(
-      "SELECT * FROM job_submissions WHERE status='approved' ORDER BY created_at DESC"
-    ).all();
-    res.json({ jobs });
-  } catch (e) {
-    console.error("DB read failed:", e);
-    res.json({ jobs: [] });
+    const response = await fetch(ORION_JOBS_FEED_URL, {
+      headers: { accept: "application/json" },
+      signal: controller.signal,
+    });
+    if (!response.ok) throw new Error(`feed returned ${response.status}`);
+    const payload: any = await response.json();
+    if (!Array.isArray(payload.jobs)) throw new Error("feed returned an invalid payload");
+
+    return payload.jobs.map((job: any) => ({
+      id: `orion:${job.id}`,
+      source_job_id: job.id,
+      source: "join-orion",
+      workspace_slug: "orion",
+      title: job.title,
+      company: payload.workspace?.name || "Orion Wholesale",
+      steam: job.department || "Other",
+      remote: /remote/i.test(job.location || "") ? "Remote" : "On-site",
+      type: job.employment_type || "—",
+      pay: job.pay || "—",
+      hours: job.hours || null,
+      location: job.location || "—",
+      created_at: job.created_at,
+      description: job.description || "",
+      video_url: job.video_url || null,
+      apply_url: `https://join-orion.com/careers?job=${encodeURIComponent(job.id)}&source=geniusseeker`,
+    }));
+  } finally {
+    clearTimeout(timer);
   }
+}
+
+app.get("/api/jobs", async (_req, res) => {
+  let jobs: any[] = [];
+  try {
+    jobs = db.prepare(
+      "SELECT * FROM job_submissions WHERE status='approved' ORDER BY created_at DESC"
+    ).all() as any[];
+  } catch (e) {
+    console.error("Local job DB read failed:", e);
+  }
+
+  try {
+    jobs.push(...await loadOrionJobs());
+  } catch (e) {
+    console.error("Orion job feed failed (local jobs remain available):", e);
+  }
+
+  jobs.sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")));
+  res.set("Cache-Control", "public, max-age=30, stale-while-revalidate=300");
+  res.json({ jobs });
 });
 
 const port = Number(process.env.PORT || 8787);
