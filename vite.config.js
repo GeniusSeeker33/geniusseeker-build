@@ -47,6 +47,8 @@ export default defineConfig({
         makeOffer:        "make-offer.html",
         myOffers:         "my-offers.html",
         quiz:             "quiz.html",
+        geniusSeekerPreview: "genius-seeker-preview.html",
+        geniusLovesCompanyPreview: "genius-loves-company-preview.html",
       },
     },
   },
