@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="gs-api" content="https://geniusseeker.com" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GeniusSeeker Preview | Proof over promises</title>
+  <meta name="description" content="Preview concept for GeniusSeeker: trust infrastructure for human capability." />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    .preview-page{padding:34px 0 72px}
+    .preview-hero{padding:34px;border-radius:24px;border:1px solid var(--line);background:
+      radial-gradient(800px 400px at 15% 15%,rgba(168,230,255,.12),transparent 60%),
+      radial-gradient(800px 400px at 85% 0%,rgba(245,196,90,.12),transparent 55%),
+      linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));box-shadow:var(--shadow)}
+    .preview-eyebrow{font-size:.84rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:700}
+    .preview-hero h1{font-size:clamp(2.4rem,6vw,5rem);max-width:920px;margin-top:12px}
+    .preview-lead{font-size:clamp(1.05rem,2vw,1.35rem);max-width:780px;color:var(--muted)}
+    .preview-note{margin-top:16px;padding:10px 12px;border:1px solid rgba(168,230,255,.2);background:rgba(168,230,255,.05);border-radius:12px;color:var(--muted)}
+    .flow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:18px}
+    .flow-step{padding:15px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.03);text-align:center;font-weight:650}
+    .section-kicker{color:var(--accent2);text-transform:uppercase;letter-spacing:.12em;font-size:.8rem;font-weight:700}
+    .record-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}
+    .record-card{padding:16px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.03)}
+    .big-quote{font-size:clamp(1.4rem,3vw,2.25rem);line-height:1.2;max-width:900px}
+    .case-study{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}
+    .metric-stack{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .metric{padding:16px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.03)}
+    .metric strong{display:block;font-size:1.7rem}
+    @media(max-width:900px){.flow{grid-template-columns:1fr 1fr}.record-grid{grid-template-columns:1fr 1fr}.case-study{grid-template-columns:1fr}}
+    @media(max-width:560px){.flow,.record-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div id="site-header"></div>
+  <main class="preview-page">
+    <section class="container preview-hero">
+      <div class="preview-eyebrow">GeniusSeeker • Preview concept</div>
+      <h1>Proof over promises.</h1>
+      <p class="preview-lead">Your résumé says what you’ve done. GeniusSeeker shows what you can do — with a living record of practice, performance, growth, and real-world outcomes.</p>
+      <div class="actions">
+        <a class="btn" href="/candidates.html">Prove My Genius</a>
+        <a class="btn btn-ghost" href="/employer-verify.html">Find Proven Talent</a>
+      </div>
+      <div class="preview-note">This is a preview page only. It does not replace the current homepage or change production routing.</div>
+    </section>
+
+    <section class="container section">
+      <div class="section-kicker">The new model</div>
+      <h2>Trust is earned by evidence.</h2>
+      <p class="muted">AI can polish a résumé, a cover letter, and even an interview answer. GeniusSeeker shifts the question from “What do you claim?” to “What can you demonstrate?”</p>
+      <div class="flow">
+        <div class="flow-step">Identity</div>
+        <div class="flow-step">Practice</div>
+        <div class="flow-step">Evidence</div>
+        <div class="flow-step">Capability</div>
+        <div class="flow-step">Reputation</div>
+      </div>
+    </section>
+
+    <section class="container section">
+      <div class="section-kicker">Your Genius Record</div>
+      <h2>A living capability passport.</h2>
+      <div class="record-grid">
+        <div class="record-card"><h3>Verified Skills</h3><p class="muted">Evidence-backed strengths and transferable capabilities.</p></div>
+        <div class="record-card"><h3>Practice Evidence</h3><p class="muted">Simulations, role-play, assignments, and learning progression.</p></div>
+        <div class="record-card"><h3>Human Validation</h3><p class="muted">Coach, manager, peer, mentor, and employer observations.</p></div>
+        <div class="record-card"><h3>Real Outcomes</h3><p class="muted">Completed missions, production, customer results, and work artifacts.</p></div>
+      </div>
+    </section>
+
+    <section class="container section">
+      <div class="card">
+        <div class="section-kicker">For companies</div>
+        <p class="big-quote"><strong>Stop hiring claims. Start hiring evidence.</strong></p>
+        <p class="muted">Assess → Train → Coach → Deploy → Measure. GeniusSeeker helps organizations see capability more clearly while keeping human judgment at the center.</p>
+        <div class="actions"><a class="btn" href="/employer-verify.html">Build a Proven Talent Pipeline</a></div>
+      </div>
+    </section>
+
+    <section class="container section case-study">
+      <div class="card">
+        <div class="section-kicker">Live proof</div>
+        <h2>Orion as the first operating case study.</h2>
+        <p class="muted">The Orion environment tests the model inside a real company: practice, coaching, competency evidence, progression, production levels, and measurable outcomes all feed a stronger picture of human capability.</p>
+        <p class="muted">That turns training from a course into a proof engine.</p>
+      </div>
+      <div class="metric-stack">
+        <div class="metric"><strong>Practice</strong><span class="muted">Simulations + coaching</span></div>
+        <div class="metric"><strong>Progression</strong><span class="muted">Competency + production levels</span></div>
+        <div class="metric"><strong>Evidence</strong><span class="muted">Human + system signals</span></div>
+        <div class="metric"><strong>Outcome</strong><span class="muted">Real work + reputation</span></div>
+      </div>
+    </section>
+
+    <section class="container section">
+      <div class="section-kicker">Your economic identity</div>
+      <h2>Who are you when the résumé is no longer enough?</h2>
+      <div class="grid">
+        <div class="card"><h3>Who are you?</h3><p>Your identity and context.</p></div>
+        <div class="card"><h3>What can you do?</h3><p>Demonstrated capability, not just credentials.</p></div>
+        <div class="card"><h3>Who trusts your work?</h3><p>Reputation built through real relationships and outcomes.</p></div>
+      </div>
+      <div class="actions"><a class="btn" href="/candidates.html">Build My Genius Record</a><a class="btn btn-ghost" href="/genius-loves-company-preview.html">See Genius Loves Company</a></div>
+    </section>
+  </main>
+  <div id="site-footer"></div>
+  <script src="/js/main.js"></script>
+</body>
+</html>
