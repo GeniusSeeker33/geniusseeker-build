@@ -23,6 +23,7 @@ function copyStaticFolders() {
 
 export default defineConfig({
   plugins: [react(), copyStaticFolders()],
+  server: { allowedHosts: ["terminal.local"] },
   build: {
     rollupOptions: {
       input: {
