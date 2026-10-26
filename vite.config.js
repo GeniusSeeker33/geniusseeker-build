@@ -23,6 +23,7 @@ function copyStaticFolders() {
 
 export default defineConfig({
   plugins: [react(), copyStaticFolders()],
+  server: { allowedHosts: ["terminal.local"] },
   build: {
     rollupOptions: {
       input: {
@@ -47,6 +48,8 @@ export default defineConfig({
         makeOffer:        "make-offer.html",
         myOffers:         "my-offers.html",
         quiz:             "quiz.html",
+        geniusSeekerPreview: "genius-seeker-preview.html",
+        geniusLovesCompanyPreview: "genius-loves-company-preview.html",
       },
     },
   },
